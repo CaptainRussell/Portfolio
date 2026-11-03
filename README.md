@@ -31,7 +31,7 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 
 ## Return button
 
-Every page has one return button: the first item in the top bar, top left, same pill and hover everywhere (`.pf-back` in `shared/portfolio.css`; Storm HQ uses the same placement). It says **All projects** on a project's main page, and names the project on its sub-pages (the ADS browser tool, the cipher slides, and the paper viewer). The hub has none.
+Every page has one return button: the first item in the top bar, top left, same pill and hover everywhere (`.pf-back` in `shared/portfolio.css`; Storm HQ uses the same placement). It says **All projects** on a project's main page, and names the project on its sub-pages (the ADS browser tool, the cipher slides, and the paper viewer). The hub has none. Never skip a level: on a sub-page every link in the bar (the button and the name) goes to its project page, as on Storm HQ where the whole bar is one link.
 
 Papers open in `view/?d=<key>` (pdf.js, in `shared/vendor/pdfjs/`), which has the return button and a Download PDF button. Add a paper to the `DOCS` list in `view/index.html`.
 

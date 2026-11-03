@@ -29,7 +29,7 @@
 <body style="--tone:#c8102e">
 <header class="pf-bar">
   <a class="pf-back" id="back" href="../"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span id="backLabel">All projects</span></a>
-  <a class="pf-brand" href="../"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></a>
+  <a class="pf-brand" id="brand" href="../"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></a>
   <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
 </header>
 
@@ -74,7 +74,8 @@ const DOCS = {
   const status = t => { $("status").hidden = !t; $("status").textContent = t || ""; };
   if (!D) { $("title").textContent = "Document not found"; status("That paper isn't here. Go back to all projects."); return; }
   document.body.style.setProperty("--tone", D.tone);
-  $("back").href = D.back; $("backLabel").textContent = D.label;
+  // The whole bar goes up one level, like Storm HQ: the return button and the name both go to the project.
+  $("back").href = D.back; $("brand").href = D.back; $("backLabel").textContent = D.label;
   $("kicker").textContent = D.kicker; $("title").textContent = D.title;
   document.title = D.title + " · Scott D. Russell";
   const url = encodeURI(D.pdf);
