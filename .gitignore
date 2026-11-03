@@ -1,0 +1,12 @@
+# ADS (projects/ads/): raw disk images, bytecode, case databases, rebuilt test sets
+projects/ads/**/*.img
+!projects/ads/downloads/sample_drive.img
+projects/ads/**/*.E01
+projects/ads/**/*.dd
+projects/ads/**/*.raw
+__pycache__/
+*.pyc
+projects/ads/**/*.sqlite
+projects/ads/project3/eval/sets/
+projects/ads/project3/recovered*/
+projects/ads/project3/tests/data/

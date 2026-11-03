@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>Fig 1</title>
+<style>
+body{margin:0;background:#fff;font-family:"Liberation Sans",Arial,sans-serif;color:#111}
+#fig{width:400px;padding:6px}
+.io{font-size:13px;border:1.5px dashed #555;border-radius:6px;padding:5px 9px;text-align:center}
+.box{display:grid;grid-template-columns:30px 150px 1fr;align-items:center;gap:8px;border:2px solid #222;border-radius:8px;padding:7px 10px}
+.box.key{background:#ececec}
+.n{width:26px;height:26px;line-height:26px;border-radius:50%;background:#222;color:#fff;font-weight:700;font-size:14px;text-align:center}
+.t{font-weight:700;font-size:15px}
+.d{font-size:12.5px;line-height:1.3;color:#222}
+.arr{text-align:center;font-size:13px;line-height:15px;color:#222;margin:1px 0}
+</style>
+<div id="fig">
+<div class="io"><b>In:</b> a bit-for-bit copy (image) of a USB stick or Windows drive</div>
+<div class="arr">&#9660;</div>
+<div class="box"><div class="n">1</div><div class="t">Open &amp; fingerprint</div><div class="d">Open the copy read-only and fingerprint (hash) it</div></div>
+<div class="arr">&#9660;</div>
+<div class="box"><div class="n">2</div><div class="t">Match records</div><div class="d">Link each record to its file; put all times on one clock</div></div>
+<div class="arr">&#9660;</div>
+<div class="box key"><div class="n">3</div><div class="t">Compare</div><div class="d">11 date rules and 8 questions find disagreements; 5 warnings flag missing records</div></div>
+<div class="arr">&#9660;</div>
+<div class="box"><div class="n">4</div><div class="t">Rank &amp; explain</div><div class="d">Score the disagreements, rank the files, say why in plain words</div></div>
+<div class="arr">&#9660;</div>
+<div class="io"><b>Out:</b> ranked files, a plain-language report, and the evidence behind each flag</div>
+</div>

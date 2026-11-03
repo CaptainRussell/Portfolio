@@ -15,29 +15,31 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 
 | Path | What |
 |---|---|
-| `index.html` | Hub page. `PROFILE` (name, role, contact buttons, focus chips) and `PROJECTS` (one entry per card) are near the bottom. |
-| `shared/portfolio.css` | Palette (dark default, light kept), top bar, buttons, chips, project page parts (header, stats, prose, downloads), footer. |
+| `index.html` | Hub page. `PROFILE` (name, role, contact buttons) and `PROJECTS` (one card each: icon or image, name, blurb, one link) are near the bottom. |
+| `shared/portfolio.css` | Storm HQ look: palette (dark default, light kept), top bar, project page parts, footer. |
 | `shared/portfolio.js` | Light/dark toggle, remembered per browser (`pf-theme`). |
-| `projects/<slug>/index.html` | One page per project. |
-| `projects/ads/app.html` | The ADS browser edition, copied from CYBSC5360Project. Self-contained and offline. |
-| `projects/ads/downloads/` | Tool ZIP, term paper PDF and the sample drive. |
-| `tools/sync-ads.sh` | Refreshes the ADS files from a CYBSC5360Project checkout. |
+| `shared/img/` | Header photo and the Det 250 patch used on the Storm HQ card. |
+| `projects/daniels-cipher/` | Creative component page, `slides/index.html` (the defense deck) and the paper PDF. Moved here from `CaptainRussell/Creative-Component`. |
+| `projects/ads/` | ADS project page plus the whole former `CaptainRussell/CYBSC5360Project` repo: `tool/` (source, tests, browser edition), `paper/`, `project3/`, drafts, and the tool ZIPs. `downloads/sample_drive.img` is the try-it sample. |
 
 ## Adding a project
 
-1. Copy `projects/ads/` or `projects/daniels-cipher/` to `projects/<new-slug>/` and rewrite `index.html`. Set the page color with `style="--tone:#hex"` on `<body>`. Keep every path relative.
-2. Add one entry to `PROJECTS` in `index.html` (`section` is `security` or `professional`; add a key to `SECTIONS` for a new group, and an SVG to `ICONS` for a new icon).
-3. A project with no page of its own (like the Steam game) can point `href` straight at an external URL with `external: true`.
-4. Before pushing, check the page at phone width (390 px) and desktop width in both themes.
+1. Copy `projects/ads/index.html` or `projects/daniels-cipher/index.html` to `projects/<new-slug>/index.html` and rewrite it. Set the page color with `style="--tone:#hex"` on `<body>`. Keep every path relative.
+2. Add one entry to `PROJECTS` in `index.html` (`section` is `security` or `professional`). Keep the blurb to one short sentence, as on Storm HQ.
+3. A project with no page here (like the Steam game) can point `href` straight at its own site.
+4. Before pushing, check the page at phone width (390 px) and desktop width in both themes. No em dashes in page copy.
+
+## Old addresses
+
+`CaptainRussell/Creative-Component` and `CaptainRussell/CYBSC5360Project` now hold only forwarding pages (`index.html` + `404.html`) that send their old GitHub Pages links, including sub-paths, to the matching folder here. Do not build in them.
+
+- `captainrussell.github.io/Creative-Component/...` goes to `projects/daniels-cipher/...`
+- `captainrussell.github.io/CYBSC5360Project/...` goes to `projects/ads/...`
+
+## Publishing the creative component
+
+The slides and paper are built in the private `CPRE5990` repo. Its `Final Report/Defense/presentation/publish_site.py` copies them into `projects/daniels-cipher/` of a local checkout of this repo (by default `Portfolio` next to the CPRE 5990 folder), and `--push` commits and pushes.
 
 ## Updating ADS
 
-The source of truth for ADS is `CaptainRussell/CYBSC5360Project`. After changing it there, run:
-
-```
-tools/sync-ads.sh ../CYBSC5360Project
-```
-
-When the final paper (December 2026) lands, update the PDF name in `tools/sync-ads.sh` and the "November 2026 draft" wording in `projects/ads/index.html`.
-
-The Creative Component paper and slides are linked from their own site (`CaptainRussell/Creative-Component`), not copied here.
+Work on ADS directly in `projects/ads/` (run its tests from `projects/ads/tool`). When the final paper (December 2026) lands, update the paper link and the "November 2026 draft" wording in `projects/ads/index.html`.
