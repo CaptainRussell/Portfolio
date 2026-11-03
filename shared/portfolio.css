@@ -48,7 +48,7 @@ code,kbd{font-family:var(--mono);font-size:.92em}
 .pf-bar{view-transition-name:pf-bar}
 
 /* ---------- top bar (Storm HQ style: dark strip, cardinal rule, gold name) ---------- */
-.pf-bar{position:relative;z-index:50;display:flex;align-items:center;gap:10px;min-height:40px;padding:6px 16px;background:#16161a;color:#ececee;border-bottom:2px solid #c8102e;font:600 13px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.pf-bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;min-height:40px;padding:6px 16px;background:#16161a;color:#ececee;border-bottom:2px solid #c8102e;font:600 13px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 .pf-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;min-width:0}
 .pf-mark{flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,#c8102e,#7a0a1c);color:#fff;font:700 11px/1 var(--mono)}
 .pf-name{color:#f1be48;font-weight:800;letter-spacing:.02em;white-space:nowrap}
@@ -62,9 +62,12 @@ code,kbd{font-family:var(--mono);font-size:.92em}
 /* The return button: always the first thing in the top bar, top left, on every page of both sites
    (Portfolio and Storm HQ). Label: "All projects" on a project's main page, the project's name on its sub-pages. */
 .pf-back{flex:none;display:inline-flex;align-items:center;gap:5px;padding:5px 11px 5px 8px;border-radius:999px;border:1px solid #46464f;background:transparent;color:#ececee;font:700 12px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;white-space:nowrap;text-decoration:none;transition:background .2s,border-color .2s}
-.pf-back:hover,.pf-back:focus-visible{background:#c8102e;border-color:#c8102e;color:#fff}
+/* The bar's return button and name are one link (like Storm HQ), so hovering anywhere on it lights the button. */
+.pf-up{display:flex;align-items:center;gap:10px;min-width:0;color:inherit;text-decoration:none}
+.pf-up:focus-visible{outline:3px solid #f1be48;outline-offset:2px;border-radius:8px}
+.pf-up:hover .pf-back,.pf-up:focus-visible .pf-back{background:#c8102e;border-color:#c8102e;color:#fff}
 .pf-back svg{transition:transform .25s var(--ease)}
-.pf-back:hover svg{transform:translateX(-3px)}
+.pf-up:hover .pf-back svg{transform:translateX(-3px)}
 @media (max-width:520px){.pf-sub{display:none}}
 @media print{.pf-bar{display:none!important}}
 

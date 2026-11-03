@@ -9,7 +9,7 @@
 <script src="../shared/portfolio.js"></script>
 <style>
 [hidden]{display:none!important}
-.doc-head{position:relative;background:var(--surface);border-bottom:1px solid var(--line)}
+.doc-head{position:sticky;top:42px;z-index:40;background:var(--surface);border-bottom:1px solid var(--line)}
 .doc-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tone)}
 .doc-in{max-width:960px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
 .ttl{flex:1 1 240px;min-width:0}
@@ -28,8 +28,7 @@
 </head>
 <body style="--tone:#c8102e">
 <header class="pf-bar">
-  <a class="pf-back" id="back" href="../"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span id="backLabel">All projects</span></a>
-  <a class="pf-brand" id="brand" href="../"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></a>
+  <a class="pf-up" id="back" href="../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span id="backLabel">All projects</span></span><span class="pf-brand"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
   <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
 </header>
 
@@ -74,8 +73,8 @@ const DOCS = {
   const status = t => { $("status").hidden = !t; $("status").textContent = t || ""; };
   if (!D) { $("title").textContent = "Document not found"; status("That paper isn't here. Go back to all projects."); return; }
   document.body.style.setProperty("--tone", D.tone);
-  // The whole bar goes up one level, like Storm HQ: the return button and the name both go to the project.
-  $("back").href = D.back; $("brand").href = D.back; $("backLabel").textContent = D.label;
+  // The bar (return button and name, one link) goes up one level, to the project.
+  $("back").href = D.back; $("backLabel").textContent = D.label;
   $("kicker").textContent = D.kicker; $("title").textContent = D.title;
   document.title = D.title + " · Scott D. Russell";
   const url = encodeURI(D.pdf);
