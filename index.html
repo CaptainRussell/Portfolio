@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Scott D. Russell · Cybersecurity Portfolio</title>
+<meta name="description" content="Cybersecurity portfolio of Capt Scott D. Russell, USAF (M.S. Cybersecurity, Iowa State University): cryptanalysis research, digital forensics tools and other large projects.">
+<link rel="icon" href="shared/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="shared/portfolio.css">
+<script src="shared/portfolio.js"></script>
+<style>
+.hero{position:relative;padding:52px 0 30px;overflow:hidden}
+.hero::before{content:"";position:absolute;inset:-50% -10% auto;height:440px;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 20%,transparent),transparent 70%);opacity:.6;pointer-events:none}
+.hero>*{position:relative}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.hero h1{margin:6px 0 4px;font-size:clamp(30px,5.4vw,46px);line-height:1.08;letter-spacing:-.015em}
+.role{margin:0;font-size:16px;color:var(--soft);font-weight:600}
+.lede{margin:14px 0 0;max-width:640px;color:var(--soft)}
+.contact{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.focus{margin-top:18px}
+.hero .eyebrow,.hero h1,.hero .role,.hero .lede{animation:up .6s var(--ease) both}
+.hero h1{animation-delay:.05s}.hero .role{animation-delay:.1s}.hero .lede{animation-delay:.15s}
+@keyframes up{from{opacity:0;transform:translateY(10px)}}
+
+section{margin-top:30px}
+.sechead{margin:0 2px 12px}
+.sechead h2{margin:0;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--soft)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}
+.card{position:relative;display:flex;flex-direction:column;gap:12px;padding:18px;background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);overflow:hidden;
+  transition:transform .28s var(--ease),box-shadow .28s var(--ease),border-color .2s;animation:rise .55s var(--ease) both;animation-delay:calc(var(--i,0) * 70ms + .15s)}
+@keyframes rise{from{opacity:0;transform:translateY(16px) scale(.98)}}
+.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tone)}
+.card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg);border-color:var(--tone)}
+.top{display:flex;gap:14px;align-items:flex-start}
+.icon{flex:none;width:52px;height:52px;border-radius:14px;display:grid;place-items:center;color:#fff;background:linear-gradient(135deg,var(--tone),color-mix(in srgb,var(--tone) 60%,#000));box-shadow:0 6px 14px color-mix(in srgb,var(--tone) 35%,transparent);transition:transform .35s var(--ease)}
+.card:hover .icon{transform:rotate(-6deg) scale(1.06)}
+.head{min-width:0}
+.ctx{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--tone-ink,var(--tone))}
+.name{margin:2px 0 0;font-size:18px;font-weight:800;line-height:1.25}
+.name a{text-decoration:none}
+.name a::after{content:"";position:absolute;inset:0;border-radius:inherit}  /* whole card opens the project */
+.name .ext{font-size:13px;color:var(--faint);font-weight:600;margin-left:4px}
+.blurb{margin:0;color:var(--soft);font-size:14px}
+.hl{margin:0;padding:10px 12px;border-radius:10px;background:var(--surface-2);font-size:13.5px}
+.hl b{font-family:var(--mono);color:var(--tone-ink,var(--ink))}
+.links{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
+.links .btn,.card .chips{position:relative;z-index:1}   /* stay clickable above the card link */
+.links .btn{padding:7px 11px;font-size:13px}
+
+@media (max-width:640px){
+  .hero{padding:34px 0 20px}
+  .grid{grid-template-columns:1fr}
+  .card{padding:16px 14px}
+  .icon{width:46px;height:46px;border-radius:12px}
+}
+</style>
+</head>
+<body>
+<header class="pf-bar">
+  <a class="pf-brand" href="./"><span class="pf-mark" aria-hidden="true">SR</span><span>Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<div class="hero wrap">
+  <div class="eyebrow">Cybersecurity Portfolio</div>
+  <h1 id="pf-name"></h1>
+  <p class="role" id="pf-role"></p>
+  <p class="lede" id="pf-lede"></p>
+  <div class="contact" id="pf-contact"></div>
+  <ul class="chips focus" id="pf-focus" aria-label="Focus areas"></ul>
+</div>
+
+<main class="wrap" id="projects"></main>
+
+<footer class="pf-foot">
+  <p class="who">Capt Scott D. Russell, USAF</p>
+  <p>M.S. Cybersecurity · Iowa State University</p>
+  <p>Built by hand and hosted on GitHub Pages. <a href="https://github.com/CaptainRussell/Portfolio">Source</a></p>
+  <p>The views expressed are my own and do not reflect the official policy or position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
+</footer>
+
+<script>
+/* =====================================================================
+   PROFILE: the header. Leave a contact value empty ("") to hide it.
+   ===================================================================== */
+const PROFILE = {
+  name: "Scott D. Russell",
+  role: "Captain, U.S. Air Force · M.S. Cybersecurity, Iowa State University",
+  lede: "Large projects I have designed and built: original cryptanalysis research, a digital forensics tool with its paper, a game released on Steam, and the tool suite I built for an Air Force ROTC detachment. Each card links to a project page with the write-up, the results and everything you need to run it.",
+  contact: [
+    {label:"GitHub", href:"https://github.com/CaptainRussell", icon:"github"},
+    {label:"LinkedIn", href:"", icon:"link"},   // add your LinkedIn URL to show this
+    {label:"Email", href:"", icon:"mail"},      // e.g. "mailto:you@example.com"
+    {label:"Résumé", href:"", icon:"doc"}       // e.g. "resume.pdf" in the repo root
+  ],
+  focus: ["Cryptanalysis","Digital forensics","File-system internals (FAT, NTFS)","C","Python","JavaScript","Tool validation","Technical writing"]
+};
+
+/* =====================================================================
+   PROJECTS: add a project by giving it a folder under projects/ with an
+   index.html (copy an existing one), then adding one entry here.
+     href     project page (or an external URL for a project with no page)
+     section  one of the keys in SECTIONS
+     tone     accent color for the card and its page
+     icon     one of the keys in ICONS
+     context  short line above the name (course, year, role)
+     highlight one result, shown in a band (optional; <b> allowed)
+     links    buttons on the card: {label, href, icon, primary?}
+   Cards are shown in the order listed, grouped by section.
+   ===================================================================== */
+const PROJECTS = [
+  {href:"projects/daniels-cipher/", section:"research", tone:"#c8102e", icon:"cards",
+   context:"M.S. Creative Component · 2026",
+   name:"Analysis of a Card-Shuffle Stream Cipher",
+   blurb:"First analysis of the Daniels' Cipher, a new hand cipher run with two decks of cards. I proved the round transition is one-to-one and exhaustively mapped every cycle and every key at reduced deck sizes.",
+   highlight:"All <b>1,625,702,400</b> states and <b>16,777,216</b> keys resolved at deck size 8, in under 2 GB of memory.",
+   tags:["C","Cryptanalysis","Group theory","Bitset state tracking","Chi-square testing"],
+   links:[
+     {label:"Paper (PDF)", href:"https://captainrussell.github.io/Creative-Component/Russell_2026_Card-Shuffle-Stream-Cipher-Analysis.pdf", icon:"doc", primary:true},
+     {label:"Slides", href:"https://captainrussell.github.io/Creative-Component/slides/", icon:"slides"}
+   ]},
+  {href:"projects/ads/", section:"tools", tone:"#1f6feb", icon:"drive",
+   context:"Digital Forensics · CYBSC 5360 · 2026",
+   name:"Artifact Disagreement Scorer",
+   blurb:"Anti-forensics triage tool. It reads FAT and NTFS images directly, cross-checks the independent records Windows keeps about each file, and ranks the files where they disagree, with a plain-English reason for every flag.",
+   highlight:"Ranked <b>6 of 7</b> evidence files in its top ten out of <b>2,246</b> files on the Project 1 image.",
+   tags:["Python (stdlib only)","JavaScript","NTFS / FAT parsing","Timestomp detection","Offline web app"],
+   links:[
+     {label:"Run in browser", href:"projects/ads/app.html", icon:"play", primary:true},
+     {label:"Download", href:"projects/ads/downloads/ADS-tool.zip", icon:"download"},
+     {label:"Paper (PDF)", href:"projects/ads/downloads/Russell_ADS_Term_Paper.pdf", icon:"doc"}
+   ]},
+  {href:"https://store.steampowered.com/app/5341000/Ashnars_Lair/", external:true, section:"professional", tone:"#7c3aed", icon:"game",
+   context:"Independent game · Released Oct 2026",
+   name:"Ashnar's Lair",
+   blurb:"A traditional roguelike I developed and published on Steam: seven unlockable classes, three talent trees per class, gear with rolled affixes, and elites and whole dungeons that roll affixes too. One life per run.",
+   tags:["Game design","Procedural generation","Turn-based systems","Shipped on Steam"],
+   links:[
+     {label:"View on Steam", href:"https://store.steampowered.com/app/5341000/Ashnars_Lair/", icon:"ext", primary:true}
+   ]},
+  {href:"https://captainrussell.github.io/det250/", external:true, section:"professional", tone:"#b45309", icon:"bolt",
+   context:"AFROTC Det 250 · Operations Flight Commander · 2026",
+   name:"Storm HQ",
+   blurb:"One GitHub Pages site holding the nine tools I built for the cadets and instructors of AFROTC Detachment 250: a PFRA scoring calculator, org chart, ribbon rack builder, classroom games and an OPSEC open-source recon exercise.",
+   highlight:"Evaluation page locked client-side with <b>AES-GCM</b>, key derived by <b>PBKDF2-SHA-256</b> (310,000 iterations).",
+   tags:["JavaScript","Static web apps","Web Crypto","Accessibility","Used by a live unit"],
+   links:[
+     {label:"Open Storm HQ", href:"https://captainrussell.github.io/det250/", icon:"ext", primary:true},
+     {label:"Source", href:"https://github.com/CaptainRussell/det250", icon:"github"}
+   ]}
+];
+const SECTIONS = {research:"Research", tools:"Security tools", professional:"Professional projects"};
+
+const ICONS = {
+  cards:'<rect x="3" y="5" width="11" height="15" rx="2"/><path d="M10 4.2 11.6 3a2 2 0 0 1 2.8.4l6.2 8.3a2 2 0 0 1-.4 2.8l-4.2 3.1"/><path d="M8.5 10.2c-.8-1-2.5-.4-2.5.9 0 1.3 2.5 2.9 2.5 2.9s2.5-1.6 2.5-2.9c0-1.3-1.7-1.9-2.5-.9z"/>',
+  drive:'<rect x="2.5" y="13" width="19" height="7" rx="2"/><path d="M4.5 13 7 5h10l2.5 8"/><circle cx="17.5" cy="16.5" r="1" fill="currentColor"/><path d="M6 16.5h6"/>',
+  game:'<path d="M7 8h10a5 5 0 0 1 4.8 6.4l-.6 2a2.6 2.6 0 0 1-4.4 1L15 15.5H9l-1.8 1.9a2.6 2.6 0 0 1-4.4-1l-.6-2A5 5 0 0 1 7 8z"/><path d="M7.5 11v3M6 12.5h3"/><circle cx="16" cy="11.5" r=".9" fill="currentColor"/><circle cx="17.8" cy="13.5" r=".9" fill="currentColor"/>',
+  doc:'<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/>',
+  slides:'<rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/>',
+  play:'<circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z" fill="currentColor"/>',
+  download:'<path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/>',
+  ext:'<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+  github:'<path d="M9 19c-4.3 1.4-4.3-2.5-6-3m12 5v-3.5c0-1 .1-1.4-.5-2 2.8-.3 5.5-1.4 5.5-6a4.6 4.6 0 0 0-1.3-3.2 4.2 4.2 0 0 0-.1-3.2s-1.1-.3-3.5 1.3a12.3 12.3 0 0 0-6.2 0C6.5 2.8 5.4 3.1 5.4 3.1a4.2 4.2 0 0 0-.1 3.2A4.6 4.6 0 0 0 4 9.5c0 4.6 2.7 5.7 5.5 6-.6.6-.6 1.2-.5 2V21"/>',
+  link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  bolt:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+  mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 7 8.5-7"/>'
+};
+const esc = s => String(s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const svg = (k, n=16, w=2) => `<svg width="${n}" height="${n}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[k] || ICONS.doc}</svg>`;
+const isExt = h => /^https?:/.test(h);
+const tgt = h => isExt(h) ? ' target="_blank" rel="noopener"' : "";
+
+document.getElementById("pf-name").textContent = PROFILE.name;
+document.getElementById("pf-role").textContent = PROFILE.role;
+document.getElementById("pf-lede").textContent = PROFILE.lede;
+document.getElementById("pf-contact").innerHTML = PROFILE.contact.filter(c => c.href)
+  .map(c => `<a class="btn" href="${esc(c.href)}"${tgt(c.href)}>${svg(c.icon)}${esc(c.label)}</a>`).join("");
+document.getElementById("pf-focus").innerHTML = PROFILE.focus.map(f => `<li>${esc(f)}</li>`).join("");
+
+let i = 0;
+document.getElementById("projects").innerHTML = Object.entries(SECTIONS).map(([key, title]) => {
+  const list = PROJECTS.filter(p => p.section === key);
+  if (!list.length) return "";
+  return `<section aria-labelledby="h-${key}"><div class="sechead"><h2 id="h-${key}">${title}</h2></div><div class="grid">${
+    list.map(p => `<article class="card" style="--tone:${p.tone};--i:${i++}">
+      <div class="top">
+        <span class="icon" aria-hidden="true">${svg(p.icon, 26, 1.9)}</span>
+        <div class="head"><div class="ctx">${esc(p.context)}</div>
+          <h3 class="name"><a href="${esc(p.href)}"${tgt(p.href)}>${esc(p.name)}</a>${p.external ? '<span class="ext" aria-label="(opens external site)">↗</span>' : ""}</h3></div>
+      </div>
+      <p class="blurb">${esc(p.blurb)}</p>
+      ${p.highlight ? `<p class="hl">${p.highlight}</p>` : ""}
+      ${p.tags ? `<ul class="chips" aria-label="Skills">${p.tags.map(t => `<li>${esc(t)}</li>`).join("")}</ul>` : ""}
+      <div class="links">${(p.links || []).map(l => `<a class="btn${l.primary ? " primary" : ""}" href="${esc(l.href)}"${tgt(l.href)}>${svg(l.icon)}${esc(l.label)}</a>`).join("")}</div>
+    </article>`).join("")
+  }</div></section>`;
+}).join("");
+</script>
+</body>
+</html>

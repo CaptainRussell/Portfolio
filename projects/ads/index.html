@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Artifact Disagreement Scorer · Scott D. Russell</title>
+<meta name="description" content="Artifact Disagreement Scorer: a digital forensics triage tool that cross-checks the independent records Windows keeps about each file to surface anti-forensic tampering. Runs offline in the browser or from Python.">
+<link rel="icon" href="../../shared/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../shared/portfolio.css">
+<script src="../../shared/portfolio.js"></script>
+<style>
+table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+td:first-child{font-family:var(--mono);font-weight:700;white-space:nowrap}
+.tablewrap{overflow-x:auto;max-width:760px}
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps li{counter-increment:s;position:relative;padding-left:36px;margin:10px 0}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--tone);color:#fff;font:700 12px/1 var(--mono)}
+pre{margin:10px 0;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto;font:13px/1.5 var(--mono)}
+</style>
+</head>
+<body style="--tone:#1f6feb">
+<header class="pf-bar">
+  <a class="pf-brand" href="../../"><span class="pf-mark" aria-hidden="true">SR</span><span>Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></a>
+  <nav><a class="pf-pill" href="../../">All projects</a><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<div class="proj-head"><div class="wrap">
+  <div class="kicker">Security tool · Digital Forensics (CYBSC 5360)</div>
+  <h1>Artifact Disagreement Scorer</h1>
+  <p class="sub">A cover-up rarely changes every record. ADS compares the separate records a drive keeps about each file, ranks the files where those records disagree, and explains every flag in plain English.</p>
+  <ul class="facts">
+    <li><b>Course:</b> Digital Forensics, Iowa State University</li>
+    <li><b>Year:</b> Fall 2026</li>
+    <li><b>Role:</b> Sole designer, developer and author</li>
+    <li><b>Stack:</b> Python 3 (standard library only), JavaScript port</li>
+  </ul>
+  <div class="actions">
+    <a class="btn primary" href="app.html"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z" fill="currentColor"/></svg>Run it in your browser</a>
+    <a class="btn" href="downloads/ADS-tool.zip"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>Download the tool <span class="size">ZIP, 0.8 MB</span></a>
+    <a class="btn" href="downloads/Russell_ADS_Term_Paper.pdf"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg>Read the paper <span class="size">PDF</span></a>
+    <a class="btn" href="https://github.com/CaptainRussell/CYBSC5360Project/tree/main/tool">Source on GitHub</a>
+  </div>
+</div></div>
+
+<main class="wrap">
+  <div class="stats">
+    <div class="stat"><span class="n">6 of 7</span><span class="l">evidence files in the top 10 of 2,246 files (Project 1, FAT16)</span></div>
+    <div class="stat"><span class="n">5 in top 10</span><span class="l">on a held-out NTFS image, with the checks frozen before I examined it (Project 2)</span></div>
+    <div class="stat"><span class="n">0 dependencies</span><span class="l">Python standard library; the browser edition needs no install and no network</span></div>
+    <div class="stat"><span class="n">Byte for byte</span><span class="l">FAT reader matches The Sleuth Kit on all 4,923 live files of the Project 1 image</span></div>
+  </div>
+
+  <div class="prose">
+    <h2>The problem</h2>
+    <p>Hiding evidence is cheap: any program can rewrite a file's visible dates (timestomping), rename a photo so it sits among system binaries, or tuck one file inside another. Hiding it well is hard, because Windows and NTFS record the same facts in several independent places: the $STANDARD_INFORMATION and $FILE_NAME timestamps in the MFT, the USN change journal, LNK shortcut files, Prefetch and the event logs. EnCase and FTK display all of these, but leave it to the examiner to notice when two of them conflict, and any single automated check is noisy.</p>
+
+    <h2>What I built</h2>
+    <ul>
+      <li><b>Direct image parsing.</b> My own FAT and NTFS readers walk raw images (<code>.img</code>, <code>.dd</code>, <code>.raw</code>) read-only, and fingerprint every input with SHA-256 so each result traces back to the original copy.</li>
+      <li><b>First look:</b> eight questions asked of every file: disguised (name vs. magic bytes), data hidden after the end marker, password-locked, password written down nearby, odd one out in its folder, never referenced, archive of personal files, and written at an unusual time.</li>
+      <li><b>Windows date checks:</b> rules R1 to R11 and warnings S1 to S5 that cross-check MFT, $J, LNK, Prefetch and event-log times. They run straight from an NTFS image or from Eric Zimmerman's MFTECmd, PECmd, LECmd and EvtxECmd CSVs.</li>
+      <li><b>Scoring that combines evidence.</b> A file rises only when several independent checks disagree about it, and a missing or cleared record counts as a clue rather than being skipped.</li>
+      <li><b>Reports a non-specialist can read.</b> One self-contained HTML briefing per case (overview, ranked leads, hex map of the boot sector, keys and locks, timeline), plus CSV and JSON for an examiner.</li>
+      <li><b>Two front ends, one answer.</b> A JavaScript port runs the whole pipeline in a single offline web page. The test suite runs both engines on fixtures, seeded stress drives and fuzzed inputs and requires every result to match field by field.</li>
+    </ul>
+
+    <figure>
+      <img src="img/fig1_pipeline.png" alt="ADS pipeline: drive image and Windows records are fingerprinted, normalized, checked by independent rules, scored and reported." width="1648" height="1540" loading="lazy">
+      <figcaption>How the tool works. Every input is fingerprinted, so each result traces back to the original drive copy.</figcaption>
+    </figure>
+
+    <h2>Evaluation</h2>
+    <p>I tested ADS against my own manual EnCase and FTK examinations of the course's two lab images, using my findings as the answer key.</p>
+    <ul>
+      <li><b>Project 1 (development case, FAT16):</b> all seven evidence files are on the list, six in the top ten. It named a JPEG hidden after the end of another photo straight from the RAR header behind it, a find that took me a TA hint and a byte search by hand.</li>
+      <li><b>Project 2 (held-out, NTFS):</b> the checks were locked before I examined the image. ADS listed 7 of the 16 evidence files among 4,818, five of them in its top ten.</li>
+      <li><b>Combination vs. single checks:</b> on Project 1 no single check caught more than four of the seven files, and the broad checks lost clearly to the combined score.</li>
+    </ul>
+    <div class="callout"><p><b>Limits, stated plainly:</b> the date rules target changes made from inside a running Windows system; editing a raw disk offline bypasses Windows' own logs and is out of scope. The paper linked here is the November 2026 draft; the final version adds the full results and discussion.</p></div>
+
+    <figure>
+      <img src="img/shot_funnel.png" alt="ADS overview page for the Project 2 image: 5,607 entries narrowed to 164 files with a clue and 7 marked look first." width="921" height="883" loading="lazy">
+      <figcaption>The report's front page on the Project 2 image: 5,607 entries narrowed to 164 files with at least one clue, and 7 marked "look first".</figcaption>
+    </figure>
+
+    <h2>Try it</h2>
+    <ol class="steps">
+      <li>Open <a href="app.html">the browser edition</a> in Chrome, Edge or Firefox. Everything runs on your computer; the image is never uploaded or changed.</li>
+      <li>No drive image at hand? Download the <a href="downloads/sample_drive.img" download>sample drive</a> (12 MB, a made-up Windows-style drive with no real evidence) and drop it on the page.</li>
+      <li>Watch the analysis, then open the <em>First look</em> and <em>Date checks</em> tabs. <em>Everything (.zip)</em> saves the same files the command line writes.</li>
+    </ol>
+    <p>Or run the Python version from the <a href="downloads/ADS-tool.zip">download</a> (Python 3, nothing else to install):</p>
+<pre>python3 -m ads IMAGE.img                         # first-look report
+python3 -m ads gui                               # point-and-click window
+python3 -m unittest discover -s tests -v         # test suite</pre>
+
+    <h2>Downloads</h2>
+    <div class="dl">
+      <a href="downloads/ADS-tool.zip"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg><span><span class="t">ADS-tool.zip</span><span class="d">Browser edition, Python package, tests, the Project 1 and 2 result pages, and the sample drive. 0.8 MB.</span></span></a>
+      <a href="downloads/Russell_ADS_Term_Paper.pdf"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg><span><span class="t">Cross-Checking Windows Artifacts to Detect Anti-Forensic Tampering</span><span class="d">Term paper, IEEE two-column, November 2026 draft. PDF.</span></span></a>
+      <a href="downloads/sample_drive.img" download><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="13" width="19" height="7" rx="2"/><path d="M4.5 13 7 5h10l2.5 8"/><circle cx="17.5" cy="16.5" r="1" fill="currentColor"/></svg><span><span class="t">sample_drive.img</span><span class="d">Synthetic test drive to try the tool on. 12 MB.</span></span></a>
+    </div>
+  </div>
+</main>
+
+<footer class="pf-foot">
+  <p class="who">Capt Scott D. Russell, USAF</p>
+  <p>M.S. Cybersecurity · Iowa State University · <a href="../../">All projects</a></p>
+</footer>
+</body>
+</html>
