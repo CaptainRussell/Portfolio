@@ -19,8 +19,8 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 | `shared/portfolio.css` | Storm HQ look: palette (dark default, light kept), top bar, project page parts, footer. |
 | `shared/portfolio.js` | Light/dark toggle, remembered per browser (`pf-theme`). |
 | `shared/img/` | Header photo and the Det 250 patch used on the Storm HQ card. |
-| `projects/daniels-cipher/` | Creative component page, `slides/index.html` (the defense deck) and the paper PDF. Moved here from `CaptainRussell/Creative-Component`. |
-| `projects/ads/` | ADS project page plus the whole former `CaptainRussell/CYBSC5360Project` repo: `tool/` (source, tests, browser edition), `paper/`, `project3/`, drafts, and the tool ZIPs. `downloads/sample_drive.img` is the try-it sample. |
+| `projects/daniels-cipher/` | Creative component page, `slides/index.html` (the defense deck) and the paper PDF. Moved here from the old `CaptainRussell/Creative-Component` repo (deleted). |
+| `projects/ads/` | ADS project page plus the whole former `CaptainRussell/CYBSC5360Project` repo (now private): `tool/` (source, tests, browser edition), `paper/`, `project3/`, drafts, and the tool ZIPs. `downloads/sample_drive.img` is the try-it sample. |
 
 ## Adding a project
 
@@ -31,10 +31,7 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 
 ## Old addresses
 
-`CaptainRussell/Creative-Component` and `CaptainRussell/CYBSC5360Project` now hold only forwarding pages (`index.html` + `404.html`) that send their old GitHub Pages links, including sub-paths, to the matching folder here. Do not build in them.
-
-- `captainrussell.github.io/Creative-Component/...` goes to `projects/daniels-cipher/...`
-- `captainrussell.github.io/CYBSC5360Project/...` goes to `projects/ads/...`
+`CaptainRussell/Creative-Component` was deleted on 2026-11-03, so its old `captainrussell.github.io/Creative-Component/` links no longer work. `CaptainRussell/CYBSC5360Project` is now private, which turns off its GitHub Pages forwarding, so its old links no longer work either. Point anything new at the folders here.
 
 ## Publishing the creative component
 
