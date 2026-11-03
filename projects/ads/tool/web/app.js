@@ -75,7 +75,18 @@ const route = files => {
   startImage(img);
 };
 wireDrop($("#drop-img"), $("#f-img"), route);
-wireDrop($("#drop-rec"), $("#f-rec"), route);
+/* The sample drive ships next to this page (sample/sample_drive.img, in the download and on the website). */
+const SAMPLE = "sample/sample_drive.img";
+$("#use-sample").addEventListener("click", async () => {
+  const b = $("#use-sample"); b.disabled = true;
+  try {
+    const r = await fetch(SAMPLE);
+    if (!r.ok) throw new Error("HTTP " + r.status);
+    startImage(new File([await r.blob()], "sample_drive.img"));
+  } catch (e) {
+    showError("The browser would not load the sample from this folder (pages opened straight from the disk cannot read files beside them). Press “Choose an image” and pick " + SAMPLE + " instead.");
+  } finally { b.disabled = false; }
+});
 document.addEventListener("dragover", e => e.preventDefault());
 document.addEventListener("drop", e => { e.preventDefault(); if ($("#v-home").classList.contains("on") && !e.target.closest(".drop")) route([...e.dataTransfer.files]); });
 function showError(msg) { const e = $("#err"); e.innerHTML = "<b>That did not work.</b> " + esc(msg); e.classList.add("on"); show("v-home"); }

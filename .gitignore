@@ -1,6 +1,6 @@
 # ADS (projects/ads/): raw disk images, bytecode, case databases, rebuilt test sets
 projects/ads/**/*.img
-!projects/ads/downloads/sample_drive.img
+!projects/ads/tool/sample/sample_drive.img
 projects/ads/**/*.E01
 projects/ads/**/*.dd
 projects/ads/**/*.raw
