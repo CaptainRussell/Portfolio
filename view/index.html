@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper · Scott D. Russell</title>
+<link rel="icon" href="../shared/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../shared/portfolio.css">
+<script src="../shared/portfolio.js"></script>
+<style>
+[hidden]{display:none!important}
+.doc-head{position:relative;background:var(--surface);border-bottom:1px solid var(--line)}
+.doc-head::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--tone)}
+.doc-in{max-width:960px;margin:0 auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.ttl{flex:1 1 240px;min-width:0}
+.ttl .kicker{font-size:11px}
+.ttl h1{margin:2px 0 0;font-size:18px;line-height:1.25;font-weight:800}
+.acts{display:flex;gap:8px;align-items:center}
+.pc{font-size:12.5px;color:var(--soft);white-space:nowrap}
+.stage{max-width:960px;margin:0 auto;padding:18px 16px 8px}
+.pages{display:flex;flex-direction:column;align-items:center;gap:14px}
+.pg{position:relative;width:100%;max-width:900px;background:#fff;border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.35);overflow:hidden}
+.pg canvas{display:block;width:100%;height:auto}
+.pg .n{position:absolute;right:8px;bottom:6px;font-size:11px;font-weight:700;color:#888;background:rgba(255,255,255,.85);padding:1px 6px;border-radius:6px}
+.status{padding:40px 16px;text-align:center;color:var(--soft)}
+@media print{.pf-bar,.doc-head,.pf-foot{display:none!important}.stage{padding:0;max-width:none}.pg{box-shadow:none;border-radius:0;break-after:page}}
+</style>
+</head>
+<body style="--tone:#c8102e">
+<header class="pf-bar">
+  <a class="pf-back" id="back" href="../"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg><span id="backLabel">All projects</span></a>
+  <a class="pf-brand" href="../"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<div class="doc-head"><div class="doc-in">
+  <div class="ttl"><p class="kicker" id="kicker">Paper</p><h1 id="title">Loading…</h1></div>
+  <div class="acts">
+    <span class="pc" id="pc"></span>
+    <a class="btn" id="dl" href="#" download hidden><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></svg>Download PDF</a>
+  </div>
+</div></div>
+
+<main class="stage">
+  <p class="status" id="status" role="status">Loading…</p>
+  <div class="pages" id="pages" aria-label="Document pages"></div>
+</main>
+
+<footer class="pf-foot">
+  <div class="foot-mark" aria-hidden="true">SR</div>
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">M.S. Cybersecurity · Iowa State University</p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
+</footer>
+
+<script src="../shared/vendor/pdfjs/pdf.min.js"></script>
+<script>
+/* =====================================================================
+   DOCS: every paper the viewer can open, as view/?d=<key>.
+     pdf    path from this folder     back/label  where the return button goes
+     tone   the project's color       kicker/title  shown above the pages
+   Only these keys open, so a link can't point the viewer anywhere else.
+   ===================================================================== */
+const DOCS = {
+  "ads-paper": {pdf:"../projects/ads/paper/CPRE 5360 Term Paper Draft - Russell.pdf", back:"../projects/ads/", label:"ADS", tone:"#1f6feb",
+    kicker:"Artifact Disagreement Scorer · Term paper, Nov 2026 draft", title:"Cross-Checking Windows Artifacts to Detect Anti-Forensic Tampering"},
+  "cipher-paper": {pdf:"../projects/daniels-cipher/Russell_2026_Card-Shuffle-Stream-Cipher-Analysis.pdf", back:"../projects/daniels-cipher/", label:"Card-Shuffle Cipher", tone:"#c8102e",
+    kicker:"M.S. Creative Component · Paper", title:"Analysis of a Card-Shuffle Stream Cipher"}
+};
+(async () => {
+  const $ = id => document.getElementById(id);
+  const key = new URLSearchParams(location.search).get("d");
+  const D = Object.prototype.hasOwnProperty.call(DOCS, key) ? DOCS[key] : null;
+  const status = t => { $("status").hidden = !t; $("status").textContent = t || ""; };
+  if (!D) { $("title").textContent = "Document not found"; status("That paper isn't here. Go back to all projects."); return; }
+  document.body.style.setProperty("--tone", D.tone);
+  $("back").href = D.back; $("backLabel").textContent = D.label;
+  $("kicker").textContent = D.kicker; $("title").textContent = D.title;
+  document.title = D.title + " · Scott D. Russell";
+  const url = encodeURI(D.pdf);
+  $("dl").href = url; $("dl").hidden = false;
+  try {
+    pdfjsLib.GlobalWorkerOptions.workerSrc = "../shared/vendor/pdfjs/pdf.worker.min.js";
+    status("Opening…");
+    const pdf = await pdfjsLib.getDocument({url}).promise;
+    $("pc").textContent = pdf.numPages + (pdf.numPages === 1 ? " page" : " pages");
+    const host = $("pages"), slots = [];
+    for (let n = 1; n <= pdf.numPages; n++) {
+      const page = await pdf.getPage(n), vp = page.getViewport({scale: 1});
+      const div = document.createElement("div");
+      div.className = "pg"; div.style.aspectRatio = vp.width + " / " + vp.height;
+      div.setAttribute("aria-label", "Page " + n); div.innerHTML = '<span class="n">' + n + "</span>";
+      div.dataset.i = n - 1; host.append(div); slots.push({div, page, vp, done: false});
+    }
+    status("");
+    const draw = async s => {
+      if (s.done) return; s.done = true;
+      const w = Math.min(host.clientWidth || 900, 900);
+      const v = s.page.getViewport({scale: (w / s.vp.width) * Math.min(window.devicePixelRatio || 1, 2.5)});
+      const c = document.createElement("canvas"); c.width = Math.floor(v.width); c.height = Math.floor(v.height);
+      s.div.prepend(c);
+      await s.page.render({canvasContext: c.getContext("2d"), viewport: v}).promise;
+    };
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { draw(slots[e.target.dataset.i]); io.unobserve(e.target); } }), {rootMargin: "800px 0px"});
+    slots.forEach(s => io.observe(s.div));
+  } catch (e) {
+    status("Couldn't open the paper here. Use Download PDF instead.");
+  }
+})();
+</script>
+</body>
+</html>

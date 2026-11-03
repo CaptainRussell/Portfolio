@@ -29,6 +29,12 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 3. A project with no page here (like the Steam game) can point `href` straight at its own site.
 4. Before pushing, check the page at phone width (390 px) and desktop width in both themes. No em dashes in page copy.
 
+## Return button
+
+Every page has one return button: the first item in the top bar, top left, same pill and hover everywhere (`.pf-back` in `shared/portfolio.css`; Storm HQ uses the same placement). It says **All projects** on a project's main page, and names the project on its sub-pages (the ADS browser tool, the cipher slides, and the paper viewer). The hub has none.
+
+Papers open in `view/?d=<key>` (pdf.js, in `shared/vendor/pdfjs/`), which has the return button and a Download PDF button. Add a paper to the `DOCS` list in `view/index.html`.
+
 ## Old addresses
 
 `CaptainRussell/Creative-Component` was deleted on 2026-11-03, so its old `captainrussell.github.io/Creative-Component/` links no longer work. `CaptainRussell/CYBSC5360Project` is now private, which turns off its GitHub Pages forwarding, so its old links no longer work either. Point anything new at the folders here.

@@ -16,11 +16,14 @@ body.app{overflow-x:hidden}
 /* Website strip: shown only when this page is served from the portfolio (projects/ads/tool/); hidden in the download. */
 .pfstrip{display:flex;align-items:center;gap:10px;min-height:40px;padding:6px 16px;background:#16161a;color:#ececee;border-bottom:2px solid #c8102e;font:600 13px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 .pfstrip[hidden]{display:none}
-.pfstrip a{display:inline-flex;align-items:center;gap:5px;padding:5px 11px 5px 8px;border-radius:999px;border:1px solid #46464f;color:#ececee;font-weight:700;font-size:12px;white-space:nowrap;text-decoration:none;transition:background .2s,border-color .2s}
-.pfstrip a:hover,.pfstrip a:focus-visible{background:#c8102e;border-color:#c8102e}
+.pfstrip a.back{flex:none;display:inline-flex;align-items:center;gap:5px;padding:5px 11px 5px 8px;border-radius:999px;border:1px solid #46464f;color:#ececee;font-weight:700;font-size:12px;white-space:nowrap;text-decoration:none;transition:background .2s,border-color .2s}
+.pfstrip a.back:hover,.pfstrip a.back:focus-visible{background:#c8102e;border-color:#c8102e;color:#fff}
+.pfstrip a.back svg{transition:transform .25s cubic-bezier(.2,.7,.2,1)}.pfstrip a.back:hover svg{transform:translateX(-3px)}
+.pfstrip .brand-link{display:flex;align-items:center;gap:10px;min-width:0;color:inherit;text-decoration:none}
+.pfstrip .mk{flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,#c8102e,#7a0a1c);color:#fff;font:700 11px/1 ui-monospace,Menlo,Consolas,monospace}
 .pfstrip .who{color:#f1be48;font-weight:800;letter-spacing:.02em;white-space:nowrap}
 .pfstrip .sub{color:#b2b3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-@media (max-width:420px){.pfstrip .sub{display:none}}
+@media (max-width:520px){.pfstrip .sub{display:none}}
 @media print{.pfstrip{display:none!important}}
 .drops{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;margin-top:26px}
 @media (max-width:860px){.drops{grid-template-columns:minmax(0,1fr)}}
@@ -160,7 +163,7 @@ button.drop:disabled{cursor:progress;opacity:.7}
 </style>
 </head>
 <body class="app">
-<div class="pfstrip" id="pfstrip" hidden><a href="../"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ADS overview</a><span class="who">Scott D. Russell</span><span class="sub">Cybersecurity Portfolio</span></div>
+<div class="pfstrip" id="pfstrip" hidden><a class="back" href="../"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ADS</a><a class="brand-link" href="../../../"><span class="mk" aria-hidden="true">SR</span><span class="who">Scott D. Russell</span><span class="sub">Cybersecurity Portfolio</span></a></div>
 <script>if (/^https?:$/.test(location.protocol) && /\/projects\/ads\/tool\//.test(location.pathname)) document.getElementById("pfstrip").hidden = false;</script>
 <div class="view on" id="v-home">
 <header class="top"><div class="wrap">
