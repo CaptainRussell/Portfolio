@@ -11,7 +11,7 @@
 <style>
 .hero{position:relative;padding:44px 16px 26px;overflow:hidden;text-align:center}
 .hero::before{content:"";position:absolute;inset:-40% -10% auto;height:420px;background:radial-gradient(closest-side,color-mix(in srgb,var(--accent) 22%,transparent),transparent 70%);opacity:.55;pointer-events:none}
-.photo{display:block;width:132px;height:132px;margin:0 auto;border-radius:50%;object-fit:cover;border:3px solid var(--surface);box-shadow:0 0 0 3px #c8102e,0 10px 24px rgba(0,0,0,.3);animation:emblemIn .8s var(--ease) both}
+.photo{display:block;width:176px;height:176px;margin:0 auto;border-radius:50%;object-fit:cover;border:3px solid var(--surface);box-shadow:0 0 0 3px #c8102e,0 10px 24px rgba(0,0,0,.3);animation:emblemIn .8s var(--ease) both}
 @keyframes emblemIn{from{opacity:0;transform:translateY(10px) scale(.92) rotate(-6deg)}}
 .hero>*{position:relative}
 .eyebrow{margin-top:14px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
@@ -45,7 +45,7 @@ section{margin-top:26px}
 .blurb{margin:4px 0 0;color:var(--soft);font-size:14px}
 
 @media (max-width:640px){
-  .hero{padding:30px 16px 18px}.photo{width:108px;height:108px}
+  .hero{padding:30px 16px 18px}.photo{width:136px;height:136px}
   .grid{grid-template-columns:1fr}
   .tool{padding:16px 14px 14px;gap:14px}
   .icon{width:48px;height:48px;border-radius:12px}
@@ -59,7 +59,7 @@ section{margin-top:26px}
 </header>
 
 <div class="hero wrap">
-  <img class="photo" src="shared/img/scott-russell.jpg" alt="Capt Scott D. Russell" width="132" height="132">
+  <img class="photo" src="shared/img/scott-russell.jpg" alt="Capt Scott D. Russell" width="176" height="176">
   <div class="eyebrow">Cybersecurity Portfolio</div>
   <h1 id="pf-name"></h1>
   <p class="role" id="pf-role"></p>
