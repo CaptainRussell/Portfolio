@@ -6,8 +6,8 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 
 | Project | Section | Page |
 |---|---|---|
-| Analysis of a Card-Shuffle Stream Cipher (M.S. Creative Component) | Research | `projects/daniels-cipher/` |
-| Artifact Disagreement Scorer (Digital Forensics, CYBSC 5360) | Security tools | `projects/ads/` |
+| Analysis of a Card-Shuffle Stream Cipher (M.S. Creative Component) | Cybersecurity projects | `projects/daniels-cipher/` |
+| Artifact Disagreement Scorer (Digital Forensics, CYBSC 5360) | Cybersecurity projects | `projects/ads/` |
 | Ashnar's Lair (released on Steam) | Professional projects | links to the Steam store page |
 | Storm HQ (AFROTC Det 250 tools) | Professional projects | links to the live site and repo |
 
@@ -26,7 +26,7 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 ## Adding a project
 
 1. Copy `projects/ads/` or `projects/daniels-cipher/` to `projects/<new-slug>/` and rewrite `index.html`. Set the page color with `style="--tone:#hex"` on `<body>`. Keep every path relative.
-2. Add one entry to `PROJECTS` in `index.html` (`section` is `research`, `tools` or `professional`; add a key to `SECTIONS` for a new group, and an SVG to `ICONS` for a new icon).
+2. Add one entry to `PROJECTS` in `index.html` (`section` is `security` or `professional`; add a key to `SECTIONS` for a new group, and an SVG to `ICONS` for a new icon).
 3. A project with no page of its own (like the Steam game) can point `href` straight at an external URL with `external: true`.
 4. Before pushing, check the page at phone width (390 px) and desktop width in both themes.
 
