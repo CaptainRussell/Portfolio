@@ -5,7 +5,8 @@
 # tests) to try the tool on. Commit first: it archives HEAD.
 set -e
 cd "$(dirname "$0")/.."
-git archive --format=zip --prefix="ADS tool/" -o ADS-tool-submission.zip "HEAD:$(git rev-parse --show-prefix)tool" -- . \
+PREFIX=$(git rev-parse --show-prefix)          # where this project sits in the repository
+git -C "$(git rev-parse --show-toplevel)" archive --format=zip --prefix="ADS tool/" -o "$PWD/ADS-tool-submission.zip" "HEAD:${PREFIX}tool" -- . \
   ':(exclude)README.md' ':(exclude)results/browser' ':(exclude)results/26Fall_Project1B_rerun' \
   ':(exclude)results/26Fall_Project2_dates/outcomes.csv' ':(exclude)results/26Fall_Project2_dates/scores.csv'
 python3 - <<'PY'
