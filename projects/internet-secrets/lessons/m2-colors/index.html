@@ -291,7 +291,9 @@ function actEve(ctx, col) {
   mixBtn.addEventListener('click', () => {
     const pick = cans.filter((_, i) => on[i]);
     if (pick.length < 2) { msg.textContent = 'Pick at least 2 copies to mix.'; msg.className = 'm2-msg bad'; return; }
-    const got = mix(...pick.map((k) => k.c)), match = Math.max(0, Math.min(90, Math.round(100 - 3.5 * diff(got, col.SHARED))));
+    // Every copy Eve holds is mostly public color, so her mixes come out washed toward it. Showing that
+    // extra public color (two more parts of it) makes her misses easy to see.
+    const got = mix(...pick.map((k) => k.c), col.P, col.P), match = Math.max(0, Math.min(40, Math.round(100 - 3.5 * diff(got, col.SHARED))));
     tries.push(got);
     const row = document.createElement('div'); row.className = 'm2-try';
     row.innerHTML = `<span class="m2-sw" style="background:${got}" title="Eve's mix"></span><span class="m2-sw" style="background:${col.SHARED}" title="Shared color"></span>
