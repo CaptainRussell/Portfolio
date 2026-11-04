@@ -8,7 +8,7 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 |---|---|---|
 | Analysis of a Card-Shuffle Stream Cipher (M.S. Creative Component) | Cybersecurity projects | `projects/daniels-cipher/` |
 | Artifact Disagreement Scorer (Digital Forensics, CYBSC 5360) | Cybersecurity projects | `projects/ads/` |
-| Network Security, Animated (CYBSC 5300 visualization project) | Cybersecurity projects | `projects/netsec-animated/` |
+| How the Internet Keeps Secrets (CYBSC 5300 visualization project) | Cybersecurity projects | `projects/internet-secrets/` |
 | Ashnar's Lair (released on Steam) | Professional projects | links to the Steam store page |
 | Storm HQ (AFROTC Det 250 tools) | Professional projects | links to the live site and repo |
 
@@ -21,7 +21,7 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 | `shared/portfolio.js` | Light/dark toggle, remembered per browser (`pf-theme`). |
 | `shared/img/` | Header photo and the Det 250 patch used on the Storm HQ card. |
 | `projects/daniels-cipher/` | Creative component page, `slides/index.html` (the defense deck) and the paper PDF. Moved here from the old `CaptainRussell/Creative-Component` repo (deleted). |
-| `projects/netsec-animated/` | CYBSC 5300 project: page and the proposal PDF (opens in `view/?d=netsec-proposal`). The lessons will live here as they are built; update the Status column on the page as each one lands. |
+| `projects/internet-secrets/` | CYBSC 5300 project: page and the proposal PDF (opens in `view/?d=secrets-proposal`). The lessons will live here as they are built; update the Status column on the page as each one lands. |
 | `projects/ads/` | ADS project page plus the whole former `CaptainRussell/CYBSC5360Project` repo (now private): `tool/` (source, tests, browser edition), `paper/`, `project3/`, drafts, and the tool ZIPs. `downloads/sample_drive.img` is the try-it sample. |
 
 ## Adding a project
