@@ -1,0 +1,338 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 1: Postcards on the Internet · How the Internet Keeps Secrets · Scott D. Russell</title>
+<meta name="description" content="Lesson 1 of How the Internet Keeps Secrets: how a message is cut into packets and passed from router to router, and why anyone holding a packet can read it.">
+<link rel="icon" href="../../../../shared/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../../../shared/portfolio.css">
+<link rel="stylesheet" href="../shared/lesson.css">
+<script src="../../../../shared/portfolio.js"></script>
+<style>.proj-head{padding-bottom:6px}</style>
+</head>
+<body style="--tone:#0d9488">
+<header class="pf-bar">
+  <a class="pf-up" href="../../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Internet Secrets</span><span class="pf-brand"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<div class="proj-head"><div class="wrap">
+  <p class="kicker">How the Internet Keeps Secrets · Lesson 1 of 4</p>
+  <h1>Postcards on the Internet</h1>
+  <p class="sub">You are Alice. Send Bob a message and follow it across the internet, one router at a time.</p>
+</div></div>
+
+<main class="wrap">
+  <div id="lesson"></div>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
+</main>
+
+<footer class="pf-foot">
+  <div class="foot-mark" aria-hidden="true">SR</div>
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">M.S. Cybersecurity · Iowa State University</p>
+  <p class="source-line">How the Internet Keeps Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
+</footer>
+
+<script src="../shared/engine.js"></script>
+<script src="../shared/lesson.js"></script>
+<script>
+/* =====================================================================
+   Lesson 1: Postcards on the Internet (Objective 1)
+   A message is cut into numbered packets that routers pass hop by hop,
+   by different paths; a lost one is sent again and the numbers put the
+   message back in order. Anyone holding a packet can read it.
+   Source: Kurose and Ross, Computer Networking, 8th ed. [1].
+   Learner actions: type the message, cut it, pick the first router,
+   reroute around a jam, ask for the lost postcard, put the postcards in
+   order, read Eve's copy. Code organized with help from Claude (Anthropic).
+   ===================================================================== */
+const { Scene, C } = Anim;
+
+// Where things sit on the 1600 x 900 stage.
+const P = { alice: [140, 300], wifi: [470, 300], eve: [295, 690], A: [700, 200], B: [700, 680], D: [960, 440],
+  F: [1210, 240], G: [1210, 640], bob: [1460, 440] };
+const LINKS = [['wifi', 'A'], ['wifi', 'B'], ['A', 'D'], ['B', 'D'], ['A', 'F'], ['B', 'G'], ['D', 'F'], ['D', 'G'], ['F', 'bob'], ['G', 'bob']];
+const ROW_Y = 470, STRIP_X = 295, CH = 18;          // the message strip: 30px monospace letters, about 18 units wide each
+const TRAY = { x: 1300, y: 820, gap: 118 };
+const MAP_S = 0.75, TRAY_S = 0.9;
+const mid = (a, b) => [(P[a][0] + P[b][0]) / 2, (P[a][1] + P[b][1]) / 2];
+const disp = (t) => t.replace(/ /g, '·');           // a space shows as a dot so it can be seen
+
+// Cut the message into 3 or 4 nearly equal pieces.
+function pieces(msg) {
+  const n = msg.length >= 8 ? 4 : 3, base = Math.floor(msg.length / n), extra = msg.length % n, out = [];
+  let at = 0;
+  for (let i = 0; i < n; i++) { const len = base + (i < extra ? 1 : 0); out.push(msg.slice(at, at + len)); at += len; }
+  return out;
+}
+const cardText = (i, chunk) => `${i + 1} ${disp(chunk)}`;
+const cardW = (t) => 32 + 17 * t.length;
+const arrival = (n) => (n === 4 ? [0, 2, 3, 1] : [0, 2, 1]);      // the order the postcards reach Bob
+const slotX = (i, n) => TRAY.x + (i - (n - 1) / 2) * TRAY.gap;
+const stackY = (k, m) => (k - (m - 1) / 2) * 46;                // cards waiting at one router stack up and down
+
+function scene(st) {
+  const S = new Scene('m1');
+  const msg = st.msg, parts = pieces(msg), n = parts.length, texts = parts.map((p, i) => cardText(i, p));
+  const ids = texts.map((_, i) => 'c' + i), arr = arrival(n), first = st.first;
+
+  // ---- the café, the map and the people
+  S.add('cafe', 'rect', {}, { x: 30, y: 140, w: 530, h: 690, rx: 26, fill: C.panel2, fo: 0.55, stroke: C.line, sw: 2, z: -5, o: 0 });
+  S.add('cafeLbl', 'text', { size: 28, weight: 700, mono: true }, { x: 58, y: 186, content: 'CAFÉ', fill: C.soft, o: 0, z: -4 });
+  LINKS.forEach(([a, b], i) => S.add('ln' + i, 'path', { d: `M ${P[a][0]} ${P[a][1]} L ${P[b][0]} ${P[b][1]}` }, { draw: 0, stroke: C.line, sw: 5, z: -3 }));
+  S.add('jam', 'path', { d: `M ${P.D[0]} ${P.D[1]} L ${P.F[0]} ${P.F[1]}` }, { draw: 0, stroke: C.red, sw: 9, z: -2 });
+  S.add('jamTxt', 'text', { size: 30, weight: 800, anchor: 'middle', mono: true }, { x: mid('D', 'F')[0] + 70, y: mid('D', 'F')[1] + 10, content: 'JAMMED', fill: C.red, o: 0 });
+  S.add('alice', 'node', { icon: 'laptop', label: 'Alice' }, { x: P.alice[0], y: P.alice[1], o: 0, s: 0.6 });
+  S.add('wifi', 'node', { icon: 'router', label: 'Wi-Fi', size: 96, labelSize: 30 }, { x: P.wifi[0], y: P.wifi[1], o: 0, s: 0.6, tint: C.soft });
+  S.add('eve', 'node', { icon: 'eye', label: 'Eve', size: 104 }, { x: P.eve[0], y: P.eve[1], o: 0, s: 0.6, tint: C.red });
+  ['A', 'B', 'D', 'F', 'G'].forEach((r) => S.add(r, 'node', { icon: 'router', size: 96 }, { x: P[r][0], y: P[r][1], o: 0, s: 0.4, tint: C.soft }));
+  S.add('bob', 'node', { icon: 'phone', label: 'Bob' }, { x: P.bob[0], y: P.bob[1], o: 0, s: 0.6, tint: C.green });
+  S.add('tray', 'rect', {}, { x: 1030, y: 768, w: 540, h: 104, rx: 18, fill: C.panel2, fo: 0.7, stroke: C.green, sw: 2, o: 0, z: -4 });
+  S.add('trayLbl', 'text', { size: 24, weight: 700, mono: true }, { x: 1040, y: 752, content: "BOB'S PHONE", fill: C.green, o: 0 });
+
+  // ---- the message, its scissors and its postcards
+  S.add('strip', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: STRIP_X, y: ROW_Y, o: 0, s: 0.8, z: 3 });
+  const cuts = []; let acc = 0;
+  parts.slice(0, -1).forEach((p) => { acc += p.length; cuts.push(STRIP_X - (CH * msg.length) / 2 + CH * acc); });
+  cuts.forEach((x, i) => S.add('sc' + i, 'glyph', { icon: 'scissors', size: 40 }, { x, y: ROW_Y - 64, o: 0, tint: C.amber, rot: 90 }));
+  const total = texts.reduce((a, t) => a + cardW(t), 0) + 10 * (n - 1);
+  let rx = STRIP_X - total / 2;
+  const rowX = texts.map((t) => { const x = rx + cardW(t) / 2; rx += cardW(t) + 10; return x; });
+  ids.forEach((id, i) => S.add(id, 'packet', { text: texts[i], size: 28, w: cardW(texts[i]) }, { x: STRIP_X, y: ROW_Y, o: 0, z: 4 }));
+  S.add('tofrom', 'text', { size: 24, weight: 600, anchor: 'middle' }, { x: STRIP_X, y: ROW_Y + 78, content: 'To: Bob    From: Alice', fill: C.soft, o: 0 });
+  S.add('hand', 'glyph', { icon: 'hand', size: 60 }, { x: P.wifi[0], y: P.wifi[1] - 90, o: 0, tint: C.amber, z: 9 });
+  S.add('miss', 'packet', { text: '#2 ?', size: 28, w: 120 }, { x: P.bob[0], y: P.bob[1] - 128, o: 0, s: 0.6, edge: C.amber, ink: C.amber, z: 6 });
+  S.add('req', 'packet', { text: 'SEND #2', size: 24, w: 150 }, { x: P.bob[0], y: P.bob[1], o: 0, s: 0.7, edge: C.amber, ink: C.amber, z: 7 });
+  S.add('bobMsg', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: TRAY.x, y: TRAY.y, o: 0, s: 0.8, edge: C.green, z: 6 });
+  S.add('copy', 'packet', { text: texts[0], size: 28, w: cardW(texts[0]) }, { x: P.wifi[0], y: P.wifi[1], o: 0, s: MAP_S, edge: C.red, ink: C.red, z: 8 });
+
+  const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * (span || 0.16), k * (span || 0.16) + 0.6] }; };
+  // Move cards to a point, stacked; the hand reaches in at that point.
+  const hop = (dur, list, at, opt) => S.beat(dur, (s) => {
+    list.forEach((id, k) => Object.assign(s[id], { x: P[at][0], y: P[at][1] + stackY(k, list.length), s: MAP_S, o: 1 }, opt || {}));
+    Object.assign(s.hand, { x: P[at][0] - 70, y: P[at][1] - 70, o: 1, s: 1 });
+    if (s[at] && s[at].glow !== undefined) s[at].glow = 0.6;
+  }, stagger(list.concat(['hand'])));
+  const unglow = (s) => ['wifi', 'A', 'B', 'D', 'F', 'G'].forEach((r) => { s[r].glow = 0; });
+
+  // 1. Type a message
+  S.step({ head: 'Send Bob a message.', body: 'You are **Alice**. Type a short message for Bob below.',
+    act: actType })
+    .beat(1.0, (s) => {
+      ['cafe', 'cafeLbl', 'alice', 'wifi', 'bob'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
+      Object.assign(s.eve, { o: 0.35, s: 1 });
+    }, stagger(['cafe', 'cafeLbl', 'alice', 'wifi', 'eve', 'bob'], 0.08));
+
+  // 2. Cut it into postcards
+  S.step({ head: 'Too big to send in one piece.', body: 'Tap each pair of **scissors** to cut it into postcards.',
+    act: (ctx) => actCut(ctx, cuts) })
+    .beat(0.7, (s) => { Object.assign(s.strip, { o: 1, s: 1 }); s.alice.glow = 1; })
+    .beat(0.6, (s) => { cuts.forEach((_, i) => { s['sc' + i].o = 1; }); s.alice.glow = 0; });
+
+  // 3. The postcards and the map; pick the first router
+  const lines = LINKS.map((_, i) => 'ln' + i);
+  S.step({ head: 'Routers pass postcards hand to hand.', body: 'Each postcard has a **number** and an address. Pick the first router.',
+    act: actRouter })
+    .beat(0.8, (s) => {
+      s.strip.o = 0; cuts.forEach((_, i) => { s['sc' + i].o = 0; });
+      ids.forEach((id, i) => Object.assign(s[id], { o: 1, x: rowX[i] }));
+      s.tofrom.o = 1;
+    }, stagger(ids, 0.12))
+    .beat(1.0, (s) => { ['A', 'B', 'D', 'F', 'G'].forEach((r) => Object.assign(s[r], { o: 1, s: 1 })); lines.forEach((l) => { s[l].draw = 1; }); },
+      (id) => { const k = lines.indexOf(id); return k < 0 ? null : { w: [k * 0.05, k * 0.05 + 0.5] }; })
+    .beat(0.7, (s) => { s.A.pulse = 1; s.B.pulse = 1; s.A.tint = C.cyan; s.B.tint = C.cyan; });
+
+  // 4. Travel to D; two go on, one is lost on the way; the road jams for the rest
+  const ahead = ids.slice(0, 2), behind = ids.slice(2);
+  S.step({ head: 'A road is jammed.', body: 'Two postcards got through before the jam. Tap a **clear road** to send the rest another way.',
+    act: actRoad })
+    .beat(0.5, (s) => { s.tofrom.o = 0; s.A.tint = C.soft; s.B.tint = C.soft; s[first].tint = C.cyan; });
+  hop(1.0, ids, 'wifi');
+  hop(1.0, ids, first);
+  hop(1.0, ids, 'D');
+  S.beat(1.0, (s) => {
+    ahead.forEach((id, k) => Object.assign(s[id], { x: P.F[0], y: P.F[1] + stackY(k, 2) }));
+    behind.forEach((id, k) => Object.assign(s[id], { y: P.D[1] + stackY(k, behind.length) }));
+    Object.assign(s.hand, { x: P.F[0] - 70, y: P.F[1] - 70 });
+  }, stagger(ahead.concat(['hand'])));
+  S.beat(1.3, (s) => {
+    Object.assign(s.c0, { x: slotX(arr.indexOf(0), n), y: TRAY.y, s: TRAY_S });
+    const m = mid('F', 'bob');
+    Object.assign(s.c1, { x: m[0] + 20, y: m[1] + 110, o: 0, edge: C.red, ink: C.red });
+    s.tray.o = 1; s.trayLbl.o = 1; s.hand.o = 0; unglow(s);
+  });
+  S.beat(0.8, (s) => { s.jam.draw = 1; s.jamTxt.o = 1; });
+
+  // 5. The rest go around; Bob sees a gap
+  S.step({ head: 'One postcard got lost.', body: 'Bob can see **#2** is missing. Tap it to ask Alice to send it again.',
+    act: actAsk });
+  hop(1.0, behind, 'G');
+  S.beat(1.2, (s) => {
+    behind.forEach((id) => Object.assign(s[id], { x: slotX(arr.indexOf(+id.slice(1)), n), y: TRAY.y, s: TRAY_S }));
+    s.hand.o = 0; unglow(s);
+  }, stagger(behind));
+  S.beat(0.7, (s) => { Object.assign(s.miss, { o: 1, s: 1 }); s.bob.pulse = 1; });
+
+  // 6. The resend; then put them in order
+  const back = ['G', 'D', first, 'wifi', 'alice'], again = ['wifi', first, 'D', 'G'];
+  S.step({ head: 'Put them back in order.', body: 'The numbers tell Bob where each piece goes. **Drag** the postcards into number order.',
+    act: (ctx) => actOrder(ctx, ids, texts, arr) })
+    .beat(0.3, (s) => { Object.assign(s.req, { o: 1 }); s.miss.o = 0; s.bob.pulse = 0; });
+  back.forEach((at) => S.beat(0.45, (s) => { Object.assign(s.req, { x: P[at][0], y: P[at][1] - 70 }); }));
+  S.beat(0.3, (s) => {
+    s.req.o = 0;
+    Object.assign(s.c1, { x: P.alice[0], y: P.alice[1], o: 1, edge: C.cyan, ink: C.ink, s: MAP_S });
+    s.alice.glow = 1;
+  });
+  again.forEach((at) => hop(0.6, ['c1'], at));
+  S.beat(0.9, (s) => { Object.assign(s.c1, { x: slotX(n - 1, n), y: TRAY.y, s: TRAY_S }); s.hand.o = 0; s.alice.glow = 0; unglow(s); });
+
+  // 7. Bob reads the whole message
+  S.step({ head: 'Bob has the whole message.', body: 'The numbers put it back together, even when the pieces arrive out of order.' })
+    .beat(0.8, (s) => ids.forEach((id, i) => Object.assign(s[id], { x: slotX(i, n), edge: C.green })))
+    .beat(0.9, (s) => { ids.forEach((id) => Object.assign(s[id], { o: 0, x: TRAY.x })); Object.assign(s.bobMsg, { o: 1, s: 1 }); s.bob.glow = 1; s.jam.o = 0.35; s.jamTxt.o = 0; });
+
+  // 8. Eve copies a postcard
+  const touched = ['wifi', first, 'D', 'F', 'G'];
+  S.step({ head: 'Anyone holding a postcard can read it.', body: 'Every router that held one could read it. So could **Eve**, on the same café Wi-Fi. Tap her copy.',
+    act: actEve })
+    .beat(0.9, (s) => { touched.forEach((r) => { s[r].tint = C.red; s[r].glow = 1; }); s.bob.glow = 0; }, stagger(touched, 0.1))
+    .beat(0.7, (s) => { Object.assign(s.eve, { o: 1 }); Object.assign(s.copy, { o: 1 }); })
+    .beat(1.0, (s) => { Object.assign(s.copy, { x: 450, y: P.eve[1] }); s.eve.pulse = 1; });
+
+  // 9. Eve reads it
+  S.step({ head: 'Eve read it.', body: 'Plain postcards keep no secrets. **Lesson 2** shows how Alice and Bob can.' })
+    .beat(0.9, (s) => { Object.assign(s.copy, { x: STRIP_X, y: ROW_Y + 10, s: 1.5, glow: 1 }); s.eve.glow = 1; });
+  return S;
+}
+
+// ---------------------------------------------------------------- learner actions
+function actType(ctx) {
+  ctx.slot.innerHTML = `<form class="lz-form" style="display:contents">
+      <input id="m1msg" maxlength="12" autocomplete="off" spellcheck="false" aria-label="Your message" value="${ctx.state.msg}">
+      <button class="lz-btn go" type="submit"><span>Send</span></button>
+      <p class="hint">Letters, numbers and spaces, 4 to 12 characters. Not a real secret: this is practice.</p></form>`;
+  const inp = ctx.slot.querySelector('input'), hint = ctx.slot.querySelector('.hint');
+  inp.addEventListener('input', () => { const p = inp.selectionStart; inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9 ]/g, ''); inp.setSelectionRange(p, p); });
+  ctx.slot.querySelector('form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const v = inp.value.replace(/\s+/g, ' ').trim();
+    if (v.replace(/ /g, '').length < 3 || v.length < 4) { hint.textContent = 'Use at least 4 characters.'; hint.classList.add('err'); inp.focus(); return; }
+    ctx.done({ msg: v });
+  });
+}
+function actCut(ctx, cuts) {
+  // Scissors on the stage, plus one Cut button under the caption (easier on a phone, and for the keyboard).
+  let left = cuts.length;
+  const btn = document.createElement('button');
+  btn.className = 'lz-btn go'; ctx.slot.appendChild(btn);
+  const label = () => { btn.innerHTML = `<span>Cut (${left} left)</span>`; };
+  const hits = cuts.map((x) => ctx.hit(x, ROW_Y - 20, 34, 150, 'Cut', (b) => cut(b), 'top thin'));
+  function cut(b) {
+    if (!b || b.disabled) return;
+    b.classList.add('used'); b.disabled = true; left--; label();
+    if (left === 0) { btn.disabled = true; setTimeout(() => ctx.done({}), 250); }
+  }
+  btn.addEventListener('click', () => cut(hits.find((h) => !h.disabled)));
+  label();
+}
+function actRouter(ctx) {
+  ['A', 'B'].forEach((r) => ctx.hit(P[r][0], P[r][1], 130, 130, 'Start here', () => ctx.done({ first: r })));
+}
+function actRoad(ctx) {
+  const g = mid('D', 'G'), f = mid('D', 'F');
+  ctx.hit(f[0] - 30, f[1] + 20, 90, 70, 'This road', (b) => { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); ctx.toast('That road is jammed. Try another.'); });
+  ctx.hit(g[0], g[1], 90, 70, 'This road', () => ctx.done({}));
+}
+function actAsk(ctx) {
+  ctx.hit(P.bob[0], P.bob[1] - 128, 170, 90, 'Ask for #2 again', () => ctx.done({}), 'top');
+}
+// Drag the postcards (or tap two to swap them) until they are in number order. On a narrow screen the
+// postcards are copied into big buttons under the caption, where tapping two swaps them.
+function actOrder(ctx, ids, texts, arr) {
+  const n = ids.length, order = arr.slice(), narrow = ctx.ov.clientWidth < 600;
+  const k = ctx.ov.clientWidth / 1600;
+  let sel = null;
+  const host = narrow ? ctx.slot : ctx.ov;
+  if (narrow) {
+    const hint = document.createElement('p'); hint.className = 'hint'; hint.textContent = 'Tap two postcards to swap them.';
+    ctx.slot.appendChild(hint);
+  } else ctx.hide(ids);
+  const chips = order.map((c) => {
+    const b = document.createElement('button');
+    b.className = 'lz-chip' + (narrow ? ' flat' : ''); b.textContent = texts[c]; b.dataset.c = c;
+    b.setAttribute('aria-label', `Postcard ${c + 1}`);
+    if (!narrow) Object.assign(b.style, { width: (cardW(texts[c]) * TRAY_S * k) + 'px', height: (64 * TRAY_S * k) + 'px',
+      top: (TRAY.y / 900 * 100) + '%', fontSize: (28 * TRAY_S * k) + 'px' });
+    host.appendChild(b); return b;
+  });
+  const byC = (c) => chips.find((b) => +b.dataset.c === c);
+  const place = () => {
+    if (narrow) order.forEach((c) => host.appendChild(byC(c)));
+    else order.forEach((c, i) => { byC(c).style.left = (slotX(i, n) / 1600 * 100) + '%'; });
+  };
+  const check = () => {
+    place();
+    if (order.every((c, i) => c === i)) { chips.forEach((b) => { b.classList.add('ok'); b.disabled = true; }); setTimeout(() => ctx.done({}), 450); }
+  };
+  place();
+  chips.forEach((b) => {
+    if (!narrow) {
+      let sx = 0, moved = false, base = 0;
+      b.addEventListener('pointerdown', (e) => { sx = e.clientX; moved = false; base = b.offsetLeft; b.setPointerCapture(e.pointerId); });
+      b.addEventListener('pointermove', (e) => {
+        if (!b.hasPointerCapture(e.pointerId)) return;
+        const dx = e.clientX - sx;
+        if (Math.abs(dx) > 6) { moved = true; b.classList.add('drag'); b.style.left = (base + dx) + 'px'; }
+      });
+      b.addEventListener('pointerup', () => {
+        if (!moved) return;
+        b.classList.remove('drag');
+        const x = b.offsetLeft / k, c = +b.dataset.c;
+        let to = 0, best = 1e9;
+        for (let i = 0; i < n; i++) { const d = Math.abs(slotX(i, n) - x); if (d < best) { best = d; to = i; } }
+        order.splice(order.indexOf(c), 1); order.splice(to, 0, c);
+        b.dataset.dragged = '1'; check();
+      });
+    }
+    // a tap (or Enter) picks a card; picking a second swaps the two
+    b.addEventListener('click', () => {
+      if (b.dataset.dragged) { delete b.dataset.dragged; return; }
+      if (!sel) { sel = b; b.classList.add('sel'); return; }
+      if (sel !== b) {
+        const i = order.indexOf(+sel.dataset.c), j = order.indexOf(+b.dataset.c);
+        [order[i], order[j]] = [order[j], order[i]];
+      }
+      sel.classList.remove('sel'); sel = null; check();
+    });
+  });
+}
+function actEve(ctx) {
+  ctx.hit(450, P.eve[1], 140, 90, 'Read it', () => ctx.done({}));
+}
+
+const quiz = [
+  { q: 'Before a big message crosses the internet, it is:',
+    choices: ['Cut into small packets', 'Sent as one piece', 'Copied to every router', 'Turned into a picture'], answer: 0,
+    why: 'Messages travel as small numbered packets, like your postcards.' },
+  { q: "A router's job is to:",
+    choices: ['Store every website', 'Pass packets along', 'Write your messages', 'Lock your packets'], answer: 1,
+    why: 'Each router passes a packet one hop closer to where it is going.' },
+  { q: 'Packets from one message:',
+    choices: ['Can take different paths', 'Always take one path', 'Always arrive in order', 'Travel only at night'], answer: 0,
+    why: 'When a road jams, packets go another way. The numbers sort them out at the end.' },
+  { q: 'When a packet goes missing:',
+    choices: ['The message is lost', 'Bob asks for it again', 'A router makes one up', 'Eve sends a new one'], answer: 1,
+    why: 'The numbers show the gap, so Bob asks Alice to send that one again.' },
+  { q: 'A plain packet is like a postcard because:',
+    choices: ['It needs a stamp', 'It is often lost', 'Anyone can read it', 'It goes one way'], answer: 2,
+    why: 'Every router, and Eve on the same Wi-Fi, could read it. Lesson 2 fixes that.' },
+];
+
+Lesson.mount(document.getElementById('lesson'), { id: 'm1', state: { msg: 'MEET AT 6', first: 'A' }, scene, quiz });
+</script>
+</body>
+</html>
