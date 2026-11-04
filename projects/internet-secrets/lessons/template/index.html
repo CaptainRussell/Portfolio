@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson Template · How the Internet Keeps Secrets · Scott D. Russell</title>
+<meta name="description" content="The lesson player for How the Internet Keeps Secrets, shown with a short demo lesson and quiz.">
+<link rel="icon" href="../../../../shared/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../../../shared/portfolio.css">
+<link rel="stylesheet" href="../shared/lesson.css">
+<script src="../../../../shared/portfolio.js"></script>
+<style>.proj-head{padding-bottom:6px}</style>
+</head>
+<body style="--tone:#0d9488">
+<header class="pf-bar">
+  <a class="pf-up" href="../../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Internet Secrets</span><span class="pf-brand"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<div class="proj-head"><div class="wrap">
+  <p class="kicker">How the Internet Keeps Secrets · Lesson template</p>
+  <h1>Packets on the Move</h1>
+  <p class="sub">A short demo of the lesson player. Press Next to step through, then check yourself with five questions.</p>
+</div></div>
+
+<main class="wrap">
+  <div id="lesson"></div>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
+</main>
+
+<footer class="pf-foot">
+  <div class="foot-mark" aria-hidden="true">SR</div>
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">M.S. Cybersecurity · Iowa State University</p>
+  <p class="source-line">How the Internet Keeps Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
+</footer>
+
+<script src="../shared/engine.js"></script>
+<script src="../shared/lesson.js"></script>
+<script>
+/* =====================================================================
+   A LESSON: copy this folder to lessons/<module>/ and rewrite the two
+   parts below. scene() draws the animation, one S.step per click of
+   Next; quiz is the five-question self-check (answer = index of the
+   right choice). Keep captions to a short head and one sentence.
+   Kinds: node (device with an icon), packet (data chip), text, rect,
+   dot, ring, arrow, path. Colors: Anim.C (cyan, green, red, amber...).
+   ===================================================================== */
+const { Scene, C } = Anim;
+
+function scene() {
+  const S = new Scene('template');
+  // Where things sit on the 1600 x 900 stage.
+  const P = { me: [190, 470], r1: [560, 270], r2: [600, 690], r3: [1010, 270], r4: [1050, 690], site: [1410, 470] };
+  const LINKS = [['me', 'r1'], ['me', 'r2'], ['r1', 'r3'], ['r1', 'r4'], ['r2', 'r4'], ['r3', 'site'], ['r4', 'site']];
+  LINKS.forEach(([a, b], i) => S.add('ln' + i, 'path', { d: `M ${P[a][0]} ${P[a][1]} L ${P[b][0]} ${P[b][1]}` }, { draw: 0, stroke: C.line, sw: 5, z: -2 }));
+  S.add('me', 'node', { icon: 'laptop', label: 'You' }, { x: P.me[0], y: P.me[1], o: 0, s: 0.6 });
+  S.add('site', 'node', { icon: 'server', label: 'Website' }, { x: P.site[0], y: P.site[1], o: 0, s: 0.6, tint: C.violet });
+  ['r1', 'r2', 'r3', 'r4'].forEach((r) => S.add(r, 'node', { icon: 'router', size: 104 }, { x: P[r][0], y: P[r][1], o: 0, s: 0.4, tint: C.soft }));
+
+  // The message, its three packets and the route each one takes (packets can take different paths).
+  S.add('msg', 'packet', { text: 'HELLO' }, { x: P.me[0], y: 240, o: 0, s: 0.7, z: 3 });
+  const PK = [['p1', 'HE', ['r1', 'r3']], ['p2', 'LL', ['r2', 'r4']], ['p3', 'O', ['r1', 'r4']]];
+  const DY = { p1: -92, p2: -92, p3: 92 };   // packets sit beside a router, never on top of each other
+  PK.forEach(([id, t]) => S.add(id, 'packet', { text: t, w: 104 }, { x: P.me[0], y: 240, o: 0, z: 4 }));
+  S.add('msg2', 'packet', { text: 'HELLO' }, { x: P.site[0], y: 290, o: 0, s: 0.7, z: 3, edge: C.violet });
+  S.add('snoop', 'node', { icon: 'eye', label: 'Snoop', size: 104 }, { x: 800, y: 770, o: 0, s: 0.6, tint: C.red });
+  S.add('peek', 'arrow', {}, { x: 1000, y: 740, x2: 872, y2: 770, draw: 0, stroke: C.red, sw: 5 });
+  S.add('copy', 'packet', { text: 'LL', w: 104 }, { x: 1050, y: 690 + DY.p2, o: 0, z: 5, edge: C.red, ink: C.red });
+
+  const stagger = (ids) => (id) => { const k = ids.indexOf(id); return k < 0 ? null : { w: [k * 0.18, k * 0.18 + 0.64] }; };
+
+  S.step({ head: 'Two computers want to talk', body: 'Your laptop wants to send a message to a website far away.' })
+    .beat(0.9, (s) => { Object.assign(s.me, { o: 1, s: 1 }); Object.assign(s.site, { o: 1, s: 1 }); }, stagger(['me', 'site']))
+    .beat(0.8, (s) => { s.me.pulse = 1; s.site.pulse = 1; });
+
+  const routers = ['r1', 'r2', 'r3', 'r4'], lines = LINKS.map((_, i) => 'ln' + i);
+  S.step({ head: 'The internet is a web of routers', body: 'Routers pass data along **one hop at a time**, like mail carriers.' })
+    .beat(1.0, (s) => routers.forEach((r) => { Object.assign(s[r], { o: 1, s: 1 }); }), stagger(routers))
+    .beat(1.0, (s) => lines.forEach((l) => { s[l].draw = 1; }), (id) => { const k = lines.indexOf(id); return k < 0 ? null : { w: [k * 0.08, k * 0.08 + 0.5] }; });
+
+  S.step({ head: 'Big messages are cut into packets', body: 'Each small piece is called a **packet**. Each one travels on its own.' })
+    .beat(0.7, (s) => { Object.assign(s.msg, { o: 1, s: 1 }); s.me.glow = 1; })
+    .hold(0.3)
+    .beat(1.0, (s) => {
+      s.msg.o = 0; s.msg.s = 1.2; s.me.glow = 0;
+      PK.forEach(([id], k) => Object.assign(s[id], { o: 1, x: P.me[0] - 120 + k * 120, y: 240 }));
+    });
+
+  const hop = (dur, place) => (s) => PK.forEach(([id, , route], k) => {
+    const at = place(route, k);
+    Object.assign(s[id], { x: P[at][0], y: P[at][1] + (at === 'site' ? -180 : DY[id]) });
+  });
+  S.step({ head: 'Packets hop from router to router', body: 'They can take **different paths** and still arrive.' })
+    .beat(1.1, hop(1.1, (route) => route[0]), stagger(['p1', 'p2', 'p3']))
+    .beat(1.1, hop(1.1, (route) => route[1]), stagger(['p1', 'p2', 'p3']))
+    .beat(1.1, (s) => PK.forEach(([id], k) => Object.assign(s[id], { x: P.site[0] - 120 + k * 120, y: 290 })), stagger(['p1', 'p2', 'p3']))
+    .beat(0.8, (s) => { PK.forEach(([id]) => { s[id].o = 0; s[id].x = P.site[0]; }); Object.assign(s.msg2, { o: 1, s: 1 }); s.site.glow = 1; })
+    .beat(0.6, (s) => { s.site.glow = 0; s.site.pulse = 1; });
+
+  S.step({ head: 'Anyone along the way can read it', body: 'A packet is like a **postcard**. Lesson 2 shows how to lock it.' })
+    .beat(0.8, (s) => { Object.assign(s.snoop, { o: 1, s: 1 }); s.r4.tint = C.red; s.r4.glow = 1; })
+    .beat(0.7, (s) => { s.peek.draw = 1; Object.assign(s.copy, { o: 1 }); })
+    .beat(0.9, (s) => { Object.assign(s.copy, { x: 965, y: 830, glow: 1 }); s.snoop.pulse = 1; });
+  return S;
+}
+
+const quiz = [
+  { q: 'What happens to a big message before it crosses the internet?',
+    choices: ['It is cut into small packets', 'It is sent in one big piece', 'It is printed and mailed', 'It is turned into a picture'], answer: 0,
+    why: 'Messages travel as many small packets, which are put back together at the end.' },
+  { q: 'What does a router do?',
+    choices: ['Stores every website', 'Passes packets one hop closer to where they are going', 'Writes your messages for you', 'Locks your packets'], answer: 1,
+    why: 'Routers pass packets along, hop by hop, like mail carriers.' },
+  { q: 'Do all packets from one message take the same path?',
+    choices: ['Yes, always', 'No, they can take different paths and still arrive'], answer: 1,
+    why: 'Each packet finds its own way. The receiver puts them back in order.' },
+  { q: 'Where is the message put back together?',
+    choices: ['At the first router', 'At the computer that receives it', 'At the snoop', 'It never is'], answer: 1,
+    why: 'The receiving computer collects the packets and rebuilds the message.' },
+  { q: 'Why is an unprotected packet like a postcard?',
+    choices: ['It has a stamp', 'It is always lost', 'Anyone who handles it can read it', 'It only goes one way'], answer: 2,
+    why: 'Without protection, any router or snoop along the way can read what it says.' },
+];
+
+Lesson.mount(document.getElementById('lesson'), { id: 'template', scene, quiz });
+</script>
+</body>
+</html>
