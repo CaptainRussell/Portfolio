@@ -2,7 +2,12 @@
  *
  *   Lesson.mount(document.getElementById('lesson'), {
  *     id: 'm1',                    // short key, used to remember the best quiz score
- *     scene: () => scene,          // builds the Anim.Scene; each step's meta {head, body} is its caption
+ *     state: {msg: 'HI'},          // optional: the learner's choices, with defaults
+ *     scene: (state) => scene,     // builds the Anim.Scene; each step's meta {head, body} is its caption.
+ *                                  // meta.act(ctx) makes it a "your turn" step: build controls with ctx.hit()
+ *                                  // (a tap target on the stage), ctx.slot (space under the caption) or ctx.ov
+ *                                  // (the stage overlay), then call ctx.done({choices}) to rebuild the scene
+ *                                  // with those choices and play the next step.
  *     quiz: [{q, choices: [...], answer: 0, why: 'one sentence'}],   // five questions
  *     pass: 4,                     // correct answers needed (default 4 of 5, 80%)
  *   });
@@ -30,12 +35,16 @@
   function save(o) { try { localStorage.setItem(STORE, JSON.stringify(o)); } catch (e) { /* private window */ } }
 
   function mount(host, L) {
-    const sc = L.scene(), N = sc.steps.length, PASS = L.pass || Math.ceil(L.quiz.length * 0.8);
+    // state holds the learner's choices (a typed message, a picked router...). scene(state) is rebuilt after
+    // every action, so later steps play out what the learner chose. The step count never depends on state.
+    const state = Object.assign({}, L.state || {});
+    let sc = L.scene(state);
+    const N = sc.steps.length, PASS = L.pass || Math.ceil(L.quiz.length * 0.8);
     host.classList.add('lz');
     host.innerHTML = `
       <div class="lz-view" data-view="watch">
-        <div class="lz-stage"><svg class="lz-svg" role="img" aria-label="Lesson animation"></svg></div>
-        <div class="lz-cap" aria-live="polite"><p class="lz-count"></p><h2 class="lz-head"></h2><p class="lz-body"></p></div>
+        <div class="lz-stage"><svg class="lz-svg" role="img" aria-label="Lesson animation"></svg><div class="lz-ov"></div></div>
+        <div class="lz-cap" aria-live="polite"><p class="lz-count"></p><h2 class="lz-head"></h2><p class="lz-body"></p><div class="lz-act"></div></div>
         <div class="lz-bar">
           <button class="lz-btn" data-act="back">${I.back}<span>Back</span></button>
           <div class="lz-dots" role="group" aria-label="Steps"></div>
@@ -45,14 +54,17 @@
       </div>
       <div class="lz-view lz-quiz" data-view="quiz" hidden></div>`;
     const $ = (s) => host.querySelector(s);
-    const svg = $('.lz-svg'), dots = $('.lz-dots'), quiz = $('.lz-quiz');
+    const svg = $('.lz-svg'), dots = $('.lz-dots'), quiz = $('.lz-quiz'), ov = $('.lz-ov'), slot = $('.lz-act');
     dots.innerHTML = sc.steps.map((s, i) => `<button class="lz-dot" data-i="${i}" aria-label="Step ${i + 1}: ${esc(s.meta.head || '')}"><i></i></button>`).join('');
-    const player = new root.Anim.Player(svg, sc);
-    let step = -1, raf = 0, playing = false, t0 = 0;
+    let player = new root.Anim.Player(svg, sc);
+    let step = -1, raf = 0, playing = false, t0 = 0, reached = 0;
+    const doneActs = {};
+    const pending = () => !!(sc.steps[step].meta.act && !doneActs[step]);
 
     function paint(frac) {
       dots.querySelectorAll('.lz-dot').forEach((d, i) => {
         d.classList.toggle('done', i < step); d.classList.toggle('cur', i === step);
+        d.disabled = i > reached;
         d.firstChild.style.width = (i < step ? 100 : i === step ? frac * 100 : 0) + '%';
         if (i === step) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
       });
@@ -63,12 +75,56 @@
       $('.lz-head').innerHTML = rich(m.head || '');
       $('.lz-body').innerHTML = rich(m.body || '');
       $('[data-act="back"]').disabled = step <= 0;
-      $('[data-act="next"] span').textContent = step === N - 1 ? 'Check yourself' : 'Next';
+      const nb = $('[data-act="next"]'), wait = pending();
+      nb.disabled = wait; nb.classList.toggle('wait', wait);
+      nb.querySelector('span').textContent = wait ? 'Your turn' : step === N - 1 ? 'Check yourself' : 'Next';
     }
-    function finish() { cancelAnimationFrame(raf); playing = false; player.renderEnd(step); paint(1); }
+
+    // ---- learner actions. A step's meta.act(ctx) builds its controls once the step has finished playing.
+    function clearAct() { ov.innerHTML = ''; slot.innerHTML = ''; host.classList.remove('acting'); showAll(); }
+    const hidden = new Set();
+    function showAll() { hidden.forEach((id) => { const n = player.h[id] && player.h[id]._node; if (n) n.style.visibility = ''; }); hidden.clear(); }
+    function startAct() {
+      clearAct();
+      if (!pending()) return;
+      host.classList.add('acting');
+      const k = step;
+      const ctx = {
+        state, ov, slot, scene: sc,
+        // percent position on the stage for a point in scene units
+        pos: (x, y) => ({ left: (x / sc.w * 100) + '%', top: (y / sc.h * 100) + '%' }),
+        // a tap target on the stage, centered on (x, y), w by h scene units
+        hit(x, y, w, h, label, onTap, cls) {
+          const b = document.createElement('button');
+          b.className = 'lz-hit' + (cls ? ' ' + cls : '');
+          Object.assign(b.style, ctx.pos(x, y), { width: (w / sc.w * 100) + '%', height: (h / sc.h * 100) + '%' });
+          b.setAttribute('aria-label', label);
+          b.innerHTML = `<span>${esc(label)}</span>`;
+          b.addEventListener('click', () => onTap(b));
+          ov.appendChild(b); return b;
+        },
+        hide(ids) { ids.forEach((id) => { const n = player.h[id] && player.h[id]._node; if (n) { n.style.visibility = 'hidden'; hidden.add(id); } }); },
+        toast(msg) {
+          const t = document.createElement('div'); t.className = 'lz-toast'; t.textContent = msg;
+          ov.appendChild(t); setTimeout(() => t.remove(), 1600);
+        },
+        done(patch) {
+          if (step !== k) return;
+          Object.assign(state, patch || {});
+          doneActs[k] = true; clearAct();
+          sc = L.scene(state); player = new root.Anim.Player(svg, sc); player.renderEnd(k);
+          if (k < N - 1) play(k + 1); else caption();
+        },
+      };
+      sc.steps[k].meta.act(ctx);
+      const first = ov.querySelector('button, input') || slot.querySelector('button, input');
+      if (first && document.activeElement && host.contains(document.activeElement)) first.focus({ preventScroll: true });
+    }
+
+    function finish() { cancelAnimationFrame(raf); playing = false; player.renderEnd(step); paint(1); startAct(); }
     function play(k) {
-      cancelAnimationFrame(raf);
-      step = k; caption();
+      cancelAnimationFrame(raf); clearAct();
+      step = k; reached = Math.max(reached, k); caption();
       if (reduce()) { finish(); return; }
       const dur = sc.duration(k);
       playing = true; t0 = performance.now(); paint(0);
@@ -79,9 +135,10 @@
       };
       raf = requestAnimationFrame(tick);
     }
-    function rest(k) { cancelAnimationFrame(raf); playing = false; step = k; caption(); player.renderEnd(k); paint(1); }
+    function rest(k) { cancelAnimationFrame(raf); playing = false; clearAct(); step = k; caption(); player.renderEnd(k); paint(1); startAct(); }
     function next() {
       if (playing) { finish(); return; }
+      if (pending()) return;
       if (step < N - 1) play(step + 1); else openQuiz();
     }
     function back() { if (playing) finish(); if (step > 0) rest(step - 1); }
@@ -91,14 +148,16 @@
       if (b.dataset.act === 'next') next();
       else if (b.dataset.act === 'back') back();
       else if (b.dataset.act === 'replay') play(step);
-      else if (b.classList.contains('lz-dot')) { const i = +b.dataset.i; if (i === 0) { player.renderBase(); play(0); } else { rest(i - 1); play(i); } }
+      else if (b.classList.contains('lz-dot')) { const i = +b.dataset.i; if (i > reached) return; if (i === 0) { player.renderBase(); play(0); } else { rest(i - 1); play(i); } }
     });
     document.addEventListener('keydown', (e) => {
       if (e.altKey || e.ctrlKey || e.metaKey || !quiz.hidden) return;
-      const onBtn = e.target.closest && e.target.closest('button, a, input, textarea');
-      if (e.key === 'ArrowRight' || (e.key === ' ' && !onBtn)) { e.preventDefault(); next(); }
+      const onCtl = e.target.closest && e.target.closest('button, a, input, textarea');
+      const typing = e.target.closest && e.target.closest('input, textarea');
+      if (typing) return;
+      if (e.key === 'ArrowRight' || (e.key === ' ' && !onCtl)) { e.preventDefault(); next(); }
       else if (e.key === 'ArrowLeft') { e.preventDefault(); back(); }
-      else if ((e.key === 'r' || e.key === 'R') && !onBtn) play(step);
+      else if ((e.key === 'r' || e.key === 'R') && !onCtl) play(step);
     });
 
     // A cyan scan line sweeps the stage when the view changes (the slides' section sweep, recolored).
@@ -155,7 +214,7 @@
           <button class="lz-btn go" data-q="retake"><span>Retake quiz</span>${I.next}</button>
         </div>`;
       quiz.querySelector('h2').focus({ preventScroll: true });
-      quiz.querySelector('[data-q="watch"]').addEventListener('click', () => { swap('watch'); player.renderBase(); play(0); });
+      quiz.querySelector('[data-q="watch"]').addEventListener('click', () => { swap('watch'); rest(0); });
       quiz.querySelector('[data-q="retake"]').addEventListener('click', openQuiz);
     }
 

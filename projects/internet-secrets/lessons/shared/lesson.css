@@ -20,6 +20,45 @@
     var(--c-panel)}
 .lz-svg{display:block;width:100%;height:auto;aspect-ratio:16/9}
 
+/* ---------- learner actions ---------- */
+.lz-ov{position:absolute;inset:0;pointer-events:none}
+.lz-ov > *{pointer-events:auto}
+.lz-hit{position:absolute;transform:translate(-50%,-50%);min-width:40px;min-height:40px;padding:0;border-radius:16px;cursor:pointer;
+  border:2px dashed var(--c-cyan);background:rgba(34,211,238,.08);color:var(--c-ink);animation:lz-beckon 1.6s ease-in-out infinite}
+.lz-hit span{position:absolute;left:50%;top:100%;transform:translate(-50%,6px);white-space:nowrap;padding:3px 8px;border-radius:8px;
+  background:rgba(7,11,20,.88);border:1px solid var(--c-line);font:700 12px/1.2 system-ui,sans-serif;color:var(--c-cyan);pointer-events:none}
+.lz-hit.top span{top:auto;bottom:100%;transform:translate(-50%,-6px)}
+.lz-hit.quiet span{display:none}
+.lz-hit.thin{min-width:0}
+.lz-hit.thin span{display:none}
+.lz-hit.used span{display:none}
+.lz-hit:hover{background:rgba(34,211,238,.2);border-style:solid}
+.lz-hit.used{animation:none;opacity:.35;border-style:solid;cursor:default}
+.lz-hit.shake{animation:lz-shake .4s;border-color:var(--c-red)}
+@keyframes lz-beckon{0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,.45)}50%{box-shadow:0 0 0 10px rgba(34,211,238,0)}}
+@keyframes lz-shake{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(calc(-50% - 6px),-50%)}75%{transform:translate(calc(-50% + 6px),-50%)}}
+.lz-toast{position:absolute;left:50%;top:8%;transform:translateX(-50%);padding:7px 14px;border-radius:10px;background:var(--c-red);color:#1a0509;
+  font:800 14px/1.2 system-ui,sans-serif;pointer-events:none;animation:lz-pop .25s ease-out}
+@keyframes lz-pop{from{opacity:0;transform:translate(-50%,-6px)}}
+.lz-act:empty{display:none}
+.lz-act{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.lz-act input{flex:1 1 220px;max-width:360px;padding:11px 14px;border-radius:12px;border:1px solid var(--c-line);background:var(--c-panel);color:var(--c-ink);
+  font:700 20px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.12em;text-transform:uppercase;caret-color:var(--c-cyan)}
+.lz-act input:focus{outline:none;border-color:var(--c-cyan);box-shadow:0 0 0 3px rgba(34,211,238,.25)}
+.lz-act .hint{color:var(--c-faint);font-size:13px;flex-basis:100%;margin:0}
+.lz-act .err{color:var(--c-red)}
+.lz-btn.wait{opacity:.55}
+.lz.acting .lz-head::after{content:"Your turn";margin-left:10px;padding:2px 8px;border-radius:999px;vertical-align:3px;background:var(--c-cyan);color:#04111a;
+  font:800 11px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase}
+/* draggable chips (put things in order) */
+.lz-chip{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;border-radius:12px;border:3px solid var(--c-cyan);background:var(--c-panel2);
+  color:var(--c-ink);font:700 16px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;cursor:grab;touch-action:none;
+  transition:left .25s cubic-bezier(.2,.7,.2,1),box-shadow .2s;user-select:none;-webkit-user-select:none;white-space:pre}
+.lz-chip.drag{transition:none;cursor:grabbing;z-index:2;box-shadow:0 0 0 4px rgba(34,211,238,.3),0 10px 24px rgba(0,0,0,.5)}
+.lz-chip.sel{border-color:var(--c-amber);box-shadow:0 0 0 4px rgba(251,191,36,.3)}
+.lz-chip.ok{border-color:var(--c-green)}
+.lz-chip.flat{position:static;transform:none;padding:10px 14px;font-size:18px;transition:none}
+
 /* the scan line that sweeps the player when the view changes */
 .lz::after{content:"";position:absolute;left:0;right:0;top:-30%;height:30%;pointer-events:none;opacity:0;
   background:linear-gradient(180deg,transparent,rgba(34,211,238,.18) 70%,rgba(34,211,238,.9) 98%,transparent)}

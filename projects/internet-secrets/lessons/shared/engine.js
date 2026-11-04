@@ -93,6 +93,8 @@
     cloud: '<path d="M7 18h10a4 4 0 0 0 .5-8A6 6 0 0 0 6 9.5 4.3 4.3 0 0 0 7 18z"/>',
     mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 7 8.5-7"/>',
     hash: '<path d="M9 3 7 21M17 3l-2 18M4 8.5h17M3 15.5h17"/>',
+    hand: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5M14 10.5V5.5a1.5 1.5 0 0 1 3 0V11M17 9.5a1.5 1.5 0 0 1 3 0V14c0 4.4-3 7-7 7-2.6 0-4.4-1.2-5.8-3.3L4.3 13.6a1.5 1.5 0 0 1 2.4-1.8L8 13.5"/>',
+    scissors: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/>',
   };
 
   // ---------------------------------------------------------------- kinds
@@ -213,6 +215,21 @@
       setA(h.pulse, 'x', (-g).toFixed(2)); setA(h.pulse, 'y', (-g).toFixed(2));
       setA(h.pulse, 'width', (2 * g).toFixed(2)); setA(h.pulse, 'height', (2 * g).toFixed(2)); setA(h.pulse, 'rx', 30 + p.pulse * 30);
       setA(h.pulse, 'stroke', p.tint); setA(h.pulse, 'opacity', (p.pulse > 0.001 && p.pulse < 0.999 ? (1 - p.pulse) * 0.8 : 0).toFixed(3));
+    },
+  };
+  // A bare line icon (no tile), centered on (x, y). cfg: icon, size (px, default 72). props: tint, rot.
+  KINDS.glyph = {
+    defaults: { tint: C.ink, rot: 0 },
+    create(g, cfg) {
+      const W = cfg.size || 72, r = el('g', {}, g);
+      const ic = el('g', { fill: 'none', 'stroke-width': cfg.sw || 1.7, 'stroke-linecap': 'round', 'stroke-linejoin': 'round',
+        transform: `translate(${-W / 2} ${-W / 2}) scale(${W / 24})` }, r);
+      ic.innerHTML = ICONS[cfg.icon] || ICONS.hand;
+      return { root: r, ic };
+    },
+    update(h, p) {
+      setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) rotate(${p.rot.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      setA(h.root, 'opacity', p.o.toFixed(3)); setA(h.ic, 'stroke', p.tint);
     },
   };
   // A small piece of data on the move: a rounded chip with a short monospace label, centered on (x, y).
