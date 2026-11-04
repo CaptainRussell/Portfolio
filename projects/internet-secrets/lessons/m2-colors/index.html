@@ -11,21 +11,8 @@
 <script src="../../../../shared/portfolio.js"></script>
 <style>
 .proj-head{padding-bottom:6px}
-/* Eve's mixing game and the math peek, both under the caption */
+/* The math peek, under the caption */
 .m2-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex-basis:100%}
-.m2-tog{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:12px;border:2px solid var(--c-line);background:var(--c-panel);
-  color:var(--c-ink);font:700 14px/1.2 system-ui,sans-serif;cursor:pointer}
-.m2-tog[aria-pressed="true"]{border-color:var(--c-red);box-shadow:0 0 0 3px rgba(251,90,114,.22)}
-.m2-sw{width:22px;height:22px;border-radius:50%;border:2px solid rgba(255,255,255,.35);flex:none}
-.m2-tries{display:grid;gap:8px;flex-basis:100%}
-.m2-try{display:grid;grid-template-columns:auto auto 1fr auto;gap:10px;align-items:center;padding:8px 12px;border-radius:12px;background:var(--c-panel);
-  border:1px solid var(--c-line);font:600 13.5px/1.3 system-ui,sans-serif;color:var(--c-soft)}
-.m2-try .m2-sw{width:30px;height:30px}
-.m2-meter{height:10px;border-radius:99px;background:var(--c-line);overflow:hidden}
-.m2-meter i{display:block;height:100%;background:var(--c-amber);border-radius:99px}
-.m2-try b{color:var(--c-ink);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
-.m2-msg{flex-basis:100%;margin:0;color:var(--c-soft);font-size:14px}
-.m2-msg.bad{color:var(--c-red)}
 .m2-peek{flex-basis:100%;padding:14px 16px;border-radius:14px;background:var(--c-panel);border:1px solid var(--c-line);color:var(--c-soft);font-size:14.5px;line-height:1.5}
 .m2-peek h3{margin:0 0 6px;color:var(--c-ink);font-size:16px}
 .m2-peek p{margin:6px 0}
@@ -33,7 +20,6 @@
 .m2-peek .eq em{font-style:normal;color:var(--c-green)}
 .m2-num{min-width:40px;padding:6px 0;border-radius:10px;border:2px solid var(--c-line);background:var(--c-panel2);color:var(--c-ink);font:700 15px/1 ui-monospace,monospace;cursor:pointer}
 .m2-num[aria-pressed="true"]{border-color:var(--c-cyan);box-shadow:0 0 0 3px rgba(34,211,238,.25)}
-@media (max-width:640px){.m2-try{grid-template-columns:auto auto 1fr;}.m2-try span:last-child{grid-column:1/-1}}
 </style>
 </head>
 <body style="--tone:#0d9488">
@@ -45,12 +31,12 @@
 <div class="proj-head"><div class="wrap">
   <p class="kicker">How the Internet Keeps Secrets · Lesson 2 of 4</p>
   <h1>Mixing Secret Colors</h1>
-  <p class="sub">You are Alice again. Make a secret with Bob while Eve copies everything you send.</p>
+  <p class="sub">Help Alice and Bob mix a secret color while Eve copies everything they send, then paint a key with it.</p>
 </div></div>
 
 <main class="wrap">
   <div id="lesson"></div>
-  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. You can drag a paint can or just tap it. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. You can drag a paint can or a key, or just tap it. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
 </main>
 
 <footer class="pf-foot">
@@ -63,6 +49,7 @@
 
 <script src="../shared/engine.js"></script>
 <script src="../shared/lesson.js"></script>
+<script src="../shared/lessons.js"></script>
 <script>
 /* =====================================================================
    Lesson 2: Mixing Secret Colors (Objective 2)
@@ -72,180 +59,185 @@
    The shared color becomes the key that locks the postcards (TLS, https).
    Sources: Diffie and Hellman, "New Directions in Cryptography" [2];
    RFC 8446, TLS 1.3 [3].
-   Learner actions: open Eve's notes, pick and send the public color, pick
-   a secret color, pour it, send the mix, pour into Bob's mix, play Eve,
-   lock the postcards with the key; optional math peek.
+   Learner actions: pick and send the public color, pick Alice's and Bob's
+   secret colors, pour, send the mix, pour into Bob's mix, paint the white
+   key, pick a message, lock it with the key; optional math peek.
    Code organized with help from Claude (Anthropic).
    ===================================================================== */
 const { Scene, C } = Anim;
 
-// Paint. Mixing averages the colors in equal parts. These sets were checked so that, for every public
-// color and every pair of secrets, none of Eve's possible mixes comes close to the shared color.
+// Paint. Mixing averages the colors in equal parts.
 const PUB = [{ n: 'Yellow', c: '#fde047' }, { n: 'Mint', c: '#bbf7d0' }, { n: 'White', c: '#ffffff' }];
 const SEC = [{ n: 'Purple', c: '#9333ea' }, { n: 'Red', c: '#b91c1c' }, { n: 'Green', c: '#15803d' },
   { n: 'Blue', c: '#2563eb' }, { n: 'Pink', c: '#db2777' }, { n: 'Black', c: '#000000' }];
 const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const mix = (...cs) => '#' + [0, 1, 2].map((i) => Math.round(cs.reduce((s, c) => s + rgb(c)[i], 0) / cs.length).toString(16).padStart(2, '0')).join('');
-// How different two colors look (CIE Lab distance).
-function lab(h) {
-  const L = rgb(h).map((c) => { c /= 255; return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4); });
-  const X = (L[0] * 0.4124 + L[1] * 0.3576 + L[2] * 0.1805) / 0.95047, Y = L[0] * 0.2126 + L[1] * 0.7152 + L[2] * 0.0722, Z = (L[0] * 0.0193 + L[1] * 0.1192 + L[2] * 0.9505) / 1.08883;
-  const f = (t) => (t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116);
-  return [116 * f(Y) - 16, 500 * (f(X) - f(Y)), 200 * (f(Y) - f(Z))];
-}
-const diff = (a, b) => { const A = lab(a), B = lab(b); return Math.hypot(A[0] - B[0], A[1] - B[1], A[2] - B[2]); };
-
 // Where things sit on the 1600 x 900 stage.
-const AL = [170, 250], BO = [1430, 250], ROAD = 250, EVE = [360, 730];
+const AL = [170, 250], BO = [1430, 250], ROAD = 250, EVE = [800, 790];
 const aSpot = [170, 500], aSecSpot = [340, 500], bSpot = [1430, 500], bSecSpot = [1260, 500];
-const NOTES = { x: 520, y: 590, w: 560, h: 280 };
-const noteCan = (i) => [640 + 160 * i, 790], noteCard = (i) => [650 + 150 * i, 690];
 const choiceX = (i) => 650 + 150 * i, CHOICE_Y = 470;
 const palX = (i) => 520 + 112 * i, PAL_Y = 470;
-const cardsAt = (i) => [200, 640 + 70 * i];
-const OLD = ['1 MEET', '2 ·AT', '3 ·6'], LOCKED = ['1 Q#7K', '2 W!X', '3 Z&'];
-const cw = (t) => 32 + 16 * t.length;
+const eveCopy = (i) => [530 + 180 * i, 690];             // Eve's copies: public, Alice's mix, Bob's mix, the locked message
+const KEY_A = [400, 520], KEY_B = [1200, 520], MSG_AT = [760, 520], BOB_MSG = [1380, 660];
+const MSGS = ['MEET AT 6', 'HI BOB', 'LUNCH AT 12', 'SEE YOU SOON', 'CALL ME'];
+const disp = (t) => t.replace(/ /g, '·');
+const mw = (t) => 40 + 19 * t.length;
+// The locked message: each letter becomes a symbol, so it is the same length but unreadable.
+const SCR = 'Q#7K&W!X%Z@9$J+R?2*V';
+const scramble = (t, salt) => [...t].map((c, i) => SCR[(c.charCodeAt(0) * 7 + i * 13 + (salt || 0)) % SCR.length]).join('');
 
 function scene(st) {
   const S = new Scene('m2');
   const P = PUB[st.pub].c, a = SEC[st.sec].c, b = SEC[st.bob].c;
   const MA = mix(P, a), MB = mix(P, b), SHARED = mix(P, a, b);
+  const msg = st.msg, LOCK = scramble(msg);
 
-  // ---- people, the open road and Eve's notes
+  // ---- the open road, Alice, Bob and Eve
   S.add('road', 'path', { d: `M ${AL[0] + 90} ${ROAD} L ${BO[0] - 90} ${ROAD}`, dash: '14 14' }, { stroke: C.line, sw: 5, o: 0, z: -5 });
   S.add('roadLbl', 'text', { size: 24, weight: 700, mono: true, anchor: 'middle', ls: 3 }, { x: 800, y: ROAD - 30, content: 'THE OPEN INTERNET', fill: C.faint, o: 0 });
-  S.add('alice', 'node', { icon: 'laptop', label: 'Alice' }, { x: AL[0], y: AL[1], o: 0, s: 0.6 });
-  S.add('bob', 'node', { icon: 'phone', label: 'Bob' }, { x: BO[0], y: BO[1], o: 0, s: 0.6, tint: C.green });
-  S.add('eve', 'node', { icon: 'eye', label: 'Eve', size: 104 }, { x: EVE[0], y: EVE[1], o: 0, s: 0.6, tint: C.red });
-  S.add('notes', 'rect', {}, { x: NOTES.x, y: NOTES.y, w: NOTES.w, h: NOTES.h, rx: 22, fill: C.panel2, fo: 0.75, stroke: C.red, sw: 2, o: 0, z: -4 });
-  S.add('notesLbl', 'text', { size: 24, weight: 700, mono: true }, { x: NOTES.x + 22, y: NOTES.y + 36, content: "EVE'S NOTES", fill: C.red, o: 0, z: -3 });
-  OLD.forEach((t, i) => S.add('old' + i, 'packet', { text: t, size: 26, w: cw(t) }, { x: noteCard(i)[0], y: noteCard(i)[1], s: 0.8, o: 0, edge: C.red }));
-  S.add('cover', 'rect', {}, { x: NOTES.x, y: NOTES.y, w: NOTES.w, h: NOTES.h, rx: 22, fill: C.panel2, fo: 1, stroke: C.red, sw: 3, o: 0, z: 2 });
-  S.add('coverTxt', 'text', { size: 34, weight: 800, mono: true, anchor: 'middle', ls: 2 }, { x: 800, y: NOTES.y + NOTES.h / 2 + 12, content: "EVE'S NOTES", fill: C.red, o: 0, z: 3 });
+  S.add('alice', 'person', { who: 'alice' }, { x: AL[0], y: AL[1], o: 0, s: 0.6 });
+  S.add('bob', 'person', { who: 'bob' }, { x: BO[0], y: BO[1], o: 0, s: 0.6, tint: C.green });
+  S.add('spy', 'path', { d: `M 800 ${ROAD + 10} L 800 ${EVE[1] - 70}`, dash: '10 10' }, { stroke: C.red, sw: 3, o: 0, z: -4 });
+  S.add('eve', 'eye', { size: 110 }, { x: EVE[0], y: EVE[1], o: 0, s: 0.6 });
+  S.add('ping', 'packet', { text: 'HI', size: 26, w: 70 }, { x: AL[0] + 110, y: ROAD, o: 0, s: 0.8 });
+  S.add('pingE', 'packet', { text: 'HI', size: 26, w: 70 }, { x: 800, y: ROAD, o: 0, s: 0.8, edge: C.red, ink: C.red });
 
   // ---- paint
   PUB.forEach((p, i) => S.add('ch' + i, 'can', {}, { x: choiceX(i), y: CHOICE_Y, o: 0, s: 0.6, paint: p.c, tag: p.n }));
   S.add('aPub', 'can', {}, { x: aSpot[0], y: aSpot[1], o: 0, paint: P, tag: 'Public' });
-  S.add('bPub', 'can', {}, { x: BO[0], y: ROAD, o: 0, s: 0.6, paint: P, tag: 'Public' });
+  S.add('bPub', 'can', {}, { x: AL[0] + 120, y: ROAD, o: 0, s: 0.6, paint: P, tag: 'Public' });
   SEC.forEach((p, i) => S.add('sw' + i, 'can', { size: 88, labelSize: 24 }, { x: palX(i), y: PAL_Y, o: 0, s: 0.6, paint: p.c, tag: p.n }));
-  S.add('aSec', 'can', {}, { x: palX(st.sec), y: PAL_Y, o: 0, s: 0.8, paint: a, tag: 'Your secret', edge: C.cyan, z: 3 });
-  S.add('bSec', 'can', {}, { x: bSecSpot[0], y: bSecSpot[1], o: 0, s: 0.6, paint: b, cover: 1, tag: "Bob's secret", z: 3 });
-  const eCan = (id, i, paint, tag, from) => S.add(id, 'can', { labelSize: 40 }, { x: from[0], y: from[1], o: 0, s: 0.5, paint, tag, edge: C.red, z: 1 });
-  eCan('ePub', 0, P, 'Public', [800, ROAD]);
-  eCan('eA', 1, MA, "Alice's", [760, ROAD]);
-  eCan('eB', 2, MB, "Bob's", [840, ROAD]);
-  S.add('same', 'text', { size: 34, weight: 800, mono: true, anchor: 'middle', ls: 2 }, { x: 800, y: 512, content: 'SAME COLOR', fill: C.green, o: 0 });
+  S.add('aSec', 'can', {}, { x: palX(st.sec), y: PAL_Y, o: 0, s: 0.8, paint: a, tag: "Alice's secret", edge: C.cyan, z: 3 });
+  S.add('bSec', 'can', {}, { x: palX(st.bob), y: PAL_Y, o: 0, s: 0.8, paint: b, tag: "Bob's secret", edge: C.green, z: 3 });
+  const eCan = (id, paint, tag) => S.add(id, 'can', { labelSize: 34 }, { x: 800, y: ROAD, o: 0, s: 0.5, paint, tag, edge: C.red, z: 1 });
+  eCan('ePub', P, 'Public'); eCan('eA', MA, "Alice's mix"); eCan('eB', MB, "Bob's mix");
+  S.add('eveLbl', 'text', { size: 22, weight: 700, mono: true, anchor: 'end' }, { x: eveCopy(0)[0] - 80, y: eveCopy(0)[1] + 8, content: "EVE'S COPIES", fill: C.red, o: 0 });
+  S.add('same', 'text', { size: 34, weight: 800, mono: true, anchor: 'middle', ls: 2 }, { x: 800, y: 420, content: 'SAME COLOR', fill: C.green, o: 0 });
+  S.add('noMix', 'text', { size: 26, weight: 800, mono: true, anchor: 'middle' }, { x: eveCopy(1)[0], y: eveCopy(1)[1] - 82, content: 'NONE OF THESE IS THE SHARED COLOR', fill: C.red, o: 0 });
 
-  // ---- the key, the postcards and the browser
-  S.add('kA', 'glyph', { icon: 'key', size: 110, sw: 2.2 }, { x: aSpot[0], y: aSpot[1], o: 0, s: 0.4, tint: SHARED, z: 4 });
-  S.add('kB', 'glyph', { icon: 'key', size: 110, sw: 2.2 }, { x: bSpot[0], y: bSpot[1], o: 0, s: 0.4, tint: SHARED, z: 4 });
-  OLD.forEach((t, i) => S.add('pc' + i, 'packet', { text: t, size: 28, w: cw(t) }, { x: cardsAt(i)[0], y: cardsAt(i)[1], o: 0, s: 0.8, z: 5 }));
-  LOCKED.forEach((t, i) => S.add('lc' + i, 'packet', { text: t, size: 26, w: cw(t) }, { x: 800, y: ROAD, o: 0, s: 0.8, edge: C.red, ink: C.violet, z: 1 }));
-  S.add('bobMsg', 'packet', { text: 'MEET·AT·6', size: 30, w: 210 }, { x: 1330, y: 720, o: 0, s: 0.8, edge: C.green });
+  // ---- the keys, the message and the browser
+  S.add('kA', 'keyart', {}, { x: KEY_A[0], y: KEY_A[1], o: 0, s: 0.5 });
+  S.add('kB', 'keyart', {}, { x: KEY_B[0], y: KEY_B[1], o: 0, s: 0.5 });
+  S.add('drip', 'path', { d: `M ${KEY_A[0] + 20} ${KEY_A[1] - 150} L ${KEY_A[0] + 20} ${KEY_A[1] - 20}` }, { stroke: SHARED, sw: 16, o: 0, z: 2 });
+  S.add('dripB', 'path', { d: `M ${KEY_B[0] - 20} ${KEY_B[1] - 150} L ${KEY_B[0] - 20} ${KEY_B[1] - 20}` }, { stroke: SHARED, sw: 16, o: 0, z: 2 });
+  S.add('msg', 'packet', { text: disp(msg), size: 30, w: mw(msg) }, { x: MSG_AT[0], y: MSG_AT[1], o: 0, s: 0.6, z: 5 });
+  S.add('pad', 'glyph', { icon: 'lock', size: 54, sw: 2.4 }, { x: MSG_AT[0], y: MSG_AT[1] - 70, o: 0, tint: C.green, z: 6 });
+  S.add('eL', 'packet', { text: LOCK, size: 30, w: mw(msg) }, { x: 800, y: ROAD, o: 0, s: 0.6, edge: C.red, ink: C.violet, z: 1 });
   S.add('bar', 'rect', {}, { x: 470, y: 40, w: 660, h: 76, rx: 38, fill: C.panel2, fo: 1, stroke: C.green, sw: 2, o: 0 });
   S.add('barLock', 'glyph', { icon: 'lock', size: 40, sw: 2.2 }, { x: 520, y: 78, o: 0, tint: C.green });
   S.add('barTxt', 'text', { size: 30, weight: 700, mono: true }, { x: 560, y: 89, content: 'https://bob.example', fill: C.green, o: 0 });
+  Anim.addSection(S);
 
   const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * (span || 0.12), Math.min(1, k * (span || 0.12) + 0.6)] }; };
+  const sws = SEC.map((_, i) => 'sw' + i);
 
-  // 1. Meet Eve
-  S.step({ head: 'Alice and Bob need a secret.', body: 'But **Eve** sees everything they send. Tap her notes to look inside.', act: actNotes })
+  // 1. Meet Eve: she copies whatever crosses the open road
+  S.step({ head: 'Alice and Bob need a secret.', body: 'They talk over the open internet, and **Eve** copies everything they send.' })
     .beat(1.0, (s) => {
       ['road', 'roadLbl', 'alice', 'bob'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
-      Object.assign(s.eve, { o: 1, s: 1 }); s.cover.o = 1; s.coverTxt.o = 1;
-    }, stagger(['road', 'roadLbl', 'alice', 'bob', 'eve', 'cover', 'coverTxt'], 0.07));
+      Object.assign(s.eve, { o: 1, s: 1 });
+    }, stagger(['road', 'roadLbl', 'alice', 'bob', 'eve'], 0.1))
+    .beat(0.4, (s) => { s.ping.o = 1; })
+    .beat(0.8, (s) => { s.ping.x = 800; s.eve.look = 0; })
+    .beat(0.5, (s) => { s.spy.o = 0.9; s.pingE.o = 1; s.eve.glow = 1; s.eve.pulse = 1; })
+    .beat(1.0, (s) => { s.ping.x = BO[0] - 110; Object.assign(s.pingE, { y: EVE[1] - 110 }); s.bob.glow = 1; })
+    .beat(0.5, (s) => { s.ping.o = 0; s.pingE.o = 0; s.spy.o = 0; s.eve.glow = 0; s.eve.pulse = 0; s.bob.glow = 0; });
 
-  // 2. Every postcard so far is in her notes; pick the public color
-  S.step({ head: 'Start with a public color.', body: 'Eve copied every postcard from Lesson 1. Pick a color, then **drag** it to Bob. Eve will copy it too.',
-    act: actPublic })
-    .beat(0.6, (s) => { s.cover.o = 0; s.coverTxt.o = 0; s.notes.o = 1; s.notesLbl.o = 1; })
-    .beat(0.8, (s) => { OLD.forEach((_, i) => { s['old' + i].o = 1; }); s.eve.pulse = 1; }, stagger(OLD.map((_, i) => 'old' + i), 0.15))
-    .beat(0.7, (s) => { PUB.forEach((_, i) => Object.assign(s['ch' + i], { o: 1, s: 1 })); }, stagger(PUB.map((_, i) => 'ch' + i), 0.12));
+  // 2. Alice picks a public color and sends it to Bob
+  S.step({ head: 'Alice sends a public color.', body: 'Pick a color, then **drag** it to Bob. Eve will copy it, and that is fine.', act: actPublic });
+  Anim.section(S, 'PART 1', 'Mix a secret color');
+  S.beat(0.7, (s) => { PUB.forEach((_, i) => Object.assign(s['ch' + i], { o: 1, s: 1 })); }, stagger(PUB.map((_, i) => 'ch' + i), 0.12));
 
-  // 3. The public color reaches Bob (Eve copies it); pick a secret color
-  const sws = SEC.map((_, i) => 'sw' + i);
-  S.step({ head: 'Pick a secret color.', body: '**Never send it.** Bob secretly picks one too.', act: actSecret })
-    .beat(1.0, (s) => {
-      PUB.forEach((_, i) => { s['ch' + i].o = 0; });
-      Object.assign(s.bPub, { x: bSpot[0], y: bSpot[1], o: 1, s: 1 });
-      Object.assign(s.ePub, { x: noteCan(0)[0], y: noteCan(0)[1], o: 1 });
-      Object.assign(s.aPub, { o: 1 });
-      s.eve.pulse = 0; s.eve.glow = 1;
-    })
-    .beat(0.9, (s) => { sws.forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); Object.assign(s.bSec, { o: 1, s: 1 }); s.eve.glow = 0; }, stagger(sws.concat(['bSec']), 0.08));
+  // 3. The public color crosses the road (Eve copies it); Alice picks a secret
+  S.step({ head: "Pick Alice's secret color.", body: 'Alice keeps a public can. **Pick** a secret color for her. She **never sends it**.', act: actSecret })
+    .beat(0.5, (s) => { PUB.forEach((_, i) => { s['ch' + i].o = 0; }); Object.assign(s.aPub, { o: 1 }); s.bPub.o = 1; })
+    .beat(0.8, (s) => { s.bPub.x = 800; })
+    .beat(0.4, (s) => { s.spy.o = 0.9; s.ePub.o = 1; s.eve.glow = 1; s.eve.pulse = 1; })
+    .beat(1.0, (s) => { s.bPub.x = BO[0]; Object.assign(s.ePub, { x: eveCopy(0)[0], y: eveCopy(0)[1], s: 0.7 }); s.eveLbl.o = 1; })
+    .beat(0.5, (s) => { Object.assign(s.bPub, { x: bSpot[0], y: bSpot[1], s: 1 }); s.spy.o = 0; s.eve.glow = 0; s.eve.pulse = 0; })
+    .beat(0.8, (s) => { sws.forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); }, stagger(sws, 0.08));
 
-  // 4. Mix it in
-  S.step({ head: 'Mix in your secret.', body: '**Drag** your secret color into the public can.', act: actPour1 })
-    .beat(0.5, (s) => { sws.forEach((id) => { s[id].o = 0; }); s.aSec.o = 1; })
-    .beat(0.8, (s) => { Object.assign(s.aSec, { x: aSecSpot[0], y: aSecSpot[1], s: 1 }); });
+  // 4. Bob picks a different secret
+  S.step({ head: "Now pick Bob's secret color.", body: "It must be **different** from Alice's. Bob never sends his either.", act: actBobSecret })
+    .beat(0.8, (s) => { Object.assign(s.aSec, { o: 1, x: aSecSpot[0], y: aSecSpot[1], s: 1 }); s['sw' + st.sec].o = 0.15; });
 
-  // 5. Both mix (Bob behind his back); send the mix
+  // 5. Mix it in
+  S.step({ head: 'Mix in the secrets.', body: "Bob's secret goes into his can. **Drag** Alice's secret into her public can.", act: actPour1 })
+    .beat(0.5, (s) => { sws.forEach((id) => { s[id].o = 0; }); s.bSec.o = 1; })
+    .beat(0.8, (s) => { Object.assign(s.bSec, { x: bSecSpot[0], y: bSecSpot[1], s: 1 }); });
+
+  // 6. Both mix; send the mix
   const pourA = (s, t) => Object.assign(s.aSec, { x: t[0] + 70, y: t[1] - 120, rot: -70 });
   const pourB = (s, t) => Object.assign(s.bSec, { x: t[0] - 70, y: t[1] - 120, rot: 70 });
   const homeA = (s) => Object.assign(s.aSec, { x: aSecSpot[0], y: aSecSpot[1], rot: 0 });
   const homeB = (s) => Object.assign(s.bSec, { x: bSecSpot[0], y: bSecSpot[1], rot: 0 });
-  S.step({ head: 'Send your mix to Bob.', body: 'Eve can copy the mix, but she never sees your **secret**.', act: actSend })
+  S.step({ head: 'Send the mixes.', body: 'Each mix is public color plus a secret. Send Alice\'s mix to Bob. Eve can copy a mix, but not the **secret** inside it.', act: actSend })
     .beat(0.7, (s) => { pourA(s, aSpot); pourB(s, bSpot); })
-    .beat(0.8, (s) => { s.aPub.paint = MA; s.aPub.tag = 'Your mix'; s.bPub.paint = MB; s.bPub.tag = "Bob's mix"; })
+    .beat(0.8, (s) => { s.aPub.paint = MA; s.aPub.tag = "Alice's mix"; s.bPub.paint = MB; s.bPub.tag = "Bob's mix"; })
     .beat(0.6, (s) => { homeA(s); homeB(s); });
 
-  // 6. The mixes cross; Eve copies both; pour into Bob's
-  S.step({ head: "Add your secret to Bob's mix.", body: "Eve copied both mixes. **Drag** your secret into Bob's mix.", act: actPour2 })
+  // 7. The mixes cross; Eve copies both; pour into Bob's
+  S.step({ head: "Add Alice's secret to Bob's mix.", body: "The mixes swapped places, and Eve copied both. **Drag** Alice's secret into Bob's mix.", act: actPour2 })
     .beat(0.5, (s) => { Object.assign(s.aPub, { y: ROAD, s: 0.8 }); Object.assign(s.bPub, { y: ROAD, s: 0.8 }); })
-    .beat(0.8, (s) => { s.aPub.x = 760; s.bPub.x = 840; })
-    .beat(0.3, (s) => { s.eA.o = 1; s.eB.o = 1; s.eve.glow = 1; })
+    .beat(0.8, (s) => { s.aPub.x = 740; s.bPub.x = 860; })
+    .beat(0.4, (s) => { s.spy.o = 0.9; s.eA.o = 1; s.eB.o = 1; s.eA.x = 740; s.eB.x = 860; s.eve.glow = 1; s.eve.pulse = 1; })
     .beat(1.0, (s) => {
-      s.aPub.x = BO[0]; s.bPub.x = AL[0]; s.aPub.tag = "Alice's mix";
-      Object.assign(s.eA, { x: noteCan(1)[0], y: noteCan(1)[1] }); Object.assign(s.eB, { x: noteCan(2)[0], y: noteCan(2)[1] });
+      s.aPub.x = BO[0]; s.bPub.x = AL[0];
+      Object.assign(s.eA, { x: eveCopy(1)[0], y: eveCopy(1)[1], s: 0.7 }); Object.assign(s.eB, { x: eveCopy(2)[0], y: eveCopy(2)[1], s: 0.7 });
     })
-    .beat(0.5, (s) => { Object.assign(s.aPub, { y: bSpot[1], s: 1 }); Object.assign(s.bPub, { y: aSpot[1], s: 1 }); s.eve.glow = 0; });
+    .beat(0.5, (s) => { Object.assign(s.aPub, { y: bSpot[1], s: 1 }); Object.assign(s.bPub, { y: aSpot[1], s: 1 }); s.spy.o = 0; s.eve.glow = 0; s.eve.pulse = 0; });
 
-  // 7. Same color on both sides
-  S.step({ head: 'You made the same color.', body: 'Bob poured his secret into your mix. Neither secret was sent, yet you both hold **one shared color**.' })
+  // 8. Same color on both sides; Eve's copies do not have it
+  S.step({ head: 'The same color, on both sides.', body: 'Bob poured his secret into Alice\'s mix. Neither secret was sent. Paint cannot be unmixed, so Eve\'s copies **cannot** make it.' })
     .beat(0.7, (s) => { pourA(s, aSpot); pourB(s, bSpot); })
     .beat(0.9, (s) => { s.bPub.paint = SHARED; s.aPub.paint = SHARED; s.bPub.tag = 'Shared'; s.aPub.tag = 'Shared'; })
     .beat(0.6, (s) => { homeA(s); homeB(s); })
-    .beat(0.8, (s) => { s.aPub.glow = 1; s.bPub.glow = 1; s.aPub.edge = C.green; s.bPub.edge = C.green; s.same.o = 1; });
+    .beat(0.8, (s) => { s.aPub.glow = 1; s.bPub.glow = 1; s.aPub.edge = C.green; s.bPub.edge = C.green; s.same.o = 1; })
+    .beat(0.8, (s) => { ['ePub', 'eA', 'eB'].forEach((id) => { s[id].glow = 1; }); s.noMix.o = 1; s.eve.look = -0.6; });
 
-  // 8. Be Eve
-  S.step({ head: 'Now be Eve.', body: 'Mix her copies to try to make the shared color. You get **3 tries**.',
-    act: (ctx) => actEve(ctx, { P, MA, MB, SHARED }) })
-    .beat(0.8, (s) => { s.same.o = 0; s.eve.glow = 1; s.eve.pulse = 1; s.notes.sw = 4; s.notes.fo = 0.95; });
+  // 9. Paint a white key
+  S.step({ head: 'Paint a key.', body: 'Here is a plain **white key**. **Drag** the shared paint onto it. Bob paints his too.', act: actPaint });
+  Anim.section(S, 'PART 2', 'Lock the message', (s) => {
+    ['aSec', 'bSec', 'same', 'noMix'].forEach((id) => { s[id].o = 0; });
+    ['ePub', 'eA', 'eB'].forEach((id) => { s[id].glow = 0; });
+    Object.assign(s.bPub, { x: KEY_B[0] + 40, y: KEY_B[1] - 190, s: 0.7, glow: 0 });
+    Object.assign(s.aPub, { glow: 0 });
+    s.eve.look = 0;
+  });
+  S.beat(0.8, (s) => { Object.assign(s.kA, { o: 1, s: 1.1 }); Object.assign(s.kB, { o: 1, s: 1.1 }); }, stagger(['kA', 'kB'], 0.2));
 
-  // 9. The shared color becomes a key
-  const pcs = OLD.map((_, i) => 'pc' + i);
-  S.step({ head: 'That color becomes your key.', body: '**Drag** the key onto your postcards to lock them.', act: actLock })
-    .beat(0.8, (s) => {
-      s.eve.glow = 0; s.eve.pulse = 0; s.notes.sw = 2; s.notes.fo = 0.75;
-      ['aPub', 'bPub', 'aSec', 'bSec'].forEach((id) => { s[id].o = 0; });
-      Object.assign(s.kA, { o: 1, s: 1 }); Object.assign(s.kB, { o: 1, s: 1 });
-    })
-    .beat(0.8, (s) => { pcs.forEach((id) => Object.assign(s[id], { o: 1 })); }, stagger(pcs, 0.15));
+  // 10. The paint pours over both keys; pick a message
+  S.step({ head: 'Pick a message to lock.', body: 'Both keys are now the **shared color**. Pick what Alice sends Bob.', act: actMsg })
+    .beat(0.6, (s) => { Object.assign(s.aPub, { x: KEY_A[0] - 40, y: KEY_A[1] - 190, s: 0.7, rot: 70 }); Object.assign(s.bPub, { rot: -70 }); })
+    .beat(0.5, (s) => { s.drip.o = 1; s.dripB.o = 1; })
+    .beat(1.0, (s) => { s.kA.paint = SHARED; s.kB.paint = SHARED; s.kA.glow = 1; s.kB.glow = 1; })
+    .beat(0.6, (s) => { s.drip.o = 0; s.dripB.o = 0; s.aPub.o = 0; s.bPub.o = 0; s.kA.glow = 0; s.kB.glow = 0; });
 
-  // 10. Locked postcards cross; Eve copies only scramble; Bob unlocks
-  const lcs = LOCKED.map((_, i) => 'lc' + i), olds = OLD.map((_, i) => 'old' + i);
-  S.step({ head: 'Locked. Eve copies only scramble.', body: "Bob's key unlocks them. The **padlock** and **https://** in your browser mean your traffic is locked like this.",
+  // 11. Lock it
+  S.step({ head: 'Lock it with the key.', body: '**Drag** Alice\'s key onto the message.', act: actLock })
+    .beat(0.8, (s) => { Object.assign(s.msg, { o: 1, s: 1 }); });
+
+  // 12. Locked; Eve copies only scramble; Bob unlocks
+  S.step({ head: 'Locked. Eve copies only scramble.', body: "Bob's key unlocks it. The **padlock** and **https://** in your browser mean your traffic is locked like this.",
     act: actPeek, optional: true })
-    .beat(0.8, (s) => { pcs.forEach((id, i) => Object.assign(s[id], { content: LOCKED[i], edge: C.green, ink: C.violet })); s.kA.o = 0.4; })
-    .beat(0.6, (s) => { pcs.forEach((id, i) => Object.assign(s[id], { x: AL[0] + 150 + i * 30, y: ROAD })); }, stagger(pcs, 0.1))
-    .beat(0.8, (s) => { pcs.forEach((id, i) => { s[id].x = 760 + i * 40; }); olds.forEach((id) => { s[id].o = 0; }); })
-    .beat(0.3, (s) => { lcs.forEach((id) => { s[id].o = 1; }); s.eve.glow = 1; })
-    .beat(1.0, (s) => {
-      pcs.forEach((id, i) => { s[id].x = BO[0] - 150 + i * 30; });
-      lcs.forEach((id, i) => Object.assign(s[id], { x: noteCard(i)[0], y: noteCard(i)[1] }));
-    }, stagger(pcs.concat(lcs), 0.05))
-    .beat(0.9, (s) => {
-      pcs.forEach((id) => Object.assign(s[id], { x: 1330, y: 720, o: 0 }));
-      Object.assign(s.bobMsg, { o: 1, s: 1 }); s.kB.o = 0.4; s.bob.glow = 1; s.eve.glow = 0;
-    })
-    .beat(0.8, (s) => { ['bar', 'barLock', 'barTxt'].forEach((id) => { s[id].o = 1; }); }, stagger(['bar', 'barLock', 'barTxt'], 0.15));
+    .beat(0.6, (s) => { Object.assign(s.kA, { x: MSG_AT[0] - 200, y: MSG_AT[1], s: 0.8 }); })
+    .beat(0.5, (s) => { s.kA.rot = 90; })
+    .beat(0.3, (s) => { s.msg.content = scramble(msg, 5); s.msg.ink = C.violet; })
+    .beat(0.3, (s) => { s.msg.content = scramble(msg, 11); })
+    .beat(0.4, (s) => { s.msg.content = LOCK; s.msg.edge = C.green; s.pad.o = 1; s.kA.rot = 0; Object.assign(s.kA, { x: KEY_A[0], y: KEY_A[1], s: 1 }); })
+    .beat(0.7, (s) => { Object.assign(s.msg, { x: 560, y: ROAD, s: 0.8 }); Object.assign(s.pad, { x: 560, y: ROAD - 60 }); })
+    .beat(0.8, (s) => { s.msg.x = 800; s.pad.x = 800; })
+    .beat(0.4, (s) => { s.spy.o = 0.9; s.eL.o = 1; s.eve.glow = 1; s.eve.pulse = 1; })
+    .beat(1.0, (s) => { Object.assign(s.msg, { x: 1100 }); s.pad.x = 1100; Object.assign(s.eL, { x: eveCopy(3)[0] + 10, y: eveCopy(3)[1], s: 0.75 }); })
+    .beat(0.6, (s) => { Object.assign(s.msg, { x: BOB_MSG[0], y: BOB_MSG[1], s: 1 }); Object.assign(s.pad, { x: BOB_MSG[0], y: BOB_MSG[1] - 70 }); s.spy.o = 0; s.eve.glow = 0; s.eve.look = 0.5; })
+    .beat(0.6, (s) => { Object.assign(s.kB, { y: BOB_MSG[1] - 20, x: BOB_MSG[0] - 200, s: 0.8 }); })
+    .beat(0.5, (s) => { s.kB.rot = 90; s.pad.o = 0; })
+    .beat(0.5, (s) => { s.msg.content = disp(msg); s.msg.ink = C.ink; s.bob.glow = 1; s.kB.rot = 0; Object.assign(s.kB, { x: KEY_B[0], y: KEY_B[1], s: 1 }); })
+    .beat(0.8, (s) => { ['bar', 'barLock', 'barTxt'].forEach((id) => { s[id].o = 1; }); s.eve.pulse = 0; }, stagger(['bar', 'barLock', 'barTxt'], 0.15));
   return S;
 }
 
 // ---------------------------------------------------------------- learner actions
-function actNotes(ctx) {
-  ctx.hit(NOTES.x + NOTES.w / 2, NOTES.y + NOTES.h / 2, NOTES.w, NOTES.h, "Open Eve's notes", () => ctx.done({}));
-}
 function actPublic(ctx) {
   const pick = (k) => {
     ctx.ov.innerHTML = ''; ctx.hide(['ch' + k]);
@@ -255,14 +247,15 @@ function actPublic(ctx) {
 }
 function actSecret(ctx) {
   SEC.forEach((p, k) => ctx.hit(palX(k), PAL_Y - 8, 100, 130, p.n, () => {
-    // Bob's secret is random; it never matches Alice's, so the mixes always differ.
-    let bob = ctx.state.bob;
-    if (bob === k) bob = (k + 1 + Math.floor(Math.random() * (SEC.length - 1))) % SEC.length;
+    const bob = ctx.state.bob === k ? (k + 1) % SEC.length : ctx.state.bob;
     ctx.done({ sec: k, bob });
   }, 'quiet'));
 }
+function actBobSecret(ctx) {
+  SEC.forEach((p, k) => { if (k !== ctx.state.sec) ctx.hit(palX(k), PAL_Y - 8, 100, 130, p.n, () => ctx.done({ bob: k }), 'quiet'); });
+}
 function actPour1(ctx) {
-  ctx.drag(aSecSpot[0], aSecSpot[1], 110, 110, 'Your secret', { x: aSpot[0], y: aSpot[1], r: 75, label: 'Pour here' }, () => ctx.done({}), { color: SEC[ctx.state.sec].c });
+  ctx.drag(aSecSpot[0], aSecSpot[1], 110, 110, "Alice's secret", { x: aSpot[0], y: aSpot[1], r: 75, label: 'Pour here' }, () => ctx.done({}), { color: SEC[ctx.state.sec].c });
   ctx.hide(['aSec']);
 }
 function actSend(ctx) {
@@ -271,41 +264,21 @@ function actSend(ctx) {
   b.addEventListener('click', () => ctx.done({})); ctx.slot.appendChild(b);
 }
 function actPour2(ctx) {
-  ctx.drag(aSecSpot[0], aSecSpot[1], 110, 110, 'Your secret', { x: aSpot[0], y: aSpot[1], r: 75, label: "Bob's mix" }, () => ctx.done({}), { color: SEC[ctx.state.sec].c });
+  ctx.drag(aSecSpot[0], aSecSpot[1], 110, 110, "Alice's secret", { x: aSpot[0], y: aSpot[1], r: 75, label: "Bob's mix" }, () => ctx.done({}), { color: SEC[ctx.state.sec].c });
   ctx.hide(['aSec']);
 }
-function actLock(ctx) {
-  ctx.drag(aSpot[0], aSpot[1], 120, 120, 'Key', { x: cardsAt(1)[0], y: cardsAt(1)[1], r: 110, label: 'Lock' }, () => ctx.done({}), { cls: 'clear' });
+function actPaint(ctx) {
+  ctx.drag(aSpot[0], aSpot[1], 120, 120, 'Shared paint', { x: KEY_A[0], y: KEY_A[1], r: 110, label: 'Paint the key' }, () => ctx.done({}), { color: mix(PUB[ctx.state.pub].c, SEC[ctx.state.sec].c, SEC[ctx.state.bob].c) });
 }
-// Eve mixes 2 or 3 of her copies, up to 3 times. A meter shows how close each try is. None match.
-function actEve(ctx, col) {
-  const cans = [{ n: 'Public', c: col.P }, { n: "Alice's mix", c: col.MA }, { n: "Bob's mix", c: col.MB }];
-  const on = [true, false, true], tries = [];
-  ctx.slot.innerHTML = `<div class="m2-row">${cans.map((k, i) => `<button class="m2-tog" data-i="${i}" aria-pressed="${on[i]}"><span class="m2-sw" style="background:${k.c}"></span>${k.n}</button>`).join('')}
-    <button class="lz-btn go" data-mix><span>Mix (3 left)</span></button></div>
-    <p class="m2-msg">Pick 2 or 3 copies, then mix.</p><div class="m2-tries" aria-live="polite"></div>`;
-  const msg = ctx.slot.querySelector('.m2-msg'), list = ctx.slot.querySelector('.m2-tries'), mixBtn = ctx.slot.querySelector('[data-mix]');
-  ctx.slot.querySelectorAll('.m2-tog').forEach((b) => b.addEventListener('click', () => {
-    const i = +b.dataset.i; on[i] = !on[i]; b.setAttribute('aria-pressed', on[i]);
-  }));
-  mixBtn.addEventListener('click', () => {
-    const pick = cans.filter((_, i) => on[i]);
-    if (pick.length < 2) { msg.textContent = 'Pick at least 2 copies to mix.'; msg.className = 'm2-msg bad'; return; }
-    // Every copy Eve holds is mostly public color, so her mixes come out washed toward it. Showing that
-    // extra public color (two more parts of it) makes her misses easy to see.
-    const got = mix(...pick.map((k) => k.c), col.P, col.P), match = Math.max(0, Math.min(40, Math.round(100 - 3.5 * diff(got, col.SHARED))));
-    tries.push(got);
-    const row = document.createElement('div'); row.className = 'm2-try';
-    row.innerHTML = `<span class="m2-sw" style="background:${got}" title="Eve's mix"></span><span class="m2-sw" style="background:${col.SHARED}" title="Shared color"></span>
-      <span class="m2-meter" role="img" aria-label="${match} percent match"><i style="width:${match}%"></i></span><span><b>${match}%</b> match</span>`;
-    list.appendChild(row);
-    const left = 3 - tries.length;
-    mixBtn.querySelector('span').textContent = `Mix (${left} left)`;
-    if (left > 0) { msg.textContent = 'Not the same color. Her copies always carry too much public color.'; msg.className = 'm2-msg bad'; return; }
-    mixBtn.disabled = true; ctx.slot.querySelectorAll('.m2-tog').forEach((b) => { b.disabled = true; });
-    msg.textContent = 'No match in 3 tries. Paint cannot be unmixed, so Eve is stuck.'; msg.className = 'm2-msg bad';
-    setTimeout(() => ctx.done({}), 1800);
+function actMsg(ctx) {
+  MSGS.forEach((m) => {
+    const b = document.createElement('button'); b.className = 'lz-btn' + (m === ctx.state.msg ? ' go' : ''); b.dataset.msg = m;
+    b.innerHTML = `<span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.06em">${m}</span>`;
+    b.addEventListener('click', () => ctx.done({ msg: m })); ctx.slot.appendChild(b);
   });
+}
+function actLock(ctx) {
+  ctx.drag(KEY_A[0], KEY_A[1], 220, 120, 'Key', { x: MSG_AT[0], y: MSG_AT[1], r: 120, label: 'Lock' }, () => ctx.done({}), { cls: 'clear' });
 }
 // Optional: the same idea with small numbers (not on the quiz).
 function actPeek(ctx) {
@@ -334,7 +307,7 @@ const quiz = [
     why: 'Her secret stays with her. Only the public color and her mix travel in the open.' },
   { q: 'Eve copies the public color and both mixes. She still cannot make the secret because:',
     choices: ['She has no paint', 'Paint cannot be unmixed', 'The cans are locked', 'She is too far away'], answer: 1,
-    why: 'She cannot pull a secret back out of a mix, and mixing her copies adds too much public color.' },
+    why: 'She cannot pull a secret back out of a mix, so her copies never give the shared color.' },
   { q: 'At the end, Alice and Bob each hold:',
     choices: ['The same secret color', 'Two different colors', 'Only the public color', "Eve's mixed color"], answer: 0,
     why: 'Public + Alice + Bob ends up in both cans, in either order.' },
@@ -346,8 +319,7 @@ const quiz = [
     why: 'They mean the traffic is locked with a shared key. It does not promise the site itself is safe.' },
 ];
 
-const bob0 = 1 + Math.floor(Math.random() * (SEC.length - 1));   // never 0, Alice's default pick
-Lesson.mount(document.getElementById('lesson'), { id: 'm2', state: { pub: 0, sec: 0, bob: bob0 }, scene, quiz });
+Lesson.mount(document.getElementById('lesson'), { id: 'm2', state: { pub: 0, sec: 0, bob: 3, msg: 'MEET AT 6' }, scene, quiz, next: Lessons.next('m2') });
 </script>
 </body>
 </html>

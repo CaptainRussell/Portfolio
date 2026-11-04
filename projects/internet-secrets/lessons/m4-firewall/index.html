@@ -72,6 +72,7 @@
 
 <script src="../shared/engine.js"></script>
 <script src="../shared/lesson.js"></script>
+<script src="../shared/lessons.js"></script>
 <script>
 /* =====================================================================
    Lesson 4: Guard the Gate (Objective 4)
@@ -159,7 +160,7 @@ function scene(st) {
   for (let i = 0; i < NV; i++) S.add('v' + i, 'packet', { text: '?', size: 26, w: 100, h: 52 }, { x: gridAt(i)[0], y: gridAt(i)[1], o: 0, s: 0.8, edge: C.soft, ink: C.ink });
 
   // ---- the flood
-  S.add('eve', 'node', { icon: 'eye', label: 'Eve', size: 104 }, { x: 230, y: 690, o: 0, s: 0.6, tint: C.red });
+  S.add('eve', 'eye', { size: 130 }, { x: 230, y: 690, o: 0, s: 0.6 });
   for (let i = 0; i < ND; i++) S.add('d' + i, 'node', { icon: 'laptop', size: 40 }, { x: 360 + 42 * (i % 10), y: 640 + 44 * Math.floor(i / 10), o: 0, s: 0.5, tint: C.red });
   for (let i = 0; i < NG; i++) S.add('g' + i, 'packet', { text: '443', size: 26, w: 100, h: 52 }, { x: 160 + 110 * i, y: 470, o: 0, s: 0.8, edge: C.cyan });
   S.add('down', 'text', { size: 44, weight: 900, mono: true, anchor: 'middle', ls: 3 }, { x: BLD.x + BLD.w / 2 + 40, y: 470, content: 'SITE DOWN', fill: C.red, o: 0, z: 6 });
@@ -169,6 +170,7 @@ function scene(st) {
   S.add('srv2', 'node', { icon: 'server', size: 80 }, { x: 1460, y: 640, o: 0, s: 0.6, tint: C.green });
   S.add('back', 'text', { size: 40, weight: 900, mono: true, anchor: 'middle', ls: 3 }, { x: BLD.x + BLD.w / 2 + 40, y: 470, content: 'BACK ONLINE', fill: C.green, o: 0, z: 6 });
 
+  Anim.addSection(S);
   const vids = Array.from({ length: NV }, (_, i) => 'v' + i), dids = Array.from({ length: ND }, (_, i) => 'd' + i), gids = Array.from({ length: NG }, (_, i) => 'g' + i);
   const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * (span || 0.1), Math.min(1, k * (span || 0.1) + 0.5)] }; };
   const spread = (list, len) => (id) => { const k = list.indexOf(id); if (k < 0) return null; const a = (k / list.length) * (1 - len); return { w: [a, a + len] }; };
@@ -194,8 +196,9 @@ function scene(st) {
 
   // 1. The front door
   const first = vids.slice(0, 8);
-  S.step({ head: 'Every packet comes to the front door.', body: 'Some are friends, some are not. **Tap a packet** to read its label.', act: actFlip })
-    .beat(0.9, (s) => { ['bld', 'bldLbl'].forEach((id) => { s[id].o = 1; }); PORTS.forEach((_, i) => { s['door' + i].o = 1; }); })
+  S.step({ head: 'Every packet comes to the front door.', body: 'Some are friends, some are not. **Tap a packet** to read its label.', act: actFlip });
+  Anim.section(S, 'PART 1', 'Doors and ports');
+  S.beat(0.9, (s) => { ['bld', 'bldLbl'].forEach((id) => { s[id].o = 1; }); PORTS.forEach((_, i) => { s['door' + i].o = 1; }); })
     .beat(0.9, (s) => first.forEach((id) => { s[id].o = 1; }), stagger(first, 0.08));
 
   // 2. Ports
@@ -209,8 +212,9 @@ function scene(st) {
     .beat(0.9, (s) => { Object.assign(s.fw, { o: 1, s: 1 }); ['rules', 'rulesLbl', 'rule1', 'rule2'].forEach((id) => { s[id].o = 1; }); }, stagger(['fw', 'rules', 'rulesLbl', 'rule1', 'rule2'], 0.1));
 
   // 4-5. Round 1
-  S.step({ head: 'Round 1: set your doors.', body: 'Tap a door to open or shut it. Let real visitors in and keep attacks out, then press **Open the gate**.', act: (ctx) => actDoors(ctx, 'r1', R[0]) })
-    .beat(0.7, (s) => { allOut(s, first.concat(['rule1', 'rule2', 'rules', 'rulesLbl'])); s.legend.o = 1; s.legend2.o = 1; doorsLook(s, R[0]); });
+  S.step({ head: 'Round 1: set your doors.', body: 'Tap a door to open or shut it. Let real visitors in and keep attacks out, then press **Open the gate**.', act: (ctx) => actDoors(ctx, 'r1', R[0]) });
+  Anim.section(S, 'PART 2', 'Run the firewall', (s) => { allOut(s, first.concat(['rule1', 'rule2', 'rules', 'rulesLbl'])); doorsLook(s, R[0]); });
+  S.beat(0.7, (s) => { s.legend.o = 1; s.legend2.o = 1; s.fw.glow = 1; }).beat(0.4, (s) => { s.fw.glow = 0; });
   const v1 = verdict({ doors: R[0], blockFirst: false }, 0);
   S.step({ head: v1.head, body: v1.body });
   wave(0, R[0], false);
@@ -241,9 +245,9 @@ function scene(st) {
     .beat(0.9, (s) => { Object.assign(s.v6, { x: sneakAt[0], y: sneakAt[1], o: 1, s: 1, edge: C.cyan, glow: 1 }); });
 
   // 11. The flood begins
-  S.step({ head: 'A flood can close the door.', body: 'Eve took over thousands of machines, a **botnet**. Press **Launch** to see what a flood does.', act: actLaunch })
-    .beat(0.6, (s) => { allOut(s, ['v6', 'rules', 'rulesLbl', 'rule1', 'rule2', 'blk', 'legend3']); s.v6.glow = 0; doorsLook(s, R[2]); })
-    .beat(1.0, (s) => { Object.assign(s.eve, { o: 1, s: 1 }); dids.forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); }, stagger(['eve'].concat(dids), 0.025));
+  S.step({ head: 'A flood can close the door.', body: 'Eve took over thousands of machines, a **botnet**. Press **Launch** to see what a flood does.', act: actLaunch });
+  Anim.section(S, 'PART 3', 'The flood', (s) => { allOut(s, ['v6', 'rules', 'rulesLbl', 'rule1', 'rule2', 'blk', 'legend3']); s.v6.glow = 0; doorsLook(s, R[2]); });
+  S.beat(1.0, (s) => { Object.assign(s.eve, { o: 1, s: 1, glow: 1 }); dids.forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); }, stagger(['eve'].concat(dids), 0.025));
 
   // 12. The jam
   S.step({ head: 'Too many visitors at once.', body: 'The line jams and real visitors cannot get in, even though **nothing was stolen**. Try your door switches.', act: actJam })
@@ -430,7 +434,7 @@ const quiz = [
     why: 'Attacks can hide inside traffic on an open door, like the website door.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { id: 'm4', state: { r1: [true, true, true, true], r2: null, r3: null, blockFirst: false }, scene, quiz });
+Lesson.mount(document.getElementById('lesson'), { id: 'm4', state: { r1: [true, true, true, true], r2: null, r3: null, blockFirst: false }, scene, quiz, next: Lessons.next('m4') });
 </script>
 </body>
 </html>

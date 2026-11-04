@@ -139,9 +139,11 @@
   .lz{margin:16px -6px 8px;padding:10px;border-radius:16px}
   .lz-btn{padding:10px 12px}
   .lz-dots{min-width:60px;gap:4px}
-  .lz-btn.ghost span,.lz-bar:not(.end) [data-act="back"] span{display:none}
+  .lz-bar .lz-btn.ghost span,.lz-bar:not(.end) [data-act="back"] span{display:none}
   .lz-cap{min-height:136px}
 }
 @media (prefers-reduced-motion:reduce){
   .lz *,.lz::after{transition:none!important;animation:none!important}
 }
+
+a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}

@@ -15,8 +15,6 @@
 .m3-msg{flex-basis:100%;margin:0;color:var(--c-soft);font-size:14px}
 .m3-msg.ok{color:var(--c-green)}
 .m3-msg.bad{color:var(--c-red)}
-.m3-bc{display:inline-flex;gap:2px;align-items:flex-end;height:22px;padding:3px 5px;border-radius:6px;background:var(--c-panel);border:1px solid var(--c-line);vertical-align:middle}
-.m3-bc i{display:block;width:5px;border-radius:1px}
 .m3-log{display:grid;gap:6px;flex-basis:100%}
 .m3-log p{margin:0;display:flex;gap:10px;align-items:center;font:600 13.5px/1.3 system-ui,sans-serif;color:var(--c-soft)}
 .m3-log b{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--c-ink)}
@@ -59,6 +57,7 @@
 
 <script src="../shared/engine.js"></script>
 <script src="../shared/lesson.js"></script>
+<script src="../shared/lessons.js"></script>
 <script>
 /* =====================================================================
    Lesson 3: Crack the Password (Objective 3)
@@ -73,7 +72,7 @@
    letter, try to un-blend, log in twice, salt two sites, crack a stolen
    list, build a passphrase. Code organized with help from Claude (Anthropic).
    ===================================================================== */
-const { Scene, C, barSpec } = Anim;
+const { Scene, C } = Anim;
 
 // ---- SHA-256 (FIPS 180-4), synchronous so scenes can be rebuilt at once. Checked against Web Crypto.
 const SHA_K = (() => {
@@ -105,9 +104,8 @@ function sha256(str) {
   }
   return H.map((v) => (v >>> 0).toString(16).padStart(8, '0')).join('');
 }
-// A small fingerprint for the controls under the caption (same colors as the stage barcode).
-const miniBC = (hex) => `<span class="m3-bc" aria-hidden="true">${Array.from({ length: 16 }, (_, i) => { const b = barSpec(hex, i);
-  return `<i style="height:${Math.round(b.f * 100)}%;background:rgb(${b.c.map(Math.round).join(',')})"></i>`; }).join('')}</span>`;
+// A small fingerprint for the controls under the caption (the same art as the stage).
+const miniBC = (hex) => Anim.printSVG(hex, 30);
 
 // ---- how long a guess takes: (possible characters) ^ length at 10 billion guesses a second
 const COMMON = ['123456', 'password', '123456789', '12345678', 'qwerty', '111111', '12345', 'iloveyou', '1234567', 'dragon',
@@ -145,11 +143,14 @@ const STOLEN = [['sam', 'password'], ['kim', 'dragon'], ['lee', 'blue moon rides
 const WORDS = ['purple', 'tiger', 'tacos', 'river', 'cloud', 'banjo', 'pickle', 'rocket', 'maple', 'otter', 'lemon', 'canyon', 'piano', 'violet',
   'walrus', 'pepper', 'comet', 'garden', 'mango', 'falcon', 'velvet', 'thunder', 'pebble', 'noodle', 'harbor', 'zebra', 'cactus', 'marble'];
 const SALT = ['x7Q', 'P2m'];
+const USERS = ['alice', 'ace_al', 'cyclone', 'stormy'], PWS = ['pizza123', 'sunshine1', 'Raven2026'];
+// One tap changes one character to the next one (a to b, 9 to 0).
+const bump = (c) => /[a-y]|[A-Y]|[0-8]/.test(c) ? String.fromCharCode(c.charCodeAt(0) + 1) : c === 'z' ? 'a' : c === 'Z' ? 'A' : c === '9' ? '0' : 'x';
 
 // Where things sit on the 1600 x 900 stage.
 const AL = [170, 250], SITE = [1340, 200], CAB = { x: 1120, y: 380, w: 400, h: 320 }, EVE = [900, 560];
-const LOCK = [CAB.x + CAB.w - 40, CAB.y + 38], PW_AT = [560, 250];
-const BL = [800, 400], PW_L = [430, 400], BAR1 = [800, 640], BAR1B = [800, 780];
+const LOCK = [CAB.x + CAB.w - 40, CAB.y + 38], PW_AT = [560, 340], USER_AT = [560, 250];
+const BL = [800, 330], PW_L = [420, 330], BAR1 = [1220, 300], BAR1B = [1220, 640];
 const SA = [480, 250], SB = [1120, 250];
 const ROWS = [260, 400, 540, 680], X0 = 120, XW = 1360;
 const barW = (L) => XW * Math.max(0.012, Math.min(1, (L + 1) / 31));
@@ -159,31 +160,35 @@ function scene(st) {
   const S = new Scene('m3');
   const pw = st.pw, pw2 = st.pw2 || pw.slice(0, -1) + (pw.slice(-1) === 'x' ? 'y' : 'x');
   const h1 = sha256(pw), h2 = sha256(pw2), hs = sha256('sunshine'), hA = sha256('sunshine' + SALT[0]), hB = sha256('sunshine' + SALT[1]);
-  const cabRows = [['sam', 'sunshine'], ['kim', 'dragon42'], ['ana', 'letmein'], ['you', pw]];
-  const row = (n, p) => `${n.padEnd(5, ' ')}${p}`;
+  const cabRows = [['sam', 'sunshine'], ['kim', 'dragon42'], ['ana', 'letmein'], [st.user, pw]];
+  const row = (n, p) => `${n.padEnd(8, ' ')}${p}`;
 
   // ---- sign up and the filing cabinet
-  S.add('alice', 'node', { icon: 'laptop', label: 'Alice' }, { x: AL[0], y: AL[1], o: 0, s: 0.6 });
+  S.add('alice', 'person', { who: 'alice' }, { x: AL[0], y: AL[1], o: 0, s: 0.6 });
   S.add('site', 'node', { icon: 'server', label: 'Website' }, { x: SITE[0], y: SITE[1], o: 0, s: 0.6, tint: C.violet });
-  S.add('signLbl', 'text', { size: 26, weight: 700, mono: true, anchor: 'middle', ls: 2 }, { x: PW_AT[0], y: PW_AT[1] - 62, content: 'SIGN UP', fill: C.faint, o: 0 });
+  S.add('signLbl', 'text', { size: 26, weight: 700, mono: true, anchor: 'middle', ls: 2 }, { x: USER_AT[0], y: USER_AT[1] - 62, content: 'SIGN UP', fill: C.faint, o: 0 });
+  S.add('userBox', 'packet', { text: '@' + st.user, size: 30, w: cardW('@' + st.user) }, { x: USER_AT[0], y: USER_AT[1], o: 0, s: 0.8, edge: C.violet, z: 5 });
   S.add('pwBox', 'packet', { text: pw, size: 30, w: cardW(pw) }, { x: PW_AT[0], y: PW_AT[1], o: 0, s: 0.8, z: 5 });
   S.add('cab', 'rect', {}, { x: CAB.x, y: CAB.y, w: CAB.w, h: CAB.h, rx: 18, fill: C.panel2, fo: 0.9, stroke: C.violet, sw: 2, o: 0, z: -3 });
   S.add('cabLbl', 'text', { size: 22, weight: 700, mono: true }, { x: CAB.x + 22, y: CAB.y + 44, content: 'SAVED PASSWORDS', fill: C.soft, o: 0 });
   cabRows.forEach(([n, p], i) => S.add('r' + i, 'text', { size: 24, weight: 600, mono: true }, { x: CAB.x + 24, y: CAB.y + 110 + 52 * i, content: row(n, p), fill: i === 3 ? C.cyan : C.ink, o: 0 }));
   S.add('lock', 'glyph', { icon: 'lock', size: 48, sw: 2 }, { x: LOCK[0], y: LOCK[1], o: 0, tint: C.amber });
   S.add('unlock', 'glyph', { icon: 'unlock', size: 48, sw: 2 }, { x: LOCK[0], y: LOCK[1], o: 0, tint: C.red });
-  S.add('eve', 'node', { icon: 'eye', label: 'Eve', size: 110 }, { x: EVE[0], y: EVE[1], o: 0, s: 0.6, tint: C.red });
+  S.add('eve', 'eye', { size: 120 }, { x: EVE[0], y: EVE[1], o: 0, s: 0.6 });
 
   // ---- the blender and fingerprints
-  S.add('blender', 'node', { icon: 'blender', label: 'Blender', size: 150 }, { x: BL[0], y: BL[1], o: 0, s: 0.6, tint: C.amber });
-  S.add('bar1', 'barcode', {}, { x: BAR1[0], y: BAR1[1], o: 0, s: 0.6, hex: h1 });
-  S.add('bar1b', 'barcode', {}, { x: BAR1B[0], y: BAR1B[1], o: 0, s: 0.6, hex: h1 });
-  S.add('same', 'text', { size: 32, weight: 800, mono: true }, { x: 1110, y: 722, content: 'SAME', fill: C.green, o: 0 });
-  S.add('bar2', 'barcode', {}, { x: BL[0], y: BL[1] + 120, o: 0, s: 0.4, hex: h2 });
-  S.add('t1', 'text', { size: 30, weight: 700, mono: true, anchor: 'middle' }, { x: 480, y: 580, content: pw, fill: C.ink, o: 0 });
-  S.add('t2', 'text', { size: 30, weight: 700, mono: true, anchor: 'middle' }, { x: 1120, y: 580, content: pw2, fill: C.amber, o: 0 });
-  S.add('back', 'arrow', {}, { x: 1110, y: 530, x2: 900, y2: 420, stroke: C.amber, sw: 5, draw: 0, o: 0 });
-  S.add('backQ', 'text', { size: 40, weight: 800, anchor: 'middle', mono: true }, { x: 1040, y: 445, content: '?', fill: C.amber, o: 0 });
+  S.add('blender', 'blender', {}, { x: BL[0], y: BL[1], o: 0, s: 0.6 });
+  S.add('bLbl', 'text', { size: 24, weight: 700, mono: true, anchor: 'middle', ls: 2 }, { x: BL[0], y: BL[1] + 196, content: 'BLENDER', fill: C.amber, o: 0 });
+  S.add('bar1', 'print', {}, { x: BL[0], y: BL[1], o: 0, s: 0.2, hex: h1 });
+  S.add('bar1b', 'print', {}, { x: BL[0], y: BL[1], o: 0, s: 0.2, hex: h1 });
+  S.add('same', 'text', { size: 32, weight: 800, mono: true, anchor: 'middle' }, { x: BAR1[0], y: 494, content: '= SAME', fill: C.green, o: 0 });
+  S.add('bar2', 'print', {}, { x: BL[0], y: BL[1], o: 0, s: 0.2, hex: h2 });
+  S.add('t1', 'text', { size: 30, weight: 700, mono: true, anchor: 'middle' }, { x: 480, y: 470, content: pw, fill: C.ink, o: 0 });
+  S.add('t2', 'text', { size: 30, weight: 700, mono: true, anchor: 'middle' }, { x: 1120, y: 470, content: pw2, fill: C.amber, o: 0 });
+  const same = [...h1].filter((c, i) => c === h2[i]).length;
+  S.add('matchTxt', 'text', { size: 26, weight: 700, mono: true, anchor: 'middle' }, { x: 800, y: 860, content: `Only ${same} of 64 fingerprint characters line up. Every ridge moved.`, fill: C.amber, o: 0 });
+  S.add('back', 'arrow', {}, { x: 1000, y: 580, x2: 880, y2: 450, stroke: C.amber, sw: 5, draw: 0, o: 0 });
+  S.add('backQ', 'text', { size: 40, weight: 800, anchor: 'middle', mono: true }, { x: 975, y: 500, content: '?', fill: C.amber, o: 0 });
 
   // ---- salt
   S.add('siteA', 'node', { icon: 'server', label: 'Site A', size: 110 }, { x: SA[0], y: SA[1] - 60, o: 0, s: 0.6, tint: C.violet });
@@ -196,16 +201,23 @@ function scene(st) {
     S.add('ga' + i, 'dot', {}, { x: SA[0] + 190 + (i % 3) * 8, y: 360, r: 5, fill: C.ink, o: 0 });
     S.add('gb' + i, 'dot', {}, { x: SB[0] + 190 + (i % 3) * 8, y: 360, r: 5, fill: C.ink, o: 0 });
   }
-  S.add('barA', 'barcode', { w: 440, h: 80 }, { x: SA[0], y: 630, o: 0, hex: hs });
-  S.add('barB', 'barcode', { w: 440, h: 80 }, { x: SB[0], y: 630, o: 0, hex: hs });
-  S.add('saltSame', 'text', { size: 26, weight: 800, mono: true, anchor: 'middle' }, { x: 800, y: 640, content: 'SAME', fill: C.amber, o: 0 });
+  for (let i = 6; i < 18; i++) {
+    S.add('ga' + i, 'dot', {}, { x: SA[0] + 190, y: 360, r: 5, fill: C.ink, o: 0 });
+    S.add('gb' + i, 'dot', {}, { x: SB[0] + 190, y: 360, r: 5, fill: C.ink, o: 0 });
+  }
+  S.add('blA', 'blender', {}, { x: SA[0], y: 525, o: 0, s: 0.33 });
+  S.add('blB', 'blender', {}, { x: SB[0], y: 525, o: 0, s: 0.33 });
+  S.add('barA', 'print', {}, { x: SA[0], y: 700, o: 0, s: 0.58, hex: hs });
+  S.add('barB', 'print', {}, { x: SB[0], y: 700, o: 0, s: 0.58, hex: hs });
+  S.add('saltSame', 'text', { size: 30, weight: 800, mono: true, anchor: 'middle' }, { x: 800, y: 710, content: 'SAME', fill: C.amber, o: 0 });
 
   // ---- the stolen list
   S.add('list', 'rect', {}, { x: 520, y: 120, w: 980, h: 640, rx: 22, fill: C.panel2, fo: 0.85, stroke: C.red, sw: 2, o: 0, z: -3 });
   S.add('listLbl', 'text', { size: 24, weight: 700, mono: true }, { x: 550, y: 166, content: 'STOLEN LIST · FINGERPRINTS ONLY', fill: C.red, o: 0 });
   STOLEN.forEach((u, i) => {
     S.add('sn' + i, 'text', { size: 30, weight: 700, mono: true }, { x: 560, y: 240 + 110 * i, content: u.n, fill: C.ink, o: 0 });
-    S.add('sb' + i, 'barcode', { w: 400, h: 54, text: false }, { x: 900, y: 228 + 110 * i, o: 0, hex: u.h });
+    S.add('sb' + i, 'print', { r: 40, text: false }, { x: 760, y: 228 + 110 * i, o: 0, s: 0.85, hex: u.h });
+    S.add('sh' + i, 'text', { size: 24, weight: 600, mono: true }, { x: 840, y: 236 + 110 * i, content: u.h.slice(0, 20) + '…', fill: C.faint, o: 0 });
   });
 
   // ---- crack-time bars
@@ -220,22 +232,31 @@ function scene(st) {
     S.add('ct' + i, 'text', { size: 26, weight: 800, mono: true, anchor: inside ? 'end' : 'start' }, { x: inside ? end - 16 : end + 16, y: y + 10, content: crackTime(p), fill: inside ? C.bg : tint, o: 0 });
     rowsTxt[i].w = w;
   });
+  Anim.addSection(S);
   S.add('how', 'text', { size: 22, weight: 500 }, { x: X0, y: 860, content: 'How we counted: (possible characters) to the power of (length), at 10 billion guesses a second.', fill: C.faint, o: 0 });
 
   const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * (span || 0.12), Math.min(1, k * (span || 0.12) + 0.6)] }; };
   const rs = cabRows.map((_, i) => 'r' + i);
   const fade = (s, ids) => ids.forEach((id) => { s[id].o = 0; });
+  // The password drops into the blender, the blades spin and shred it, and a fingerprint comes out.
+  const blend = (out, at, lit) => {
+    S.beat(0.6, (s) => { Object.assign(s.pwBox, { x: BL[0], y: BL[1] - 60, s: 0.45, o: 0 }); s.blender.glow = 1; });
+    S.beat(1.4, (s) => { s.blender.spin += 3; s.blender.chop = 1; });
+    S.beat(0.4, (s) => { s.blender.chop = 0; s.blender.spin += 0.5; Object.assign(s[out], { o: 1, s: 0.3 }); });
+    S.beat(0.8, (s) => { Object.assign(s[out], { x: at[0], y: at[1], s: 0.75 }); s.blender.glow = 0; if (lit) lit(s); });
+  };
 
   // 1. Sign up
-  S.step({ head: 'Make an account.', body: 'Alice is signing up. Type a **made-up** password below.', act: actSignUp })
-    .beat(1.0, (s) => {
+  S.step({ head: 'Make an account.', body: 'Alice is signing up. Pick a **username**, then pick one of three **passwords**.', act: actSignUp });
+  Anim.section(S, 'PART 1', 'Sign up');
+  S.beat(1.0, (s) => {
       ['alice', 'site'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
-      s.signLbl.o = 1; Object.assign(s.pwBox, { o: 1, s: 1 });
-    }, stagger(['alice', 'site', 'signLbl', 'pwBox'], 0.12));
+      s.signLbl.o = 1; Object.assign(s.userBox, { o: 1, s: 1 }); Object.assign(s.pwBox, { o: 1, s: 1 });
+    }, stagger(['alice', 'site', 'signLbl', 'userBox', 'pwBox'], 0.12));
 
   // 2. Saved as is; be Eve
   S.step({ head: 'The bad way: save it as is.', body: 'The website keeps every password in a cabinet. Now be **Eve** and tap the lock.', act: actLock })
-    .beat(0.9, (s) => { Object.assign(s.pwBox, { x: SITE[0], y: SITE[1], s: 0.6 }); s.signLbl.o = 0; s.site.glow = 1; })
+    .beat(0.9, (s) => { Object.assign(s.pwBox, { x: SITE[0], y: SITE[1], s: 0.6 }); Object.assign(s.userBox, { x: SITE[0], y: SITE[1], s: 0.6, o: 0 }); s.signLbl.o = 0; s.site.glow = 1; })
     .beat(0.8, (s) => { ['cab', 'cabLbl', 'lock'].forEach((id) => { s[id].o = 1; }); rs.slice(0, 3).forEach((id) => { s[id].o = 1; }); }, stagger(['cab', 'cabLbl', 'r0', 'r1', 'r2', 'lock'], 0.08))
     .beat(0.8, (s) => { Object.assign(s.pwBox, { x: CAB.x + 200, y: CAB.y + 110 + 52 * 3 - 8, o: 0, s: 0.5 }); s.r3.o = 1; s.site.glow = 0; })
     .beat(0.7, (s) => { Object.assign(s.eve, { o: 1, s: 1 }); s.eve.pulse = 1; });
@@ -245,32 +266,31 @@ function scene(st) {
     .beat(0.5, (s) => { s.lock.o = 0; s.unlock.o = 1; s.eve.pulse = 0; })
     .beat(1.1, (s) => rs.forEach((id, i) => Object.assign(s[id], { x: EVE[0] - 260, y: EVE[1] - 70 + 40 * i, fill: C.red })), stagger(rs, 0.1))
     .hold(0.6)
-    .beat(0.7, (s) => { fade(s, rs.concat(['cab', 'cabLbl', 'unlock', 'eve', 'site', 'alice'])); })
-    .beat(0.8, (s) => { Object.assign(s.blender, { o: 1, s: 1 }); Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
+    .hold(0.2);
+  Anim.section(S, 'PART 2', 'The blender', (s) => fade(s, rs.concat(['cab', 'cabLbl', 'unlock', 'eve', 'site', 'alice'])));
+  S.beat(0.8, (s) => { Object.assign(s.blender, { o: 1, s: 0.85 }); s.bLbl.o = 1; Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
 
   // 4. The fingerprint; blend again
-  S.step({ head: 'The blender makes a fingerprint.', body: 'Same password in, same fingerprint out. **Drag** it in again to check.', act: actBlend })
-    .beat(0.7, (s) => { Object.assign(s.pwBox, { x: BL[0], y: BL[1] - 40, s: 0.5, o: 0 }); s.blender.glow = 1; })
-    .beat(0.5, (s) => { s.blender.pulse = 1; })
-    .beat(0.9, (s) => { Object.assign(s.bar1, { o: 1, s: 1 }); s.blender.glow = 0; })
-    .beat(0.5, (s) => { Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); s.blender.pulse = 0; });
+  S.step({ head: 'The blender makes a fingerprint.', body: 'It shreds the password into a **fingerprint**. Same password in, same fingerprint out. **Drag** it in again to check.', act: actBlend });
+  blend('bar1', BAR1);
+  S.beat(0.5, (s) => { Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
 
   // 5. Same again; change a letter
-  S.step({ head: 'Exactly the same.', body: 'Now change **one letter** of your password, then blend it.', act: actChange })
-    .beat(0.7, (s) => { Object.assign(s.pwBox, { x: BL[0], y: BL[1] - 40, s: 0.5, o: 0 }); s.blender.glow = 1; })
-    .beat(0.9, (s) => { Object.assign(s.bar1b, { o: 1, s: 1 }); s.blender.glow = 0; })
-    .beat(0.5, (s) => { s.same.o = 1; Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
+  S.step({ head: 'Exactly the same.', body: 'Now tap **one letter** below to change it. Then watch the blender.', act: actChange });
+  blend('bar1b', BAR1B, (s) => { s.same.o = 1; s.bar1.edge = C.green; s.bar1b.edge = C.green; });
+  S.beat(0.5, (s) => { Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
 
   // 6. One letter changes everything; no way back
-  S.step({ head: 'One letter changes everything.', body: 'Every bar changed. Now try to **un-blend** a fingerprint back into the password.', act: actUnblend })
-    .beat(0.6, (s) => { fade(s, ['bar1b', 'same', 'pwBox']); Object.assign(s.bar1, { x: 480, y: 700, s: 0.8 }); s.t1.o = 1; })
-    .beat(0.9, (s) => { Object.assign(s.bar2, { x: 1120, y: 700, s: 0.8, o: 1 }); s.t2.o = 1; s.blender.glow = 1; })
-    .beat(0.7, (s) => { s.back.o = 1; s.back.draw = 1; s.backQ.o = 1; s.blender.glow = 0; });
+  S.step({ head: 'One letter changes everything.', body: 'A brand new fingerprint, not a small change. Now try to **un-blend** it back into the password.', act: actUnblend })
+    .beat(0.6, (s) => { fade(s, ['bar1b', 'same']); Object.assign(s.bar1, { x: 480, y: 650, s: 0.8, edge: C.line }); s.t1.o = 1; s.pwBox.content = pw2; s.pwBox.ink = C.amber; });
+  blend('bar2', [1120, 650], (s) => { s.t2.o = 1; s.bar2.edge = C.amber; });
+  S.beat(0.5, (s) => { s.matchTxt.o = 1; s.pwBox.o = 0; })
+    .beat(0.7, (s) => { s.back.o = 1; s.back.draw = 1; s.backQ.o = 1; });
 
   // 7. Sites keep the fingerprint; log in
-  const fpRow = (n, p) => `${n.padEnd(5, ' ')}${sha256(p).slice(0, 14)}…`;
+  const fpRow = (n, p) => `${n.padEnd(8, ' ')}${sha256(p).slice(0, 14)}…`;
   S.step({ head: 'Sites keep only the fingerprint.', body: 'At login they blend what you type and compare. **Log in** twice: once right, once with a typo.', act: (ctx) => actLogin(ctx, pw) })
-    .beat(0.6, (s) => { fade(s, ['blender', 'bar1', 'bar2', 't1', 't2', 'back', 'backQ']); })
+    .beat(0.6, (s) => { fade(s, ['blender', 'bLbl', 'bar1', 'bar2', 't1', 't2', 'back', 'backQ', 'matchTxt']); })
     .beat(0.9, (s) => {
       ['alice', 'site', 'cab', 'cabLbl', 'lock'].forEach((id) => { s[id].o = 1; });
       s.cabLbl.content = 'SAVED FINGERPRINTS';
@@ -278,40 +298,44 @@ function scene(st) {
     }, stagger(['alice', 'site', 'cab', 'cabLbl', 'lock'].concat(rs), 0.06));
 
   // 8. Salt
-  S.step({ head: 'A pinch of salt.', body: 'Two sites, same password, same fingerprint. Tap each **salt shaker**.', act: actSalt })
-    .beat(0.6, (s) => { fade(s, ['alice', 'site', 'cab', 'cabLbl', 'lock'].concat(rs)); })
-    .beat(0.9, (s) => {
+  S.step({ head: 'A pinch of salt.', body: 'Two sites, same password, same fingerprint. Tap each **salt shaker**.', act: actSalt });
+  Anim.section(S, 'PART 3', 'A pinch of salt', (s) => fade(s, ['alice', 'site', 'cab', 'cabLbl', 'lock'].concat(rs)));
+  S.beat(0.9, (s) => {
       ['siteA', 'siteB'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
-      ['pwA', 'pwB', 'shA', 'shB', 'barA', 'barB', 'saltSame'].forEach((id) => { s[id].o = 1; });
-    }, stagger(['siteA', 'siteB', 'pwA', 'pwB', 'barA', 'barB', 'saltSame', 'shA', 'shB'], 0.06));
+      ['pwA', 'pwB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame'].forEach((id) => { s[id].o = 1; });
+    }, stagger(['siteA', 'siteB', 'pwA', 'pwB', 'blA', 'blB', 'barA', 'barB', 'saltSame', 'shA', 'shB'], 0.06));
 
   // 9. Different fingerprints
-  const gs = [0, 1, 2, 3, 4, 5].map((i) => 'ga' + i), gbs = [0, 1, 2, 3, 4, 5].map((i) => 'gb' + i);
-  S.step({ head: 'Same password, different fingerprints.', body: 'Each site adds its own salt. A thief who cracks one site still has to start over on the other.' })
-    .beat(0.5, (s) => { s.shA.rot = 150; s.shB.rot = 150; })
-    .beat(0.8, (s) => {
-      gs.forEach((id, i) => Object.assign(s[id], { o: 1, x: SA[0] + 60 + i * 14, y: 412 }));
-      gbs.forEach((id, i) => Object.assign(s[id], { o: 1, x: SB[0] + 60 + i * 14, y: 412 }));
-    }, stagger(gs.concat(gbs), 0.03))
+  const NG = 18, gs = [...Array(NG).keys()].map((i) => 'ga' + i), gbs = [...Array(NG).keys()].map((i) => 'gb' + i);
+  // grains fall from the tipped shaker in a stream and land scattered across the password
+  const fall = (s, list, x0) => list.forEach((id, i) => Object.assign(s[id], { o: 1, x: x0 - 110 + ((i * 47) % 220), y: 404 + ((i * 13) % 26) }));
+  S.step({ head: 'Same password, different fingerprints.', body: 'Each site shakes in its own salt, then blends. A thief who cracks one site still has to start over on the other.' })
+    .beat(0.5, (s) => { s.shA.rot = 150; s.shB.rot = 150; [...gs, ...gbs].forEach((id) => { s[id].o = 1; }); })
+    .beat(0.25, (s) => { s.shA.rot = 125; s.shB.rot = 175; })
+    .beat(0.25, (s) => { s.shA.rot = 170; s.shB.rot = 130; })
+    .beat(1.1, (s) => { fall(s, gs, SA[0]); fall(s, gbs, SB[0]); s.shA.rot = 150; s.shB.rot = 150; }, stagger(gs.concat(gbs).sort((a, b) => a.slice(2) - b.slice(2)), 0.025))
     .beat(0.6, (s) => {
-      gs.concat(gbs).forEach((id) => { s[id].o = 0; }); s.shA.rot = 0; s.shB.rot = 0;
-      s.pwA.content = 'sunshine + ' + SALT[0]; s.pwB.content = 'sunshine + ' + SALT[1];
+      gs.concat(gbs).forEach((id) => { s[id].o = 0; s[id].y += 20; }); s.shA.rot = 0; s.shB.rot = 0;
+      s.pwA.content = 'sunshine + ' + SALT[0]; s.pwB.content = 'sunshine + ' + SALT[1]; s.pwA.edge = C.amber; s.pwB.edge = C.amber;
     })
-    .beat(1.0, (s) => { s.barA.hex = hA; s.barB.hex = hB; s.saltSame.content = 'DIFFERENT'; s.saltSame.fill = C.green; });
+    .beat(0.5, (s) => { Object.assign(s.pwA, { y: 500, s: 0.3, o: 0 }); Object.assign(s.pwB, { y: 500, s: 0.3, o: 0 }); s.blA.glow = 1; s.blB.glow = 1; })
+    .beat(1.2, (s) => { s.blA.spin += 3; s.blB.spin += 3; s.blA.chop = 1; s.blB.chop = 1; s.barA.hex = hA; s.barB.hex = hB; })
+    .beat(0.6, (s) => { s.blA.chop = 0; s.blB.chop = 0; s.blA.glow = 0; s.blB.glow = 0; Object.assign(s.pwA, { y: 420, s: 0.9, o: 1 }); Object.assign(s.pwB, { y: 420, s: 0.9, o: 1 });
+      s.saltSame.content = 'DIFFERENT'; s.saltSame.fill = C.green; s.barA.edge = C.green; s.barB.edge = C.green; });
 
   // 10. Be the thief
-  const lst = ['list', 'listLbl'].concat(STOLEN.flatMap((_, i) => ['sn' + i, 'sb' + i]));
+  const lst = ['list', 'listLbl'].concat(STOLEN.flatMap((_, i) => ['sn' + i, 'sb' + i, 'sh' + i]));
   S.step({ head: 'Be the thief.', body: 'Eve stole a list of fingerprints. She can only **guess, blend and compare**. Tap guesses below.', act: actCrack })
-    .beat(0.6, (s) => { fade(s, ['siteA', 'siteB', 'pwA', 'pwB', 'shA', 'shB', 'barA', 'barB', 'saltSame']); })
+    .beat(0.6, (s) => { fade(s, ['siteA', 'siteB', 'pwA', 'pwB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame']); })
     .beat(1.0, (s) => {
       Object.assign(s.eve, { x: 260, y: 420, o: 1, s: 1, pulse: 0, glow: 1 });
       lst.forEach((id) => { s[id].o = 1; });
     }, stagger(['eve'].concat(lst), 0.04));
 
   // 11. Crack time
-  S.step({ head: 'Length beats tricky symbols.', body: 'How long each would take to guess. Build your own **4-word passphrase** below.', act: actPhrase })
-    .beat(0.6, (s) => { fade(s, ['eve'].concat(lst)); })
-    .beat(0.5, (s) => { s.uni.o = 1; s.uniLbl.o = 1; [0, 1, 2].forEach((i) => { s['cl' + i].o = 1; }); })
+  S.step({ head: 'Length beats tricky symbols.', body: 'How long each would take to guess. Build your own **4-word passphrase** below.', act: actPhrase });
+  Anim.section(S, 'PART 4', 'Strong passwords', (s) => fade(s, ['eve'].concat(lst)));
+  S.beat(0.5, (s) => { s.uni.o = 1; s.uniLbl.o = 1; [0, 1, 2].forEach((i) => { s['cl' + i].o = 1; }); })
     .beat(1.6, (s) => { [0, 1, 2].forEach((i) => { Object.assign(s['cb' + i], { o: 1, w: rowsTxt[i].w }); s['ct' + i].o = 1; }); }, stagger(['cb0', 'ct0', 'cb1', 'ct1', 'cb2', 'ct2'], 0.07));
 
   // 12. The passphrase wins
@@ -324,44 +348,39 @@ function scene(st) {
 
 // ---------------------------------------------------------------- learner actions
 function actSignUp(ctx) {
-  ctx.slot.innerHTML = `<form style="display:contents">
-      <input id="m3pw" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Practice password" value="${ctx.state.pw}" style="text-transform:none">
-      <button class="lz-btn go" type="submit"><span>Sign up</span></button>
-      <p class="hint">4 to 16 characters. Make it up. Never type a real password.</p></form>`;
-  const inp = ctx.slot.querySelector('input'), hint = ctx.slot.querySelector('.hint');
-  ctx.slot.querySelector('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const v = inp.value.trim();
-    if (v.length < 4) { hint.textContent = 'Use at least 4 characters.'; hint.classList.add('err'); inp.focus(); return; }
-    ctx.done({ pw: v, pw2: null });
-  });
+  let user = null;
+  ctx.slot.innerHTML = `<p class="m3-msg">1. Username</p><div class="m3-row" data-u>${USERS.map((u) => `<button class="m3-chip" data-user="${u}" aria-pressed="false">@${u}</button>`).join('')}</div>
+    <p class="m3-msg">2. Password (practice only)</p><div class="m3-row" data-p>${PWS.map((p) => `<button class="m3-chip" data-pw="${p}" disabled>${p}</button>`).join('')}</div>`;
+  const pws = [...ctx.slot.querySelectorAll('[data-pw]')];
+  ctx.slot.querySelectorAll('[data-user]').forEach((b) => b.addEventListener('click', () => {
+    user = b.dataset.user;
+    ctx.slot.querySelectorAll('[data-user]').forEach((x) => x.setAttribute('aria-pressed', x === b));
+    pws.forEach((x) => { x.disabled = false; }); pws[0].focus();
+  }));
+  pws.forEach((b) => b.addEventListener('click', () => { if (user) ctx.done({ user, pw: b.dataset.pw, pw2: null }); }));
 }
 function actLock(ctx) {
   ctx.hit(LOCK[0], LOCK[1], 110, 110, 'Break in', () => ctx.done({}), 'top');
 }
 function actBlend(ctx) {
-  ctx.drag(PW_L[0], PW_L[1], Math.min(380, cardW(ctx.state.pw)), 80, 'Drag into the blender', { x: BL[0], y: BL[1], r: 100, label: 'Blender' }, () => ctx.done({}), { cls: 'clear' });
+  ctx.drag(PW_L[0], PW_L[1], Math.min(380, cardW(ctx.state.pw)), 80, 'Drag into the blender', { x: BL[0], y: BL[1], r: 110, label: 'Blender' }, () => ctx.done({}), { cls: 'clear' });
 }
 function actChange(ctx) {
   const pw = ctx.state.pw;
-  ctx.slot.innerHTML = `<form style="display:contents">
-      <input id="m3pw2" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Change one letter" value="${pw}" style="text-transform:none">
-      <button class="lz-btn go" type="submit"><span>Blend</span></button>
-      <p class="hint">Change just one letter, for example the last one.</p></form>`;
-  const inp = ctx.slot.querySelector('input'), hint = ctx.slot.querySelector('.hint');
-  ctx.slot.querySelector('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const v = inp.value.trim();
-    if (v === pw) { hint.textContent = 'It is still the same. Change one letter.'; hint.classList.add('err'); inp.focus(); return; }
-    if (v.length < 1) { hint.textContent = 'Type something to blend.'; hint.classList.add('err'); return; }
-    ctx.done({ pw2: v });
-  });
+  ctx.slot.innerHTML = `<div class="m3-row">${[...pw].map((c, i) => `<button class="m3-chip m3-letter" data-i="${i}" aria-label="Change ${c}">${c}</button>`).join('')}</div>
+    <p class="hint">Tap any letter or number. It changes to the next one (a becomes b).</p>`;
+  ctx.slot.querySelectorAll('.m3-letter').forEach((b) => b.addEventListener('click', () => {
+    const i = +b.dataset.i, v = pw.slice(0, i) + bump(pw[i]) + pw.slice(i + 1);
+    ctx.slot.querySelectorAll('.m3-letter').forEach((x) => { x.disabled = true; });
+    b.textContent = v[i]; b.classList.add('hit');
+    setTimeout(() => ctx.done({ pw2: v }), 600);
+  }));
 }
 function actUnblend(ctx) {
-  ctx.hit(1005, 475, 130, 100, 'Un-blend', (b) => {
+  ctx.hit(950, 515, 130, 100, 'Un-blend', (b) => {
     if (b.disabled) return;
     b.disabled = true; b.classList.add('shake');
-    const x = document.createElement('div'); x.className = 'm3-x'; x.textContent = '✕'; Object.assign(x.style, ctx.pos(1005, 475)); ctx.ov.appendChild(x);
+    const x = document.createElement('div'); x.className = 'm3-x'; x.textContent = '✕'; Object.assign(x.style, ctx.pos(950, 515)); ctx.ov.appendChild(x);
     ctx.toast('No way back. A blender only goes one way.');
     setTimeout(() => ctx.done({}), 1500);
   }, 'top');
@@ -444,7 +463,7 @@ const quiz = [
     why: 'It keeps only the fingerprint, and blends what you type at login to compare.' },
   { q: 'Change one letter of a password, and its fingerprint:',
     choices: ['Stays the same', 'Changes one letter', 'Changes completely', 'Gets shorter'], answer: 2,
-    why: 'Every bar reshuffled. A tiny change gives a totally different fingerprint.' },
+    why: 'The whole fingerprint changed. A tiny change gives a totally different fingerprint.' },
   { q: 'With a stolen list of fingerprints, a thief must:',
     choices: ['Un-blend each one', 'Guess and compare', 'Ask the website', 'Wait a few days'], answer: 1,
     why: 'There is no un-blend. A thief can only guess, blend each guess and compare.' },
@@ -456,7 +475,7 @@ const quiz = [
     why: 'Each site adds its own salt, so the same password gets a different fingerprint.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { id: 'm3', state: { pw: 'pizza123', pw2: null, phrase: 'otter piano comet maple' }, scene, quiz });
+Lesson.mount(document.getElementById('lesson'), { id: 'm3', state: { user: 'alice', pw: 'pizza123', pw2: null, phrase: 'otter piano comet maple' }, scene, quiz, next: Lessons.next('m3') });
 </script>
 </body>
 </html>

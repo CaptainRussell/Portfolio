@@ -308,6 +308,204 @@
       setA(h.a, 'opacity', cross ? (1 - e).toFixed(3) : '0'); setA(h.b, 'opacity', cross ? e.toFixed(3) : '1');
     },
   };
+  // ---------------------------------------------------------------- the cast
+  // Alice and Bob as people, from the Card Deck Cipher slides (projects/daniels-cipher/slides): a white face with a
+  // dark outline; Alice with hair to her shoulders and a cardinal top, Bob with short hair. Centered on (x, y).
+  //   cfg: who ('alice' or 'bob'), label (default the name), labelSize
+  //   props: glow (0 to 1), pulse (0 to 1), tint (halo color)
+  const AGENT_BODY = 'M -46 64 C -46 27 -26 15 0 15 C 26 15 46 27 46 64 Z';
+  const AGENT_HAIR = { long: 'M -31 -12 C -33 -62 33 -62 31 -12 L 33 22 C 20 29 -20 29 -33 22 Z',
+    short: 'M -25 -15 C -27 -50 27 -50 25 -15 C 19 -28 -11 -33 -25 -15 Z' };
+  KINDS.person = {
+    defaults: { tint: C.cyan, glow: 0, pulse: 0 },
+    create(g, cfg) {
+      const long = cfg.who !== 'bob', r = el('g', {}, g);
+      const halo = el('circle', { cx: 0, cy: 0, r: 86, fill: 'none', 'stroke-width': 6 }, r);
+      const pulse = el('circle', { cx: 0, cy: 0, fill: 'none', 'stroke-width': 3 }, r);
+      el('circle', { cx: 0, cy: 0, r: 76, fill: C.panel2, stroke: C.line, 'stroke-width': 3 }, r);
+      const fig = el('g', { transform: 'translate(0 -6) scale(0.92)' }, r);
+      const line = '#0a0f1c';
+      if (long) el('path', { d: AGENT_HAIR.long, fill: '#1b1410', stroke: '#c9b8a8', 'stroke-width': 1.5 }, fig);
+      el('path', { d: AGENT_BODY, fill: long ? '#c8102e' : '#5b6b86', stroke: line, 'stroke-width': 2 }, fig);
+      el('circle', { cx: 0, cy: long ? -13 : -15, r: long ? 20 : 23, fill: '#ffffff', stroke: line, 'stroke-width': 3 }, fig);
+      if (!long) el('path', { d: AGENT_HAIR.short, fill: '#1b1410', stroke: '#c9b8a8', 'stroke-width': 1.5 }, fig);
+      const lab = el('text', { x: 0, y: 76 + 46, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 40, 'font-weight': 650, fill: C.ink }, r);
+      lab.textContent = cfg.label || (long ? 'Alice' : 'Bob');
+      return { root: r, halo, pulse };
+    },
+    update(h, p) {
+      setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      setA(h.root, 'opacity', p.o.toFixed(3));
+      setA(h.halo, 'stroke', p.tint); setA(h.halo, 'opacity', (p.glow * 0.6).toFixed(3));
+      setA(h.pulse, 'r', (82 + p.pulse * 60).toFixed(2)); setA(h.pulse, 'stroke', p.tint);
+      setA(h.pulse, 'opacity', (p.pulse > 0.001 && p.pulse < 0.999 ? (1 - p.pulse) * 0.8 : 0).toFixed(3));
+    },
+  };
+  // Eve's eye, from the Card Deck Cipher slides: a white almond with a dark iris and a glint.
+  //   cfg: label (default 'Eve'), size (width, default 150)
+  //   props: look (-1 to 1, where the iris looks, left to right), lookY, glow, pulse, tint
+  KINDS.eye = {
+    defaults: { look: 0, lookY: 0, glow: 0, pulse: 0, tint: C.red },
+    create(g, cfg) {
+      const W = cfg.size || 150, k = W / 128, r = el('g', {}, g);
+      const halo = el('path', { d: 'M -64 0 Q 0 -50 64 0 Q 0 50 -64 0 Z', fill: 'none', 'stroke-width': 10, transform: `scale(${k * 1.12})` }, r);
+      const pulse = el('path', { d: 'M -64 0 Q 0 -50 64 0 Q 0 50 -64 0 Z', fill: 'none', 'stroke-width': 3 }, r);
+      el('path', { d: 'M -64 0 Q 0 -50 64 0 Q 0 50 -64 0 Z', fill: '#ffffff', stroke: '#0a0f1c', 'stroke-width': 4, transform: `scale(${k})` }, r);
+      const iris = el('g', {}, r);
+      el('circle', { cx: 0, cy: 0, r: 22 * k, fill: '#0a0f1c' }, iris);
+      el('circle', { cx: -7 * k, cy: -7 * k, r: 6 * k, fill: '#ffffff' }, iris);
+      const lab = el('text', { x: 0, y: 30 * k + 46, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 40, 'font-weight': 650, fill: C.red }, r);
+      lab.textContent = cfg.label == null ? 'Eve' : cfg.label;
+      return { root: r, halo, pulse, iris, k };
+    },
+    update(h, p) {
+      setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      setA(h.root, 'opacity', p.o.toFixed(3));
+      setA(h.iris, 'transform', `translate(${(p.look * 26 * h.k).toFixed(2)} ${(p.lookY * 8 * h.k).toFixed(2)})`);
+      setA(h.halo, 'stroke', p.tint); setA(h.halo, 'opacity', (p.glow * 0.55).toFixed(3));
+      const sc = h.k * (1.15 + p.pulse * 0.6);
+      setA(h.pulse, 'transform', `scale(${sc.toFixed(4)})`); setA(h.pulse, 'stroke', p.tint);
+      setA(h.pulse, 'opacity', (p.pulse > 0.001 && p.pulse < 0.999 ? (1 - p.pulse) * 0.8 : 0).toFixed(3));
+    },
+  };
+  // A big key that can be painted (Lesson 2). props: paint (fill color), edge, glow, rot.
+  KINDS.keyart = {
+    defaults: { paint: '#ffffff', edge: C.ink, glow: 0, rot: 0 },
+    create(g) {
+      const r = el('g', {}, g), body = el('g', {}, r);
+      const halo = el('circle', { cx: -60, cy: 0, r: 56, fill: 'none', 'stroke-width': 8 }, body);
+      const shapes = [el('circle', { cx: -60, cy: 0, r: 40, 'stroke-width': 4 }, body),
+        el('path', { d: 'M -24 -11 H 96 V 11 H 86 V 32 H 72 V 11 H 62 V 36 H 48 V 11 H -24 Z', 'stroke-width': 4, 'stroke-linejoin': 'round' }, body)];
+      el('circle', { cx: -60, cy: 0, r: 14, fill: C.bg, 'stroke-width': 3, stroke: C.line }, body);
+      return { root: r, body, halo, shapes };
+    },
+    update(h, p) {
+      setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      setA(h.root, 'opacity', p.o.toFixed(3)); setA(h.body, 'transform', `rotate(${p.rot.toFixed(2)})`);
+      h.shapes.forEach((s) => { setA(s, 'fill', p.paint); setA(s, 'stroke', p.edge); });
+      setA(h.halo, 'stroke', p.paint); setA(h.halo, 'opacity', (p.glow * 0.6).toFixed(3));
+    },
+  };
+  // A blender (Lesson 3): a jar with blades that spin as spin grows (1 = one full turn), and a whirl of shreds.
+  //   props: spin, chop (0 to 1, how full of shreds), tint, glow
+  KINDS.blender = {
+    defaults: { spin: 0, chop: 0, tint: C.amber, glow: 0 },
+    create(g, cfg) {
+      const r = el('g', {}, g), W = cfg.size || 1;
+      const halo = el('rect', { x: -110, y: -150, width: 220, height: 330, rx: 30, fill: 'none', 'stroke-width': 8 }, r);
+      const jar = el('path', { d: 'M -90 -130 H 90 L 66 80 H -66 Z', fill: 'rgba(34,211,238,.06)', 'stroke-width': 5, 'stroke-linejoin': 'round' }, r);
+      const base = el('rect', { x: -80, y: 80, width: 160, height: 70, rx: 14, fill: C.panel2, 'stroke-width': 5 }, r);
+      const knob = el('circle', { cx: 0, cy: 115, r: 14, 'stroke-width': 4, fill: C.panel }, r);
+      const shreds = el('g', {}, r), bits = [];
+      for (let i = 0; i < 22; i++) {
+        const b = el('rect', { width: 14 + (i % 3) * 6, height: 8, rx: 2 }, shreds);
+        bits.push({ b, a: (i * 137.5) % 360, rr: 18 + ((i * 29) % 52), y: -20 - ((i * 37) % 80), c: [C.cyan, C.violet, C.amber, C.green, C.red][i % 5] });
+      }
+      const blades = el('g', {}, r);
+      el('path', { d: 'M -46 0 Q 0 -14 46 0 Q 0 14 -46 0 Z', 'stroke-width': 3 }, blades);
+      el('path', { d: 'M 0 -30 Q 10 0 0 30 Q -10 0 0 -30 Z', 'stroke-width': 3 }, blades);
+      return { root: r, halo, jar, base, knob, blades, bits, W };
+    },
+    update(h, p) {
+      setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      setA(h.root, 'opacity', p.o.toFixed(3));
+      [h.jar, h.base, h.knob].forEach((n) => setA(n, 'stroke', p.tint));
+      setA(h.halo, 'stroke', p.tint); setA(h.halo, 'opacity', (p.glow * 0.5).toFixed(3));
+      setA(h.blades, 'transform', `translate(0 52) rotate(${(p.spin * 360).toFixed(1)}) scale(1 0.45)`);
+      h.blades.querySelectorAll('path').forEach((n) => { setA(n, 'stroke', p.tint); setA(n, 'fill', C.panel2); });
+      h.bits.forEach((q, i) => {
+        const ang = ((q.a + p.spin * 520 * (i % 2 ? 1 : -1.3)) * Math.PI) / 180;
+        const x = Math.cos(ang) * q.rr, y = q.y + Math.sin(ang) * 18 * p.chop;
+        setA(q.b, 'x', x.toFixed(2)); setA(q.b, 'y', y.toFixed(2)); setA(q.b, 'fill', q.c);
+        setA(q.b, 'transform', `rotate(${((p.spin * 900 + i * 40) % 360).toFixed(1)} ${(x + 7).toFixed(1)} ${(y + 4).toFixed(1)})`);
+        setA(q.b, 'opacity', Math.max(0, Math.min(1, p.chop * 1.4 - (i % 4) * 0.08)).toFixed(3));
+      });
+    },
+  };
+  // A fingerprint drawn from a hash (Lesson 3): about a dozen ridges whose shape, breaks, tilt and colors all come
+  // from the hash bytes, so one changed letter gives a completely different print. The hash prints small underneath.
+  //   cfg: r (radius, default 120), text (false hides the hash)
+  //   props: hex, edge
+  function printPaths(hex, R) {
+    R = R || 120;
+    if (!hex) return { paths: [], tilt: 0 };
+    const b = (i) => parseInt(hex.substr((i * 2) % 64, 2), 16);
+    const type = b(0) % 3, tilt = (b(1) / 255) * 70 - 35, cx = ((b(2) / 255) - 0.5) * R * 0.35, cy = ((b(3) / 255) - 0.5) * R * 0.3;
+    const hue1 = (b(4) / 255) * 360, hue2 = (hue1 + 70 + (b(5) / 255) * 140) % 360;
+    const paths = [], n = 11;
+    for (let k = 1; k <= n; k++) {
+      const rr = (R * 0.9 * k) / n, sq = type === 2 ? 0.55 : 0.82, gap = 30 + (b(6 + k) / 255) * 70;
+      let a0, a1;
+      if (type === 0) { a0 = 200 + gap / 2; a1 = 520 - gap / 2; }                 // loop, open at the bottom
+      else if (type === 1) { a0 = (b(18 + k) / 255) * 360; a1 = a0 + 360 - gap; }  // whorl, broken at random
+      else { a0 = 190; a1 = 350; }                                                   // arch
+      const brk = 0.35 + (b(30 + k) / 255) * 0.3, pts = (t0, t1) => {
+        const st = (t0 * Math.PI) / 180, en = (t1 * Math.PI) / 180;
+        const x0 = cx + rr * Math.cos(st), y0 = cy + rr * sq * Math.sin(st), x1 = cx + rr * Math.cos(en), y1 = cy + rr * sq * Math.sin(en);
+        return `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${rr.toFixed(1)} ${(rr * sq).toFixed(1)} 0 ${t1 - t0 > 180 ? 1 : 0} 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
+      };
+      const mid = a0 + (a1 - a0) * brk;
+      const col = `hsl(${(k % 2 ? hue1 : hue2).toFixed(0)} 80% ${(52 + (k % 3) * 6).toFixed(0)}%)`;
+      paths.push({ d: pts(a0, mid - 6), c: col }, { d: pts(mid + 6, a1), c: col });
+    }
+    return { paths, tilt };
+  }
+  KINDS.print = {
+    defaults: { hex: '', edge: C.line },
+    create(g, cfg) {
+      const R = cfg.r || 120, r = el('g', {}, g);
+      const frame = el('rect', { x: -R - 18, y: -R - 18, width: 2 * R + 36, height: 2 * R + 36, rx: 26, fill: C.panel, 'stroke-width': 2 }, r);
+      const A = el('g', {}, r), B = el('g', {}, r);
+      const mk = () => el('text', { x: 0, y: R + 58, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': cfg.size || 24, 'font-weight': 600, fill: C.soft }, r);
+      return { root: r, frame, A, B, R, cfg, ta: mk(), tb: mk(), ha: null, hb: null };
+    },
+    update(h, p, from, to, e) {
+      setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      setA(h.root, 'opacity', p.o.toFixed(3)); setA(h.frame, 'stroke', p.edge);
+      const draw = (grp, hex) => {
+        while (grp.firstChild) grp.removeChild(grp.firstChild);
+        const P = printPaths(hex, h.R);
+        grp.setAttribute('transform', `rotate(${P.tilt.toFixed(1)})`);
+        P.paths.forEach((q) => el('path', { d: q.d, fill: 'none', stroke: q.c, 'stroke-width': 5, 'stroke-linecap': 'round' }, grp));
+      };
+      if (h.ha !== from.hex) { draw(h.A, from.hex); h.ha = from.hex; }
+      if (h.hb !== to.hex) { draw(h.B, to.hex); h.hb = to.hex; }
+      const cross = from.hex !== to.hex;
+      // the old print spins away as the new one spins in
+      setA(h.A, 'opacity', cross ? (1 - e).toFixed(3) : '0');
+      setA(h.B, 'opacity', cross ? e.toFixed(3) : '1');
+      if (cross) {
+        const P0 = printPaths(from.hex, h.R).tilt, P1 = printPaths(to.hex, h.R).tilt;
+        h.A.setAttribute('transform', `rotate(${(P0 - e * 180).toFixed(1)}) scale(${(1 - e * 0.4).toFixed(3)})`);
+        h.B.setAttribute('transform', `rotate(${(P1 + (1 - e) * 180).toFixed(1)}) scale(${(0.6 + e * 0.4).toFixed(3)})`);
+      } else if (h.B._t !== to.hex) { h.B.setAttribute('transform', `rotate(${printPaths(to.hex, h.R).tilt.toFixed(1)})`); h.B._t = to.hex; }
+      const lab = (q) => (h.cfg.text === false || !q.hex ? '' : q.hex.slice(0, 16) + '…');
+      const ca = lab(from), cb = lab(to);
+      h.ta.textContent = ca; h.tb.textContent = cb;
+      setA(h.ta, 'opacity', ca !== cb ? (1 - e).toFixed(3) : '0'); setA(h.tb, 'opacity', ca !== cb ? e.toFixed(3) : '1');
+    },
+  };
+  // A section card: a full-stage title that sweeps in between parts of a lesson (shared by all four lessons).
+  // Call Anim.addSection(S) before the first step, then Anim.section(S, 'Part 2', 'Title') at the start of a step.
+  function addSection(S) {
+    S.add('secBg', 'rect', {}, { x: 0, y: 0, w: S.w, h: S.h, rx: 0, fill: C.bg, fo: 0.92, sw: 0, o: 0, z: 50 });
+    S.add('secLine', 'rect', {}, { x: S.w / 2 - 160, y: S.h / 2 + 4, w: 0, h: 5, rx: 3, fill: C.cyan, sw: 0, o: 0, z: 51 });
+    S.add('secK', 'text', { size: 30, weight: 700, mono: true, anchor: 'middle', ls: 6 }, { x: S.w / 2, y: S.h / 2 - 70, content: '', fill: C.cyan, o: 0, z: 51 });
+    S.add('secT', 'text', { size: 72, weight: 800, anchor: 'middle' }, { x: S.w / 2, y: S.h / 2 - 12, content: '', fill: C.ink, o: 0, z: 51 });
+  }
+  function section(S, kicker, title, hide) {
+    S.beat(0.45, (s) => { Object.assign(s.secBg, { o: 1 }); Object.assign(s.secK, { o: 1, content: kicker }); Object.assign(s.secT, { o: 1, content: title }); Object.assign(s.secLine, { o: 1, w: 320 }); });
+    S.beat(0.9, (s) => { if (hide) hide(s); });
+    S.beat(0.45, (s) => { s.secBg.o = 0; s.secK.o = 0; s.secT.o = 0; Object.assign(s.secLine, { o: 0, w: 0 }); });
+    return S;
+  }
+  // A small inline SVG fingerprint for page controls.
+  function printSVG(hex, px) {
+    const P = printPaths(hex, 120);
+    return `<svg viewBox="-140 -140 280 280" width="${px || 34}" height="${px || 34}" aria-hidden="true" style="vertical-align:middle;background:${C.panel};border-radius:8px">
+      <g transform="rotate(${P.tilt.toFixed(1)})">${P.paths.map((q) => `<path d="${q.d}" fill="none" stroke="${q.c}" stroke-width="9" stroke-linecap="round"/>`).join('')}</g></svg>`;
+  }
+
   // A small piece of data on the move: a rounded chip with a short monospace label, centered on (x, y).
   //   cfg: text, w (default fits the text)
   //   props: fill, ink (label color), glow (0 to 1), content (changes the label, crossfading)
@@ -433,5 +631,5 @@
     }
   }
 
-  root.Anim = { Scene, Player, KINDS, ICONS, C, el, easeInOut, fmtNum, FONT, MONO, barSpec };
+  root.Anim = { Scene, Player, KINDS, ICONS, C, el, easeInOut, fmtNum, FONT, MONO, barSpec, addSection, section, printSVG, printPaths };
 })(this);

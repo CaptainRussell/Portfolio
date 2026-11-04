@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Final Review · How the Internet Keeps Secrets · Scott D. Russell</title>
+<meta name="description" content="The final review for How the Internet Keeps Secrets: eight questions across all four lessons, then an overall score.">
+<link rel="icon" href="../../../../shared/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../../../shared/portfolio.css">
+<link rel="stylesheet" href="../shared/lesson.css">
+<script src="../../../../shared/portfolio.js"></script>
+<style>
+.proj-head{padding-bottom:6px}
+.fr-table{width:100%;border-collapse:collapse;margin:14px 0 4px;font-size:15px}
+.fr-table td{padding:9px 6px;border-bottom:1px solid var(--c-line);color:var(--c-soft)}
+.fr-table td:last-child{text-align:right;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;font-weight:800;color:var(--c-ink)}
+.fr-table tr.total td{color:var(--c-ink);font-weight:800;border-bottom:0}
+.fr-table a{color:var(--c-cyan)}
+</style>
+</head>
+<body style="--tone:#0d9488">
+<header class="pf-bar">
+  <a class="pf-up" href="../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Lessons</span><span class="pf-brand"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<div class="proj-head"><div class="wrap">
+  <p class="kicker">How the Internet Keeps Secrets · Complete</p>
+  <h1>Final review</h1>
+  <p class="sub">Eight questions, two from each lesson. Then see your overall score.</p>
+</div></div>
+
+<main class="wrap">
+  <div id="final" class="lz"><div class="lz-view lz-quiz" data-view="quiz"></div></div>
+</main>
+
+<footer class="pf-foot">
+  <div class="foot-mark" aria-hidden="true">SR</div>
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">M.S. Cybersecurity · Iowa State University</p>
+  <p class="source-line">How the Internet Keeps Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
+</footer>
+<script src="../shared/lessons.js"></script>
+<script>
+/* The final review: two new questions per lesson (choices of about equal length), then the overall score:
+   the best check score from each lesson (out of 20) plus this review (out of 8). Code organized with help from Claude (Anthropic). */
+(function () {
+  const Q = [
+    { l: 1, q: 'Why does each packet carry a number?', choices: ['So Bob can put them in order', 'So routers can read them', 'So Eve can find them', 'So they travel faster'], answer: 0,
+      why: 'Packets can arrive out of order. The numbers let Bob rebuild the message.' },
+    { l: 1, q: 'A router that passes your plain packet along can:', choices: ['Change your password', 'Read what it says', 'Stop the internet', 'Lock it with a key'], answer: 1,
+      why: 'A plain packet is like a postcard: anyone holding it can read it.' },
+    { l: 2, q: 'Alice and Bob end up with the same secret color because:', choices: ['Eve sends it to them', 'They mail it to each other', 'Each adds a secret to a mix', 'The public color is secret'], answer: 2,
+      why: 'Public + Alice + Bob lands in both cans, in either order, and the secrets are never sent.' },
+    { l: 2, q: 'After Alice locks a message with the shared key, Eve copies it. She sees:', choices: ['The whole message', "Alice's password", 'The secret color', 'Only scrambled letters'], answer: 3,
+      why: 'Without the key, the locked message is just scramble.' },
+    { l: 3, q: 'Two sites add different salt. The same password gets:', choices: ['Different fingerprints', 'The same fingerprint', 'No fingerprint at all', 'A shorter fingerprint'], answer: 0,
+      why: 'Salt changes what goes into the blender, so the fingerprints differ.' },
+    { l: 3, q: 'Which password would take the longest to guess?', choices: ['A short word with symbols', "Your pet's name and birthday", 'A long four-word passphrase', 'The same one on every site'], answer: 2,
+      why: 'Length wins. Four random words beat a short, tricky password.' },
+    { l: 4, q: 'Door 22 (remote login) gets only attacks. You should:', choices: ['Leave it open', 'Shut that door', 'Open every door', 'Shut every door'], answer: 1,
+      why: 'Shut the doors nobody real uses. Shutting every door turns real visitors away too.' },
+    { l: 4, q: 'A flood of traffic (DDoS) is best fought by:', choices: ['Closing every door', 'Changing passwords', 'Filtering it early', 'Turning off the firewall'], answer: 2,
+      why: 'Filtering upstream and spreading the load keep the door open for real visitors.' },
+  ];
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ic = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+  const I = { next: ic('<path d="M9 5l7 7-7 7"/>'), check: ic('<path d="m5 12 5 5 9-10"/>'), x: ic('<path d="M6 6l12 12M18 6 6 18"/>') };
+  const box = document.querySelector('#final .lz-quiz');
+  let qi = 0, right = 0;
+  function ask() {
+    const q = Q[qi];
+    box.innerHTML = `<p class="lz-count">Final review · Lesson ${q.l} · Question ${qi + 1} of ${Q.length}</p>
+      <div class="lz-qbar" aria-hidden="true">${Q.map((_, i) => `<i class="${i < qi ? 'done' : i === qi ? 'cur' : ''}"></i>`).join('')}</div>
+      <h2 class="lz-q" tabindex="-1">${esc(q.q)}</h2>
+      <div class="lz-choices">${q.choices.map((c, i) => `<button class="lz-choice" data-c="${i}"><span class="lz-key">${'ABCD'[i]}</span><span>${esc(c)}</span></button>`).join('')}</div>
+      <div class="lz-why" aria-live="polite"></div>`;
+    box.querySelectorAll('.lz-choice').forEach((b) => b.addEventListener('click', () => pick(+b.dataset.c)));
+  }
+  function pick(c) {
+    const q = Q[qi], ok = c === q.answer; if (ok) right++;
+    box.querySelectorAll('.lz-choice').forEach((b, i) => {
+      b.disabled = true;
+      if (i === q.answer) { b.classList.add('right'); b.querySelector('.lz-key').innerHTML = I.check; }
+      else if (i === c) { b.classList.add('wrong'); b.querySelector('.lz-key').innerHTML = I.x; }
+    });
+    const last = qi === Q.length - 1;
+    box.querySelector('.lz-why').innerHTML = `<p class="${ok ? 'ok' : 'no'}"><b>${ok ? 'Correct.' : 'Not quite.'}</b> ${esc(q.why)}</p>
+      <button class="lz-btn go" data-q="next"><span>${last ? 'See my overall score' : 'Next question'}</span>${I.next}</button>`;
+    const nb = box.querySelector('[data-q="next"]');
+    nb.addEventListener('click', () => { if (last) done(); else { qi++; ask(); } }); nb.focus({ preventScroll: true });
+  }
+  function done() {
+    const sc = Lessons.scores();
+    if (!(sc.final >= right)) sc.final = right;
+    Lessons.save(sc);
+    const rows = Lessons.LIST.map((l) => [l, sc[l.id]]);
+    const got = rows.reduce((a, [, v]) => a + (v || 0), 0) + right, of = 20 + Q.length, pct = Math.round((100 * got) / of);
+    const missing = rows.filter(([, v]) => v == null);
+    box.classList.add('scored');
+    box.innerHTML = `<div class="lz-score ${pct >= 80 ? 'pass' : 'retry'}">
+        <div class="lz-ring" style="--p:${got / of}"><b>${pct}%</b></div>
+        <div><p class="lz-count">How the Internet Keeps Secrets · Overall</p>
+        <h2 tabindex="-1">${pct >= 80 ? 'Course complete' : 'Almost there'}</h2>
+        <p class="lz-body">${got} of ${of} across the four lesson checks and this review. ${pct >= 80 ? 'You met the 80% goal.' : '80% or more meets the goal. Replay a lesson and retake its check.'}</p></div></div>
+      <table class="fr-table">${rows.map(([l, v]) => `<tr><td><a href="../${l.href}">Lesson ${l.n}: ${esc(l.name)}</a></td><td>${v == null ? 'not taken' : v + '/5'}</td></tr>`).join('')}
+        <tr><td>Final review (this time)</td><td>${right}/${Q.length}</td></tr><tr class="total"><td>Overall</td><td>${got}/${of}</td></tr></table>
+      ${missing.length ? `<p class="lz-best">Not taken yet: ${missing.map(([l]) => 'Lesson ' + l.n).join(', ')}. Those count as zero until you take their checks.</p>` : ''}
+      <div class="lz-bar end"><a class="lz-btn" href="../">All lessons</a><button class="lz-btn go" data-q="again"><span>Retake the review</span>${I.next}</button></div>`;
+    box.querySelector('h2').focus({ preventScroll: true });
+    box.querySelector('[data-q="again"]').addEventListener('click', () => { qi = 0; right = 0; box.classList.remove('scored'); ask(); });
+  }
+  ask();
+})();
+</script>
+</body>
+</html>
