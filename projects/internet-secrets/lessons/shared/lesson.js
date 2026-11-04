@@ -12,6 +12,7 @@
  *                                  // Next is not blocked (extras such as a math peek).
  *     quiz: [{q, choices: [...], answer: 0, why: 'one sentence'}],   // five questions
  *     pass: 4,                     // correct answers needed (default 4 of 5, 80%)
+ *     next: {href, label},         // where the score screen sends the learner: the next lesson, or the final review
  *   });
  *
  * Controls: Next (or the right arrow or Space) plays the next step, and skips to the end of a step that is
@@ -250,7 +251,8 @@
         </div>
         <div class="lz-bar end">
           <button class="lz-btn" data-q="watch">${I.replay}<span>Watch again</span></button>
-          <button class="lz-btn go" data-q="retake"><span>Retake quiz</span>${I.next}</button>
+          <button class="lz-btn ${L.next ? 'ghost' : 'go'}" data-q="retake"><span>Retake quiz</span></button>
+          ${L.next ? `<a class="lz-btn go" href="${esc(L.next.href)}"><span>${esc(L.next.label)}</span>${I.next}</a>` : ''}
         </div>`;
       quiz.querySelector('h2').focus({ preventScroll: true });
       quiz.querySelector('[data-q="watch"]').addEventListener('click', () => { swap('watch'); rest(0); });

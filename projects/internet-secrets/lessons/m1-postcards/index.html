@@ -20,7 +20,7 @@
 <div class="proj-head"><div class="wrap">
   <p class="kicker">How the Internet Keeps Secrets · Lesson 1 of 4</p>
   <h1>Postcards on the Internet</h1>
-  <p class="sub">You are Alice. Send Bob a message and follow it across the internet, one router at a time.</p>
+  <p class="sub">You are Alice. Pick a message for Bob and follow it across the internet, one router at a time.</p>
 </div></div>
 
 <main class="wrap">
@@ -38,6 +38,7 @@
 
 <script src="../shared/engine.js"></script>
 <script src="../shared/lesson.js"></script>
+<script src="../shared/lessons.js"></script>
 <script>
 /* =====================================================================
    Lesson 1: Postcards on the Internet (Objective 1)
@@ -45,7 +46,7 @@
    by different paths; a lost one is sent again and the numbers put the
    message back in order. Anyone holding a packet can read it.
    Source: Kurose and Ross, Computer Networking, 8th ed. [1].
-   Learner actions: type the message, cut it, pick the first router,
+   Learner actions: pick the message, cut it, pick the first router,
    reroute around a jam, ask for the lost postcard, put the postcards in
    order, read Eve's copy. Code organized with help from Claude (Anthropic).
    ===================================================================== */
@@ -56,7 +57,8 @@ const P = { alice: [140, 300], wifi: [470, 300], eve: [295, 690], A: [700, 200],
   F: [1210, 240], G: [1210, 640], bob: [1460, 440] };
 const LINKS = [['wifi', 'A'], ['wifi', 'B'], ['A', 'D'], ['B', 'D'], ['A', 'F'], ['B', 'G'], ['D', 'F'], ['D', 'G'], ['F', 'bob'], ['G', 'bob']];
 const ROW_Y = 470, STRIP_X = 295, CH = 18;          // the message strip: 30px monospace letters, about 18 units wide each
-const TRAY = { x: 1300, y: 820, gap: 118 };
+const TRAY = { x: 1300, y: 800, gap: 118 };
+const MSGS = ['MEET AT 6', 'HI BOB', 'LUNCH AT 12', 'SEE YOU SOON', 'CALL ME'];
 const MAP_S = 0.75, TRAY_S = 0.9;
 const mid = (a, b) => [(P[a][0] + P[b][0]) / 2, (P[a][1] + P[b][1]) / 2];
 const disp = (t) => t.replace(/ /g, '·');           // a space shows as a dot so it can be seen
@@ -85,14 +87,20 @@ function scene(st) {
   LINKS.forEach(([a, b], i) => S.add('ln' + i, 'path', { d: `M ${P[a][0]} ${P[a][1]} L ${P[b][0]} ${P[b][1]}` }, { draw: 0, stroke: C.line, sw: 5, z: -3 }));
   S.add('jam', 'path', { d: `M ${P.D[0]} ${P.D[1]} L ${P.F[0]} ${P.F[1]}` }, { draw: 0, stroke: C.red, sw: 9, z: -2 });
   S.add('jamTxt', 'text', { size: 30, weight: 800, anchor: 'middle', mono: true }, { x: mid('D', 'F')[0] + 70, y: mid('D', 'F')[1] + 10, content: 'JAMMED', fill: C.red, o: 0 });
-  S.add('alice', 'node', { icon: 'laptop', label: 'Alice' }, { x: P.alice[0], y: P.alice[1], o: 0, s: 0.6 });
+  S.add('alice', 'person', { who: 'alice' }, { x: P.alice[0], y: P.alice[1], o: 0, s: 0.6 });
   S.add('wifi', 'node', { icon: 'router', label: 'Wi-Fi', size: 96, labelSize: 30 }, { x: P.wifi[0], y: P.wifi[1], o: 0, s: 0.6, tint: C.soft });
-  S.add('eve', 'node', { icon: 'eye', label: 'Eve', size: 104 }, { x: P.eve[0], y: P.eve[1], o: 0, s: 0.6, tint: C.red });
+  S.add('eve', 'eye', { size: 130 }, { x: P.eve[0], y: P.eve[1], o: 0, s: 0.6 });
   ['A', 'B', 'D', 'F', 'G'].forEach((r) => S.add(r, 'node', { icon: 'router', size: 96 }, { x: P[r][0], y: P[r][1], o: 0, s: 0.4, tint: C.soft }));
-  S.add('bob', 'node', { icon: 'phone', label: 'Bob' }, { x: P.bob[0], y: P.bob[1], o: 0, s: 0.6, tint: C.green });
-  S.add('tray', 'rect', {}, { x: 1030, y: 768, w: 540, h: 104, rx: 18, fill: C.panel2, fo: 0.7, stroke: C.green, sw: 2, o: 0, z: -4 });
-  S.add('trayLbl', 'text', { size: 24, weight: 700, mono: true }, { x: 1040, y: 752, content: "BOB'S PHONE", fill: C.green, o: 0 });
+  S.add('bob', 'person', { who: 'bob' }, { x: P.bob[0], y: P.bob[1], o: 0, s: 0.6, tint: C.green });
+  S.add('tray', 'rect', {}, { x: 1030, y: 740, w: 540, h: 146, rx: 18, fill: C.panel2, fo: 0.7, stroke: C.green, sw: 2, o: 0, z: -4 });
+  S.add('trayLbl', 'text', { size: 24, weight: 700, mono: true }, { x: 1040, y: 726, content: "BOB'S PHONE", fill: C.green, o: 0 });
 
+  // ---- numbered slots for putting the postcards back in order
+  pieces(st.msg).forEach((p, i, a) => {
+    const w = cardW(cardText(i, p)) * TRAY_S + 16;
+    S.add('sl' + i, 'rect', { dash: '8 7' }, { x: slotX(i, a.length) - w / 2, y: TRAY.y - 37, w, h: 74, rx: 12, fill: 'none', fo: 0, stroke: C.amber, sw: 2.5, o: 0, z: -3 });
+    S.add('sn' + i, 'text', { size: 22, weight: 800, mono: true, anchor: 'middle' }, { x: slotX(i, a.length), y: TRAY.y + 68, content: 'SLOT ' + (i + 1), fill: C.amber, o: 0 });
+  });
   // ---- the message, its scissors and its postcards
   S.add('strip', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: STRIP_X, y: ROW_Y, o: 0, s: 0.8, z: 3 });
   const cuts = []; let acc = 0;
@@ -103,25 +111,30 @@ function scene(st) {
   const rowX = texts.map((t) => { const x = rx + cardW(t) / 2; rx += cardW(t) + 10; return x; });
   ids.forEach((id, i) => S.add(id, 'packet', { text: texts[i], size: 28, w: cardW(texts[i]) }, { x: STRIP_X, y: ROW_Y, o: 0, z: 4 }));
   S.add('tofrom', 'text', { size: 24, weight: 600, anchor: 'middle' }, { x: STRIP_X, y: ROW_Y + 78, content: 'To: Bob    From: Alice', fill: C.soft, o: 0 });
-  S.add('hand', 'glyph', { icon: 'hand', size: 60 }, { x: P.wifi[0], y: P.wifi[1] - 90, o: 0, tint: C.amber, z: 9 });
   S.add('miss', 'packet', { text: '#2 ?', size: 28, w: 120 }, { x: P.bob[0], y: P.bob[1] - 128, o: 0, s: 0.6, edge: C.amber, ink: C.amber, z: 6 });
   S.add('req', 'packet', { text: 'SEND #2', size: 24, w: 150 }, { x: P.bob[0], y: P.bob[1], o: 0, s: 0.7, edge: C.amber, ink: C.amber, z: 7 });
   S.add('bobMsg', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: TRAY.x, y: TRAY.y, o: 0, s: 0.8, edge: C.green, z: 6 });
-  S.add('copy', 'packet', { text: texts[0], size: 28, w: cardW(texts[0]) }, { x: P.wifi[0], y: P.wifi[1], o: 0, s: MAP_S, edge: C.red, ink: C.red, z: 8 });
+  // Eve's view of every router: a red line from each router to her eye, and a copy of each postcard.
+  const SPY = ['wifi', 'A', 'B', 'D', 'F', 'G'];
+  SPY.forEach((r) => S.add('spy' + r, 'path', { d: `M ${P[r][0]} ${P[r][1]} L ${P.eve[0] + 40} ${P.eve[1] - 30}`, dash: '10 10' }, { stroke: C.red, sw: 3, o: 0, z: -2 }));
+  const copyFrom = (i) => (i === 0 ? 'F' : i === 1 ? first : 'G');
+  ids.forEach((id, i) => S.add('ec' + i, 'packet', { text: texts[i], size: 28, w: cardW(texts[i]) }, { x: P[copyFrom(i)][0], y: P[copyFrom(i)][1], o: 0, s: MAP_S, edge: C.red, ink: C.red, z: 8 }));
+  S.add('eveMsg', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: 470, y: 600, o: 0, s: 0.8, edge: C.red, ink: C.red, z: 9 });
+  Anim.addSection(S);
 
   const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * (span || 0.16), k * (span || 0.16) + 0.6] }; };
-  // Move cards to a point, stacked; the hand reaches in at that point.
+  // Move cards to a point, stacked; the router they reach lights up.
   const hop = (dur, list, at, opt) => S.beat(dur, (s) => {
     list.forEach((id, k) => Object.assign(s[id], { x: P[at][0], y: P[at][1] + stackY(k, list.length), s: MAP_S, o: 1 }, opt || {}));
-    Object.assign(s.hand, { x: P[at][0] - 70, y: P[at][1] - 70, o: 1, s: 1 });
-    if (s[at] && s[at].glow !== undefined) s[at].glow = 0.6;
-  }, stagger(list.concat(['hand'])));
+    ['wifi', 'A', 'B', 'D', 'F', 'G'].forEach((r) => { s[r].glow = r === at ? 0.8 : 0; });
+  }, stagger(list));
   const unglow = (s) => ['wifi', 'A', 'B', 'D', 'F', 'G'].forEach((r) => { s[r].glow = 0; });
 
-  // 1. Type a message
-  S.step({ head: 'Send Bob a message.', body: 'You are **Alice**. Type a short message for Bob below.',
-    act: actType })
-    .beat(1.0, (s) => {
+  // 1. Pick a message
+  S.step({ head: 'Send Bob a message.', body: 'You are **Alice**. Pick a message for Bob below.',
+    act: actPick });
+  Anim.section(S, 'PART 1', 'Plain postcards');
+  S.beat(1.0, (s) => {
       ['cafe', 'cafeLbl', 'alice', 'wifi', 'bob'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
       Object.assign(s.eve, { o: 0.35, s: 1 });
     }, stagger(['cafe', 'cafeLbl', 'alice', 'wifi', 'eve', 'bob'], 0.08));
@@ -135,8 +148,9 @@ function scene(st) {
   // 3. The postcards and the map; pick the first router
   const lines = LINKS.map((_, i) => 'ln' + i);
   S.step({ head: 'Routers pass postcards hand to hand.', body: 'Each postcard has a **number** and an address. Pick the first router.',
-    act: actRouter })
-    .beat(0.8, (s) => {
+    act: actRouter });
+  Anim.section(S, 'PART 2', 'Router to router');
+  S.beat(0.8, (s) => {
       s.strip.o = 0; cuts.forEach((_, i) => { s['sc' + i].o = 0; });
       ids.forEach((id, i) => Object.assign(s[id], { o: 1, x: rowX[i] }));
       s.tofrom.o = 1;
@@ -156,23 +170,25 @@ function scene(st) {
   S.beat(1.0, (s) => {
     ahead.forEach((id, k) => Object.assign(s[id], { x: P.F[0], y: P.F[1] + stackY(k, 2) }));
     behind.forEach((id, k) => Object.assign(s[id], { y: P.D[1] + stackY(k, behind.length) }));
-    Object.assign(s.hand, { x: P.F[0] - 70, y: P.F[1] - 70 });
-  }, stagger(ahead.concat(['hand'])));
-  S.beat(1.3, (s) => {
-    Object.assign(s.c0, { x: slotX(arr.indexOf(0), n), y: TRAY.y, s: TRAY_S });
+    unglow(s); s.F.glow = 0.8;
+  }, stagger(ahead));
+  S.beat(1.0, (s) => {
+    Object.assign(s.c0, { x: P.bob[0], y: P.bob[1], s: MAP_S });
     const m = mid('F', 'bob');
     Object.assign(s.c1, { x: m[0] + 20, y: m[1] + 110, o: 0, edge: C.red, ink: C.red });
-    s.tray.o = 1; s.trayLbl.o = 1; s.hand.o = 0; unglow(s);
+    unglow(s); s.bob.glow = 1;
   });
+  S.beat(0.9, (s) => { Object.assign(s.c0, { x: slotX(arr.indexOf(0), n), y: TRAY.y, s: TRAY_S }); s.tray.o = 1; s.trayLbl.o = 1; s.bob.glow = 0; });
   S.beat(0.8, (s) => { s.jam.draw = 1; s.jamTxt.o = 1; });
 
   // 5. The rest go around; Bob sees a gap
   S.step({ head: 'One postcard got lost.', body: 'Bob can see **#2** is missing. Tap it to ask Alice to send it again.',
     act: actAsk });
   hop(1.0, behind, 'G');
-  S.beat(1.2, (s) => {
+  S.beat(0.9, (s) => { behind.forEach((id, k) => Object.assign(s[id], { x: P.bob[0], y: P.bob[1] + stackY(k, behind.length) })); unglow(s); s.bob.glow = 1; }, stagger(behind));
+  S.beat(1.0, (s) => {
     behind.forEach((id) => Object.assign(s[id], { x: slotX(arr.indexOf(+id.slice(1)), n), y: TRAY.y, s: TRAY_S }));
-    s.hand.o = 0; unglow(s);
+    s.bob.glow = 0;
   }, stagger(behind));
   S.beat(0.7, (s) => { Object.assign(s.miss, { o: 1, s: 1 }); s.bob.pulse = 1; });
 
@@ -187,41 +203,43 @@ function scene(st) {
     Object.assign(s.c1, { x: P.alice[0], y: P.alice[1], o: 1, edge: C.cyan, ink: C.ink, s: MAP_S });
     s.alice.glow = 1;
   });
-  again.forEach((at) => hop(0.6, ['c1'], at));
-  S.beat(0.9, (s) => { Object.assign(s.c1, { x: slotX(n - 1, n), y: TRAY.y, s: TRAY_S }); s.hand.o = 0; s.alice.glow = 0; unglow(s); });
+  again.concat(['bob']).forEach((at) => hop(0.6, ['c1'], at));
+  S.beat(0.9, (s) => { Object.assign(s.c1, { x: slotX(n - 1, n), y: TRAY.y, s: TRAY_S }); s.alice.glow = 0; unglow(s); s.bob.glow = 0; });
+  // numbered slots light up under the postcards
+  S.beat(0.7, (s) => ids.forEach((_, i) => { s['sl' + i].o = 1; s['sn' + i].o = 1; }), stagger(ids.map((_, i) => 'sl' + i), 0.1));
+  // once the learner has sorted them, they rest in order (no snapping back)
+  if (st.sorted) S.beat(0.5, (s) => ids.forEach((id, i) => Object.assign(s[id], { x: slotX(i, n), edge: C.green })));
 
   // 7. Bob reads the whole message
   S.step({ head: 'Bob has the whole message.', body: 'The numbers put it back together, even when the pieces arrive out of order.' })
-    .beat(0.8, (s) => ids.forEach((id, i) => Object.assign(s[id], { x: slotX(i, n), edge: C.green })))
-    .beat(0.9, (s) => { ids.forEach((id) => Object.assign(s[id], { o: 0, x: TRAY.x })); Object.assign(s.bobMsg, { o: 1, s: 1 }); s.bob.glow = 1; s.jam.o = 0.35; s.jamTxt.o = 0; });
+    .beat(0.5, (s) => ids.forEach((id, i) => Object.assign(s[id], { x: slotX(i, n), edge: C.green })))
+    .beat(0.9, (s) => { ids.forEach((id, i) => { Object.assign(s[id], { o: 0, x: TRAY.x }); s['sl' + i].o = 0; s['sn' + i].o = 0; }); Object.assign(s.bobMsg, { o: 1, s: 1 }); s.bob.glow = 1; s.jam.o = 0.35; s.jamTxt.o = 0; });
 
   // 8. Eve copies a postcard
   const touched = ['wifi', first, 'D', 'F', 'G'];
-  S.step({ head: 'Anyone holding a postcard can read it.', body: 'Every router that held one could read it. So could **Eve**, on the same café Wi-Fi. Tap her copy.',
-    act: actEve })
-    .beat(0.9, (s) => { touched.forEach((r) => { s[r].tint = C.red; s[r].glow = 1; }); s.bob.glow = 0; }, stagger(touched, 0.1))
-    .beat(0.7, (s) => { Object.assign(s.eve, { o: 1 }); Object.assign(s.copy, { o: 1 }); })
-    .beat(1.0, (s) => { Object.assign(s.copy, { x: 450, y: P.eve[1] }); s.eve.pulse = 1; });
+  const ecs = ids.map((_, i) => 'ec' + i), spies = SPY.map((r) => 'spy' + r);
+  S.step({ head: 'Anyone holding a postcard can read it.', body: 'Every router that held one could read it. **Eve** can see every router from the café Wi-Fi. Tap her copies.',
+    act: actEve });
+  Anim.section(S, 'PART 3', 'Who else can read it?');
+  S.beat(0.7, (s) => { Object.assign(s.eve, { o: 1, s: 1, glow: 1 }); s.bob.glow = 0; })
+    .beat(1.0, (s) => { spies.forEach((id) => { s[id].o = 0.85; }); touched.forEach((r) => { s[r].tint = C.red; s[r].glow = 1; }); s.eve.look = 1; }, stagger(spies, 0.08))
+    .beat(0.4, (s) => ecs.forEach((id) => { s[id].o = 1; }))
+    .beat(1.2, (s) => ecs.forEach((id, i) => Object.assign(s[id], { x: 470, y: 540 + i * 50, s: 0.7 })), stagger(ecs, 0.12))
+    .beat(0.4, (s) => { s.eve.pulse = 1; s.eve.look = 0.4; });
 
   // 9. Eve reads it
-  S.step({ head: 'Eve read it.', body: 'Plain postcards keep no secrets. **Lesson 2** shows how Alice and Bob can.' })
-    .beat(0.9, (s) => { Object.assign(s.copy, { x: STRIP_X, y: ROW_Y + 10, s: 1.5, glow: 1 }); s.eve.glow = 1; });
+  S.step({ head: 'Eve read the whole message.', body: 'She put the copies in number order, just like Bob. Plain postcards keep no secrets. **Lesson 2** shows how Alice and Bob can.' })
+    .beat(0.8, (s) => ecs.forEach((id, i) => Object.assign(s[id], { x: 470, y: 600, s: 0.7, o: 0 })))
+    .beat(0.9, (s) => { Object.assign(s.eveMsg, { o: 1, s: 1.4, x: 560, y: 560, glow: 1 }); s.eve.glow = 1; spies.forEach((id) => { s[id].o = 0.35; }); });
   return S;
 }
 
 // ---------------------------------------------------------------- learner actions
-function actType(ctx) {
-  ctx.slot.innerHTML = `<form class="lz-form" style="display:contents">
-      <input id="m1msg" maxlength="12" autocomplete="off" spellcheck="false" aria-label="Your message" value="${ctx.state.msg}">
-      <button class="lz-btn go" type="submit"><span>Send</span></button>
-      <p class="hint">Letters, numbers and spaces, 4 to 12 characters. Not a real secret: this is practice.</p></form>`;
-  const inp = ctx.slot.querySelector('input'), hint = ctx.slot.querySelector('.hint');
-  inp.addEventListener('input', () => { const p = inp.selectionStart; inp.value = inp.value.toUpperCase().replace(/[^A-Z0-9 ]/g, ''); inp.setSelectionRange(p, p); });
-  ctx.slot.querySelector('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const v = inp.value.replace(/\s+/g, ' ').trim();
-    if (v.replace(/ /g, '').length < 3 || v.length < 4) { hint.textContent = 'Use at least 4 characters.'; hint.classList.add('err'); inp.focus(); return; }
-    ctx.done({ msg: v });
+function actPick(ctx) {
+  MSGS.forEach((m) => {
+    const b = document.createElement('button'); b.className = 'lz-btn' + (m === ctx.state.msg ? ' go' : ''); b.dataset.msg = m;
+    b.innerHTML = `<span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.06em">${m}</span>`;
+    b.addEventListener('click', () => ctx.done({ msg: m, sorted: false })); ctx.slot.appendChild(b);
   });
 }
 function actCut(ctx, cuts) {
@@ -258,7 +276,7 @@ function actOrder(ctx, ids, texts, arr) {
   let sel = null;
   const host = narrow ? ctx.slot : ctx.ov;
   if (narrow) {
-    const hint = document.createElement('p'); hint.className = 'hint'; hint.textContent = 'Tap two postcards to swap them.';
+    const hint = document.createElement('p'); hint.className = 'hint'; hint.textContent = 'Tap two postcards to swap them. Slot 1 is on the left.';
     ctx.slot.appendChild(hint);
   } else ctx.hide(ids);
   const chips = order.map((c) => {
@@ -276,7 +294,7 @@ function actOrder(ctx, ids, texts, arr) {
   };
   const check = () => {
     place();
-    if (order.every((c, i) => c === i)) { chips.forEach((b) => { b.classList.add('ok'); b.disabled = true; }); setTimeout(() => ctx.done({}), 450); }
+    if (order.every((c, i) => c === i)) { chips.forEach((b) => { b.classList.add('ok'); b.disabled = true; }); setTimeout(() => ctx.done({ sorted: true }), 450); }
   };
   place();
   chips.forEach((b) => {
@@ -311,7 +329,7 @@ function actOrder(ctx, ids, texts, arr) {
   });
 }
 function actEve(ctx) {
-  ctx.hit(450, P.eve[1], 140, 90, 'Read it', () => ctx.done({}));
+  ctx.hit(470, 590, 200, 220, 'Read them', () => ctx.done({}));
 }
 
 const quiz = [
@@ -332,7 +350,7 @@ const quiz = [
     why: 'Every router, and Eve on the same Wi-Fi, could read it. Lesson 2 fixes that.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { id: 'm1', state: { msg: 'MEET AT 6', first: 'A' }, scene, quiz });
+Lesson.mount(document.getElementById('lesson'), { id: 'm1', state: { msg: 'MEET AT 6', first: 'A', sorted: false }, scene, quiz, next: Lessons.next('m1') });
 </script>
 </body>
 </html>

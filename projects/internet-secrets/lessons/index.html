@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Lessons · How the Internet Keeps Secrets · Scott D. Russell</title>
+<meta name="description" content="Pick a lesson from How the Internet Keeps Secrets: packets, secret keys, passwords and firewalls, each with a short check, then a final review.">
+<link rel="icon" href="../../../shared/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../../shared/portfolio.css">
+<script src="../../../shared/portfolio.js"></script>
+<style>
+.proj-head{padding-bottom:6px}
+.lnum{display:grid;place-items:center;width:44px;height:44px;border-radius:12px;font:800 20px/1 var(--mono, ui-monospace, monospace)}
+.badge{display:inline-block;margin-left:8px;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:800;letter-spacing:.04em;vertical-align:2px;border:1px solid var(--line);color:var(--soft)}
+.badge.done{border-color:#16a34a;color:#22c55e}
+.badge.next{border-color:var(--tone);color:var(--ink);background:color-mix(in srgb,var(--tone) 22%,transparent)}
+.overall{margin:18px 0 0;color:var(--soft);font-size:14.5px}
+</style>
+</head>
+<body style="--tone:#0d9488">
+<header class="pf-bar">
+  <a class="pf-up" href="../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Internet Secrets</span><span class="pf-brand"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<div class="proj-head"><div class="wrap">
+  <p class="kicker">How the Internet Keeps Secrets</p>
+  <h1>Pick a lesson</h1>
+  <p class="sub">Four short lessons, about 10 minutes each. Each ends with a five-question check. Finish all four for the final review and your overall score.</p>
+  <div class="pcards" id="list"></div>
+  <p class="overall" id="overall"></p>
+</div></div>
+
+<footer class="pf-foot">
+  <div class="foot-mark" aria-hidden="true">SR</div>
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">M.S. Cybersecurity · Iowa State University</p>
+  <p class="source-line">How the Internet Keeps Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../">Project page</a></p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
+</footer>
+<script src="shared/lessons.js"></script>
+<script>
+(function () {
+  const sc = Lessons.scores(), list = document.getElementById('list');
+  const nextUp = Lessons.LIST.find((l) => sc[l.id] == null);
+  const card = (href, num, name, blurb, badge, i) => `<a class="pcard" href="${href}" style="--i:${i}"><span class="icon lnum" aria-hidden="true">${num}</span>
+    <span class="body"><span class="name">${name}${badge}</span><span class="blurb">${blurb}</span></span></a>`;
+  list.innerHTML = Lessons.LIST.map((l, i) => {
+    const b = sc[l.id] != null ? `<span class="badge done">Check ${sc[l.id]}/5</span>` : l === nextUp ? '<span class="badge next">Start here</span>' : '';
+    return card(l.href, l.n, `Lesson ${l.n}: ${l.name}`, l.blurb, b, i);
+  }).join('') + card('complete/', '✓', 'Final review', 'Eight questions across all four lessons, then your overall score.',
+    sc.final != null ? `<span class="badge done">Review ${sc.final}/8</span>` : !nextUp ? '<span class="badge next">Ready</span>' : '', 4);
+  const done = Lessons.LIST.filter((l) => sc[l.id] != null).length;
+  document.getElementById('overall').textContent = done ? `${done} of 4 lessons checked on this device.` : 'Your scores are kept on this device only.';
+})();
+</script>
+</body>
+</html>
