@@ -1,0 +1,436 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lesson 4: Guard the Gate · How the Internet Keeps Secrets · Scott D. Russell</title>
+<meta name="description" content="Lesson 4 of How the Internet Keeps Secrets: how a firewall decides which traffic gets in, and how a flood of traffic (DDoS) can shut a site even when nothing is stolen.">
+<link rel="icon" href="../../../../shared/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../../../shared/portfolio.css">
+<link rel="stylesheet" href="../shared/lesson.css">
+<script src="../../../../shared/portfolio.js"></script>
+<style>
+.proj-head{padding-bottom:6px}
+.m4-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex-basis:100%}
+.m4-msg{flex-basis:100%;margin:0;color:var(--c-soft);font-size:14px}
+.m4-msg.ok{color:var(--c-green)}
+.m4-msg.bad{color:var(--c-red)}
+.m4-chip{padding:9px 14px;border-radius:10px;border:2px solid var(--c-cyan);background:var(--c-panel);color:var(--c-ink);
+  font:800 17px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;cursor:pointer}
+.m4-chip[aria-pressed="true"]{border-color:var(--c-amber);box-shadow:0 0 0 3px rgba(251,191,36,.3)}
+.m4-chip.done{border-color:var(--c-green);color:var(--c-green);opacity:.5;cursor:default}
+.m4-sort{display:grid;gap:8px;flex-basis:100%}
+.m4-sort p{margin:0;display:flex;flex-wrap:wrap;gap:8px;align-items:center;font:600 14px/1.3 system-ui,sans-serif;color:var(--c-soft)}
+.m4-sort b{min-width:170px;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--c-ink)}
+.m4-sort .lz-btn{padding:7px 12px}
+.m4-sort .good{border-color:var(--c-green);color:var(--c-green)}
+.lz-hit.m4-door{border-style:solid;border-radius:10px}
+.lz-hit.m4-door.open{background:rgba(52,245,164,.28);border-color:var(--c-green)}
+.lz-hit.m4-door.shut{background:rgba(251,90,114,.32);border-color:var(--c-red)}
+.lz-hit.m4-door.open span{color:var(--c-green)}
+.lz-hit.m4-door.shut span{color:var(--c-red)}
+.m4-flat{padding:9px 12px;border-radius:10px;border:2px solid var(--c-line);background:var(--c-panel);color:var(--c-ink);font:700 14px/1.1 system-ui,sans-serif;cursor:pointer}
+.m4-flat.open{border-color:var(--c-green);background:rgba(52,245,164,.18);color:var(--c-green)}
+.m4-flat.shut{border-color:var(--c-red);background:rgba(251,90,114,.2);color:var(--c-red)}
+.m4-flat.m4-sign{border-color:var(--c-amber)}
+.m4-flat.got{border-color:var(--c-green);color:var(--c-green)}
+.m4-flat.shake{animation:lz-shake2 .4s}
+@keyframes lz-shake2{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.lz-hit.m4-slot em{font:700 13px/1 system-ui,sans-serif;font-style:normal;color:var(--c-cyan)}
+.lz-hit.m4-sign{border-color:var(--c-amber);background:rgba(251,191,36,.06)}
+.lz-hit.m4-sign.got{animation:none;border-style:solid;border-color:var(--c-green);background:rgba(52,245,164,.12);color:var(--c-green);
+  font:800 15px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.m4-peek{position:absolute;transform:translate(-50%,-50%);max-width:46%;padding:10px 14px;border-radius:12px;background:rgba(7,11,20,.94);border:2px solid var(--c-red);
+  color:var(--c-ink);font:600 13px/1.4 system-ui,sans-serif;pointer-events:none;animation:lz-pop .25s ease-out}
+.m4-peek code{display:block;margin-top:4px;color:var(--c-red);font:700 12.5px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:pre-wrap}
+</style>
+</head>
+<body style="--tone:#0d9488">
+<header class="pf-bar">
+  <a class="pf-up" href="../../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Internet Secrets</span><span class="pf-brand"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<div class="proj-head"><div class="wrap">
+  <p class="kicker">How the Internet Keeps Secrets · Lesson 4 of 4</p>
+  <h1>Guard the Gate</h1>
+  <p class="sub">Run the firewall for Alice's home network. Let real visitors in, keep attacks out, then face a flood.</p>
+</div></div>
+
+<main class="wrap">
+  <div id="lesson"></div>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Tap a door to open or shut it. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
+</main>
+
+<footer class="pf-foot">
+  <div class="foot-mark" aria-hidden="true">SR</div>
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">M.S. Cybersecurity · Iowa State University</p>
+  <p class="source-line">How the Internet Keeps Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
+</footer>
+
+<script src="../shared/engine.js"></script>
+<script src="../shared/lesson.js"></script>
+<script>
+/* =====================================================================
+   Lesson 4: Guard the Gate (Objective 4)
+   Packets ask for numbered doors (ports). A firewall checks each one
+   against a list of rules, first match wins. Too strict turns real
+   visitors away; too loose lets attacks in; some attacks hide inside
+   allowed traffic. A flood from many machines (DDoS) can shut the door
+   even when nothing is stolen; filtering upstream and spreading the load
+   bring the site back.
+   Sources: NIST SP 800-41 Rev. 1, Guidelines on Firewalls [6]; Mirkovic
+   and Reiher, "A Taxonomy of DDoS Attack and DDoS Defense Mechanisms" [7].
+   Scoring: +1 per attack blocked, -1 per real visitor turned away.
+   Code organized with help from Claude (Anthropic).
+   ===================================================================== */
+const { Scene, C } = Anim;
+
+const PORTS = [443, 25, 22, 3074], NAMES = ['Websites', 'Email', 'Remote login', 'Games'];
+const HINTS = ['Secure websites (https) use door 443.', 'Email servers talk on door 25.', 'Remote login (SSH) uses door 22.', 'Many game consoles use door 3074.'];
+const DOOR_Y = [215, 375, 535, 695], DOOR_X = 1060;
+const BLD = { x: 1060, y: 110, w: 460, h: 700 };
+const FW = [930, 455];
+const gridAt = (i) => [160 + 92 * (i % 8), 400 + 70 * Math.floor(i / 8)];
+const NV = 20, ND = 30, NG = 3;
+const ROLE = { real: C.cyan, atk: C.red, bad: C.amber, sneak: C.cyan };
+
+// The three waves. p = door index, k = real visitor, attack, bad address (66.6.6.6) or sneak (an attack that looks real).
+const mk = (list) => list.map((s) => ({ p: +s[0], k: { r: 'real', a: 'atk', b: 'bad', s: 'sneak' }[s[1]] }));
+const WAVES = [
+  mk(['0r', '2a', '1r', '0r', '2a', '0r', '1r', '2a', '0r', '1r', '0r', '2a']),
+  mk(['0r', '3r', '2a', '1r', '3a', '0r', '2a', '3r', '0r', '1r', '3a', '2a', '0r', '3r', '1r', '2a', '0r', '3a', '3r', '0r']),
+  mk(['0r', '0b', '3r', '2a', '1r', '0r', '0s', '3a', '0b', '1r', '0r', '3r', '2a', '0r', '1r', '3r']),
+];
+const isAtk = (v) => v.k !== 'real';
+const passes = (v, doors, blockFirst) => (v.k === 'bad' && blockFirst ? false : !!doors[v.p]);
+function score(wave, doors, blockFirst) {
+  let blocked = 0, away = 0;
+  const cost = [0, 0, 0, 0];
+  let orderCost = 0;
+  wave.forEach((v) => {
+    const ok = passes(v, doors, blockFirst);
+    if (isAtk(v) && !ok) blocked++;
+    if (!isAtk(v) && !ok) { away++; cost[v.p]++; }
+    if (isAtk(v) && ok) { if (v.k === 'bad') orderCost++; else if (v.k !== 'sneak') cost[v.p]++; }
+  });
+  return { blocked, away, total: blocked - away, cost, orderCost };
+}
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
+function verdict(r, round) {
+  const s = score(WAVES[round], r.doors, r.blockFirst);
+  const worst = s.cost.indexOf(Math.max(...s.cost));
+  let tip;
+  if (round === 2 && !r.blockFirst) tip = 'Your block rule came after the allow rule, so it never ran. **First match wins.**';
+  else if (Math.max(...s.cost) === 0) tip = round === 2 ? 'The block rule stopped the bad address. Good order.' : 'Nothing could have gone better. A perfect round.';
+  else tip = `The **${NAMES[worst]}** door cost you the most.`;
+  return { head: `Round ${round + 1}: ${plural(s.total, 'point')}.`, body: `${plural(s.blocked, 'attack')} blocked, ${plural(s.away, 'real visitor')} turned away. ${tip}`, s };
+}
+
+function scene(st) {
+  const S = new Scene('m4');
+  const R = [st.r1, st.r2 || st.r1, st.r3 || st.r2 || st.r1];
+
+  // ---- the building, its doors and the firewall
+  S.add('bld', 'rect', {}, { x: BLD.x, y: BLD.y, w: BLD.w, h: BLD.h, rx: 24, fill: C.panel2, fo: 0.7, stroke: C.line, sw: 3, o: 0, z: -6 });
+  S.add('bldLbl', 'text', { size: 24, weight: 700, mono: true, anchor: 'middle', ls: 2 }, { x: BLD.x + BLD.w / 2, y: BLD.y + 44, content: "ALICE'S HOME NETWORK", fill: C.soft, o: 0 });
+  PORTS.forEach((p, i) => {
+    S.add('door' + i, 'rect', {}, { x: DOOR_X - 14, y: DOOR_Y[i] - 50, w: 28, h: 100, rx: 6, fill: C.faint, fo: 1, sw: 0, o: 0 });
+    S.add('sign' + i, 'text', { size: 30, weight: 700 }, { x: DOOR_X + 40, y: DOOR_Y[i] - 4, content: NAMES[i], fill: C.ink, o: 0 });
+    S.add('num' + i, 'text', { size: 26, weight: 700, mono: true }, { x: DOOR_X + 40, y: DOOR_Y[i] + 34, content: 'door ' + p, fill: C.amber, o: 0 });
+  });
+  S.add('fw', 'node', { icon: 'shield', label: 'Firewall', size: 110, labelSize: 32 }, { x: FW[0], y: FW[1], o: 0, s: 0.6, tint: C.green });
+
+  // ---- rules, legend, score
+  S.add('rules', 'rect', {}, { x: 120, y: 96, w: 640, h: 300, rx: 18, fill: C.panel2, fo: 0.85, stroke: C.green, sw: 2, o: 0, z: -4 });
+  S.add('rulesLbl', 'text', { size: 22, weight: 700, mono: true }, { x: 144, y: 134, content: 'FIREWALL RULES · FIRST MATCH WINS', fill: C.green, o: 0 });
+  S.add('rule1', 'text', { size: 28, weight: 600 }, { x: 150, y: 250, content: 'Let in: doors **443** and **25**', fill: C.ink, o: 0 });
+  S.add('rule2', 'text', { size: 28, weight: 600 }, { x: 150, y: 298, content: 'Turn away: everything else', fill: C.ink, o: 0 });
+  const bf = !!st.blockFirst;
+  S.add('blk', 'packet', { text: 'Block address 66.6.6.6', size: 22, w: 330, h: 44 }, { x: 315, y: bf ? 190 : 350, o: 0, edge: C.amber, ink: C.amber });
+  S.add('legend', 'text', { size: 22, weight: 600 }, { x: 120, y: 870, content: '**Cyan** = real visitor', fill: C.soft, o: 0 });
+  S.add('legend2', 'text', { size: 22, weight: 600, hi: C.red }, { x: 400, y: 870, content: '**Red** = attack', fill: C.soft, o: 0 });
+  S.add('legend3', 'text', { size: 22, weight: 600, hi: C.amber }, { x: 640, y: 870, content: '**Amber** = from 66.6.6.6', fill: C.soft, o: 0 });
+  S.add('score', 'text', { size: 32, weight: 800, mono: true, anchor: 'middle' }, { x: 480, y: 700, content: '', fill: C.ink, o: 0 });
+
+  // ---- visitors
+  for (let i = 0; i < NV; i++) S.add('v' + i, 'packet', { text: '?', size: 26, w: 100, h: 52 }, { x: gridAt(i)[0], y: gridAt(i)[1], o: 0, s: 0.8, edge: C.soft, ink: C.ink });
+
+  // ---- the flood
+  S.add('eve', 'node', { icon: 'eye', label: 'Eve', size: 104 }, { x: 230, y: 690, o: 0, s: 0.6, tint: C.red });
+  for (let i = 0; i < ND; i++) S.add('d' + i, 'node', { icon: 'laptop', size: 40 }, { x: 360 + 42 * (i % 10), y: 640 + 44 * Math.floor(i / 10), o: 0, s: 0.5, tint: C.red });
+  for (let i = 0; i < NG; i++) S.add('g' + i, 'packet', { text: '443', size: 26, w: 100, h: 52 }, { x: 160 + 110 * i, y: 470, o: 0, s: 0.8, edge: C.cyan });
+  S.add('down', 'text', { size: 44, weight: 900, mono: true, anchor: 'middle', ls: 3 }, { x: BLD.x + BLD.w / 2 + 40, y: 470, content: 'SITE DOWN', fill: C.red, o: 0, z: 6 });
+  S.add('stolen', 'packet', { text: 'NOTHING WAS STOLEN', size: 22, w: 320, h: 44 }, { x: BLD.x + BLD.w / 2 + 40, y: 540, o: 0, edge: C.soft, ink: C.soft, z: 6 });
+  S.add('filter', 'node', { icon: 'wall', label: 'Filter', size: 100, labelSize: 30 }, { x: 640, y: 300, o: 0, s: 0.6, tint: C.amber });
+  S.add('srv1', 'node', { icon: 'server', size: 80 }, { x: 1460, y: 260, o: 0, s: 0.6, tint: C.green });
+  S.add('srv2', 'node', { icon: 'server', size: 80 }, { x: 1460, y: 640, o: 0, s: 0.6, tint: C.green });
+  S.add('back', 'text', { size: 40, weight: 900, mono: true, anchor: 'middle', ls: 3 }, { x: BLD.x + BLD.w / 2 + 40, y: 470, content: 'BACK ONLINE', fill: C.green, o: 0, z: 6 });
+
+  const vids = Array.from({ length: NV }, (_, i) => 'v' + i), dids = Array.from({ length: ND }, (_, i) => 'd' + i), gids = Array.from({ length: NG }, (_, i) => 'g' + i);
+  const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * (span || 0.1), Math.min(1, k * (span || 0.1) + 0.5)] }; };
+  const spread = (list, len) => (id) => { const k = list.indexOf(id); if (k < 0) return null; const a = (k / list.length) * (1 - len); return { w: [a, a + len] }; };
+  const doorsLook = (s, doors) => PORTS.forEach((_, i) => { s['door' + i].fill = doors[i] ? C.green : C.red; });
+  const allIn = (s, ids) => ids.forEach((id) => { s[id].o = 1; });
+  const allOut = (s, ids) => ids.forEach((id) => { s[id].o = 0; });
+
+  // A wave: line up, walk to the doors, then in or turned away.
+  function wave(round, doors, blockFirst) {
+    const W = WAVES[round], ids = W.map((_, i) => 'v' + i);
+    S.beat(0.1, (s) => { vids.forEach((id, i) => Object.assign(s[id], { x: gridAt(i)[0], y: gridAt(i)[1], o: 0, s: 0.8 })); doorsLook(s, doors); });
+    S.beat(0.9, (s) => W.forEach((v, i) => Object.assign(s['v' + i], { o: 1, content: String(PORTS[v.p]), edge: ROLE[v.k], ink: v.k === 'atk' ? C.red : C.ink })), stagger(ids, 0.04));
+    const seen = [0, 0, 0, 0];
+    S.beat(2.6, (s) => W.forEach((v, i) => { const k = seen[v.p]++; Object.assign(s['v' + i], { x: DOOR_X - 70 - 22 * (k % 4), y: DOOR_Y[v.p] + (k % 2 ? 14 : -14) }); }), spread(ids, 0.3));
+    S.beat(2.4, (s) => W.forEach((v, i) => {
+      const ok = passes(v, doors, blockFirst), o = s['v' + i];
+      if (ok) Object.assign(o, { x: 1250 + (i % 3) * 30, y: DOOR_Y[v.p], o: 0, s: 0.6 });
+      else Object.assign(o, { x: 820 - (i % 4) * 30, y: DOOR_Y[v.p] + 30, o: 0, s: 0.6 });
+    }), spread(ids, 0.3));
+    const r = verdict({ doors, blockFirst }, round);
+    S.beat(0.6, (s) => { s.score.content = `Blocked ${r.s.blocked} · Turned away ${r.s.away} · Score ${r.s.total}`; s.score.o = 1; s.score.fill = r.s.total > 0 ? C.green : C.amber; });
+  }
+
+  // 1. The front door
+  const first = vids.slice(0, 8);
+  S.step({ head: 'Every packet comes to the front door.', body: 'Some are friends, some are not. **Tap a packet** to read its label.', act: actFlip })
+    .beat(0.9, (s) => { ['bld', 'bldLbl'].forEach((id) => { s[id].o = 1; }); PORTS.forEach((_, i) => { s['door' + i].o = 1; }); })
+    .beat(0.9, (s) => first.forEach((id) => { s[id].o = 1; }), stagger(first, 0.08));
+
+  // 2. Ports
+  S.step({ head: 'Each packet asks for a numbered door.', body: 'That number is called a **port**. Match each number to its sign: tap a number, then its sign.', act: actPorts })
+    .beat(0.8, (s) => first.forEach((id, i) => { s[id].content = String(PORTS[WAVES[0][i].p]); }), stagger(first, 0.06))
+    .beat(0.7, (s) => PORTS.forEach((_, i) => { s['sign' + i].o = 1; }), stagger(PORTS.map((_, i) => 'sign' + i), 0.1));
+
+  // 3. The bouncer
+  S.step({ head: 'The firewall is a bouncer with a list.', body: 'Not on the list, not getting in. Sort these packets using the list.', act: actSort })
+    .beat(0.6, (s) => PORTS.forEach((_, i) => { s['num' + i].o = 1; }))
+    .beat(0.9, (s) => { Object.assign(s.fw, { o: 1, s: 1 }); ['rules', 'rulesLbl', 'rule1', 'rule2'].forEach((id) => { s[id].o = 1; }); }, stagger(['fw', 'rules', 'rulesLbl', 'rule1', 'rule2'], 0.1));
+
+  // 4-5. Round 1
+  S.step({ head: 'Round 1: set your doors.', body: 'Tap a door to open or shut it. Let real visitors in and keep attacks out, then press **Open the gate**.', act: (ctx) => actDoors(ctx, 'r1', R[0]) })
+    .beat(0.7, (s) => { allOut(s, first.concat(['rule1', 'rule2', 'rules', 'rulesLbl'])); s.legend.o = 1; s.legend2.o = 1; doorsLook(s, R[0]); });
+  const v1 = verdict({ doors: R[0], blockFirst: false }, 0);
+  S.step({ head: v1.head, body: v1.body });
+  wave(0, R[0], false);
+
+  // 6-7. Round 2
+  S.step({ head: 'Round 2: more knocking.', body: 'Now gamers visit too, and some attacks try the game door. Too strict hurts real visitors. Too loose lets attacks in.', act: (ctx) => actDoors(ctx, 'r2', R[1]) })
+    .beat(0.5, (s) => { s.score.o = 0; doorsLook(s, R[1]); });
+  const v2 = verdict({ doors: R[1], blockFirst: false }, 1);
+  S.step({ head: v2.head, body: v2.body });
+  wave(1, R[1], false);
+
+  // 8-9. Round 3
+  S.step({ head: 'Round 3: rule order.', body: 'One address sends only attacks. Place the **block card** in the rule list, set your doors, then open the gate.', act: (ctx) => actRound3(ctx, R[2]) })
+    .beat(0.5, (s) => { s.score.o = 0; doorsLook(s, R[2]); })
+    .beat(0.8, (s) => {
+      ['rules', 'rulesLbl', 'rule1', 'rule2', 'legend3'].forEach((id) => { s[id].o = 1; });
+      s.rule1.content = 'Let in: any **open** door';
+    });
+  const v3 = verdict({ doors: R[2], blockFirst: bf }, 2);
+  S.step({ head: v3.head, body: v3.body })
+    .beat(0.5, (s) => { s.blk.o = 1; });
+  wave(2, R[2], bf);
+
+  // 10. The sneak attack
+  const sneakAt = [DOOR_X + 150, DOOR_Y[0] + 40];
+  S.step({ head: 'Firewalls check labels, not intentions.', body: 'One attack asked for the website door like everyone else, and got in. **Tap it** to look inside.', act: (ctx) => actSneak(ctx, sneakAt) })
+    .beat(0.5, (s) => { s.score.o = 0; })
+    .beat(0.9, (s) => { Object.assign(s.v6, { x: sneakAt[0], y: sneakAt[1], o: 1, s: 1, edge: C.cyan, glow: 1 }); });
+
+  // 11. The flood begins
+  S.step({ head: 'A flood can close the door.', body: 'Eve took over thousands of machines, a **botnet**. Press **Launch** to see what a flood does.', act: actLaunch })
+    .beat(0.6, (s) => { allOut(s, ['v6', 'rules', 'rulesLbl', 'rule1', 'rule2', 'blk', 'legend3']); s.v6.glow = 0; doorsLook(s, R[2]); })
+    .beat(1.0, (s) => { Object.assign(s.eve, { o: 1, s: 1 }); dids.forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); }, stagger(['eve'].concat(dids), 0.025));
+
+  // 12. The jam
+  S.step({ head: 'Too many visitors at once.', body: 'The line jams and real visitors cannot get in, even though **nothing was stolen**. Try your door switches.', act: actJam })
+    .beat(0.1, (s) => { vids.forEach((id, i) => Object.assign(s[id], { x: 380 + 42 * (i % 10), y: 640 + 44 * Math.floor(i / 10), o: 0, s: 0.6, content: '443', edge: C.red, ink: C.red, glow: 0 })); })
+    .beat(1.6, (s) => vids.forEach((id, i) => Object.assign(s[id], { o: 1, x: 580 + 44 * (i % 7) + (Math.floor(i / 7) % 2) * 20, y: 360 + 52 * Math.floor(i / 7) })), spread(vids, 0.4))
+    .beat(0.8, (s) => { gids.forEach((id) => { s[id].o = 1; }); s.fw.tint = C.red; s.fw.pulse = 1; })
+    .beat(0.8, (s) => { s.down.o = 1; s.stolen.o = 1; PORTS.forEach((_, i) => { s['sign' + i].o = 0.15; s['num' + i].o = 0.15; }); });
+
+  // 13. Fight back
+  S.step({ head: 'Sites fight back.', body: 'Filter the flood **before** it reaches the door, and **spread the load** across more servers. Tap both.', act: actDefend })
+    .beat(0.4, (s) => { s.fw.pulse = 0; });
+
+  // 14. Back online
+  S.step({ head: 'The site is back online.', body: 'Firewalls guard the doors. Filtering and spreading the load keep a flood from shutting them.' })
+    .beat(0.9, (s) => { Object.assign(s.filter, { o: 1, s: 1 }); Object.assign(s.srv1, { o: 1, s: 1 }); Object.assign(s.srv2, { o: 1, s: 1 }); })
+    .beat(1.2, (s) => { vids.forEach((id, i) => Object.assign(s[id], { x: 560 - (i % 4) * 20, y: 300 + (i % 5) * 26, o: 0, s: 0.5 })); dids.forEach((id) => { s[id].tint = C.faint; }); s.down.o = 0; s.stolen.o = 0; s.fw.tint = C.green; PORTS.forEach((_, i) => { s['sign' + i].o = 1; s['num' + i].o = 1; }); }, spread(vids, 0.4))
+    .beat(1.2, (s) => { gids.forEach((id, i) => Object.assign(s[id], { x: 1250 + 40 * i, y: DOOR_Y[0], o: 0 })); s.back.o = 1; }, stagger(gids, 0.2));
+  return S;
+}
+
+// ---------------------------------------------------------------- learner actions
+function actFlip(ctx) {
+  const narrow = ctx.ov.clientWidth < 600;   // on a phone the packets are too close for one target each
+  for (let i = narrow ? 2 : 0; i < (narrow ? 3 : 8); i++) {
+    const [x, y] = gridAt(i), v = Anim && WAVES[0][i];
+    ctx.hit(narrow ? 480 : x, y, narrow ? 680 : 92, narrow ? 120 : 52, 'Read label', (b) => {
+      ctx.ov.querySelectorAll('.lz-hit').forEach((h) => { h.disabled = true; });
+      const t = document.createElement('div'); t.className = 'm4-peek'; t.style.borderColor = 'var(--c-cyan)';
+      t.innerHTML = `From: 52.4.1.${10 + i}<br>Wants: <b>door ${PORTS[v.p]}</b> (${NAMES[v.p].toLowerCase()})`;
+      Object.assign(t.style, ctx.pos(x + 40, y - 120)); ctx.ov.appendChild(t);
+      setTimeout(() => ctx.done({}), 1800);
+    }, 'quiet');
+  }
+}
+function actPorts(ctx) {
+  let pick = null, left = 4;
+  ctx.slot.innerHTML = `<div class="m4-row">${[22, 3074, 443, 25].map((p) => `<button class="m4-chip" data-p="${p}" aria-pressed="false">${p}</button>`).join('')}</div><p class="m4-msg">Tap a number, then tap the sign it belongs to.</p>`;
+  const msg = ctx.slot.querySelector('.m4-msg'), chips = [...ctx.slot.querySelectorAll('.m4-chip')];
+  chips.forEach((c) => c.addEventListener('click', () => {
+    if (c.disabled) return;
+    chips.forEach((o) => o.setAttribute('aria-pressed', 'false'));
+    pick = +c.dataset.p; c.setAttribute('aria-pressed', 'true');
+  }));
+  const narrow = isNarrow(ctx);
+  let row = null;
+  if (narrow) { row = document.createElement('div'); row.className = 'm4-row'; ctx.slot.appendChild(row); }
+  PORTS.forEach((p, i) => {
+    const onTap = (b) => {
+      if (b.classList.contains('got')) return;
+      if (pick === null) { msg.textContent = 'Tap a number first.'; msg.className = 'm4-msg bad'; return; }
+      if (pick !== p) { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); msg.textContent = 'Not that one. ' + HINTS[PORTS.indexOf(pick)]; msg.className = 'm4-msg bad'; return; }
+      b.classList.add('got'); b.innerHTML = narrow ? `${NAMES[i]}: ${p}` : String(p); b.disabled = true;
+      const c = chips.find((o) => +o.dataset.p === p); c.disabled = true; c.classList.add('done'); c.setAttribute('aria-pressed', 'false');
+      pick = null; msg.textContent = HINTS[i]; msg.className = 'm4-msg ok';
+      if (--left === 0) setTimeout(() => ctx.done({}), 900);
+    };
+    let h;
+    if (narrow) { h = document.createElement('button'); h.className = 'm4-flat m4-sign'; h.textContent = NAMES[i]; h.addEventListener('click', () => onTap(h)); row.appendChild(h); }
+    else h = ctx.hit(DOOR_X + 150, DOOR_Y[i] + 12, 260, 100, NAMES[i], onTap, 'm4-sign quiet');
+    h.setAttribute('aria-label', 'Sign: ' + NAMES[i]);
+  });
+}
+function actSort(ctx) {
+  const items = [[0, true], [2, false], [1, true], [3, false]];
+  let left = items.length;
+  ctx.slot.innerHTML = `<div class="m4-sort">${items.map(([d], k) => `<p data-k="${k}"><b>door ${PORTS[d]} · ${NAMES[d].toLowerCase()}</b>
+    <button class="lz-btn" data-in="1"><span>Let in</span></button><button class="lz-btn" data-in="0"><span>Turn away</span></button></p>`).join('')}</div>
+    <p class="m4-msg">Use the rules on the screen.</p>`;
+  const msg = ctx.slot.querySelector('.m4-msg');
+  ctx.slot.querySelectorAll('.m4-sort p').forEach((row) => {
+    const [, want] = items[+row.dataset.k];
+    row.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+      if (row.dataset.done) return;
+      if ((b.dataset.in === '1') !== want) { msg.textContent = 'Check the list: only doors 443 and 25 get in.'; msg.className = 'm4-msg bad'; return; }
+      row.dataset.done = '1'; b.classList.add('good'); row.querySelectorAll('button').forEach((o) => { o.disabled = true; });
+      msg.textContent = want ? 'In. It is on the list.' : 'Turned away. It is not on the list.'; msg.className = 'm4-msg ok';
+      if (--left === 0) setTimeout(() => ctx.done({}), 900);
+    }));
+  });
+}
+// Door switches on the stage, plus the gate button.
+const isNarrow = (ctx) => ctx.ov.clientWidth < 600;   // on a phone the doors are too close for stage targets
+function doorSwitches(ctx, doors) {
+  const d = doors.slice();
+  if (isNarrow(ctx)) {
+    const row = document.createElement('div'); row.className = 'm4-row'; ctx.slot.appendChild(row);
+    PORTS.forEach((p, i) => {
+      const b = document.createElement('button'); b.className = 'lz-hit m4-door m4-flat';
+      const paint = () => { b.className = 'm4-flat m4-door ' + (d[i] ? 'open' : 'shut'); b.textContent = `${p} ${d[i] ? 'Open' : 'Shut'}`; b.setAttribute('aria-pressed', d[i]); };
+      b.addEventListener('click', () => { d[i] = !d[i]; paint(); }); paint(); row.appendChild(b);
+    });
+    return d;
+  }
+  PORTS.forEach((p, i) => {
+    const h = ctx.hit(DOOR_X, DOOR_Y[i], 64, 110, '', () => { d[i] = !d[i]; paint(); }, 'm4-door');
+    function paint() { h.className = 'lz-hit m4-door ' + (d[i] ? 'open' : 'shut'); h.querySelector('span').textContent = (d[i] ? 'Open' : 'Shut'); h.setAttribute('aria-label', `Door ${p}, ${NAMES[i]}: ${d[i] ? 'open' : 'shut'}. Tap to switch.`); }
+    paint(); h._paint = paint;
+  });
+  return d;
+}
+function gateButton(ctx, onGo) {
+  const b = document.createElement('button'); b.className = 'lz-btn go'; b.innerHTML = '<span>Open the gate</span>';
+  b.addEventListener('click', onGo); ctx.slot.appendChild(b); return b;
+}
+function actDoors(ctx, key, doors) {
+  const d = doorSwitches(ctx, doors);
+  gateButton(ctx, () => ctx.done({ [key]: d.slice() }));
+}
+function actRound3(ctx, doors) {
+  const d = doorSwitches(ctx, doors);
+  let where = null;
+  const msg = document.createElement('p'); msg.className = 'hint'; msg.textContent = 'Place the block card first, or last, in the rule list.';
+  const slots = [[190, true, 'Put the block card first'], [350, false, 'Put the block card last']].map(([y, f, label]) => {
+    const h = ctx.hit(315, y, 330, 46, label, () => {
+      where = f;
+      slots.forEach((o) => { const me = o._f === f; o.style.background = me ? 'rgba(251,191,36,.3)' : ''; o.style.borderColor = me ? 'var(--c-amber)' : '';
+        o.querySelector('em').textContent = me ? 'Block 66.6.6.6' : o._label; });
+      go.disabled = false; msg.textContent = f ? 'Block rule first, then let in open doors.' : 'Let in open doors first, then the block rule.';
+    }, 'quiet m4-slot');
+    h.insertAdjacentHTML('beforeend', `<em>${label}</em>`);
+    h._f = f; h._label = label; return h;
+  });
+  const go = gateButton(ctx, () => { if (where !== null) ctx.done({ r3: d.slice(), blockFirst: where }); });
+  go.disabled = true; ctx.slot.appendChild(msg);
+}
+function actSneak(ctx, at) {
+  ctx.hit(at[0], at[1], 120, 70, 'Look inside', (b) => {
+    b.disabled = true; b.classList.add('used');
+    const t = document.createElement('div'); t.className = 'm4-peek';
+    t.innerHTML = 'A normal website request…<code>GET /search?q=&lt;script&gt;steal()&lt;/script&gt;</code>…with an attack hidden inside.';
+    Object.assign(t.style, ctx.pos(520, 560)); ctx.ov.appendChild(t);
+    const m = document.createElement('p'); m.className = 'hint'; m.style.color = 'var(--c-amber)'; m.textContent = 'The door number was fine, so the firewall let it in. A firewall is one guard, not the whole defense.';
+    ctx.slot.appendChild(m);
+    setTimeout(() => ctx.done({}), 3200);
+  }, 'top');
+}
+function actLaunch(ctx) {
+  const b = document.createElement('button'); b.className = 'lz-btn go'; b.innerHTML = '<span>Launch</span>';
+  b.style.background = 'var(--c-red)'; b.style.borderColor = 'var(--c-red)';
+  b.addEventListener('click', () => ctx.done({})); ctx.slot.appendChild(b);
+}
+function actJam(ctx) {
+  let tries = 0;
+  const msg = document.createElement('p'); msg.className = 'hint'; msg.textContent = 'Tap a door to shut or open it.'; ctx.slot.appendChild(msg);
+  const say = ['Shutting the door keeps the flood out, and every real visitor too.', 'Opening it lets the flood straight in. Door switches cannot fix a flood.'];
+  const tap = (b) => {
+    if (tries >= 2) return;
+    const t = say[Math.min(tries, 1)]; tries++;
+    b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
+    ctx.toast(t); msg.textContent = t; msg.style.color = 'var(--c-red)';
+    if (tries === 2) setTimeout(() => ctx.done({}), 1800);
+  };
+  if (isNarrow(ctx)) {
+    const row = document.createElement('div'); row.className = 'm4-row'; ctx.slot.insertBefore(row, msg);
+    PORTS.forEach((p) => { const b = document.createElement('button'); b.className = 'm4-flat m4-door'; b.textContent = `Switch ${p}`; b.addEventListener('click', () => tap(b)); row.appendChild(b); });
+  } else PORTS.forEach((p, i) => ctx.hit(DOOR_X, DOOR_Y[i], 64, 110, 'Switch', tap, 'm4-door quiet'));
+}
+function actDefend(ctx) {
+  let left = 2;
+  const msg = document.createElement('p'); msg.className = 'hint';
+  [['Filter upstream', 'Your internet provider drops flood traffic before it reaches you.'], ['Spread the load', 'More servers share the visitors, so no single door jams.']].forEach(([label, info]) => {
+    const b = document.createElement('button'); b.className = 'lz-btn go'; b.innerHTML = `<span>${label}</span>`;
+    b.addEventListener('click', () => { if (b.disabled) return; b.disabled = true; msg.textContent = info; msg.style.color = 'var(--c-green)'; if (--left === 0) setTimeout(() => ctx.done({}), 1400); });
+    ctx.slot.appendChild(b);
+  });
+  ctx.slot.appendChild(msg);
+}
+
+const quiz = [
+  { q: 'A firewall decides what gets in by:',
+    choices: ['Reading every message', 'Checking a list of rules', 'Asking the user first', 'Slowing all traffic'], answer: 1,
+    why: 'It checks each packet against its rules, and the first rule that matches wins.' },
+  { q: 'A port is:',
+    choices: ['A type of cable', "A website's name", 'A numbered door', 'A strong password'], answer: 2,
+    why: 'Each service listens at its own numbered door, like 443 for websites.' },
+  { q: 'If the firewall rules are too strict:',
+    choices: ['More attacks get in', 'The internet speeds up', 'Real visitors get blocked', 'Nothing at all changes'], answer: 2,
+    why: 'Shutting too many doors turns real visitors away. That cost you points.' },
+  { q: 'A DDoS takes a website offline because:',
+    choices: ['Its passwords are stolen', 'The firewall breaks', 'Its power is cut', 'Too many requests arrive'], answer: 3,
+    why: 'A flood jams the line so real visitors cannot get in, even though nothing is stolen.' },
+  { q: 'A firewall cannot stop every attack because:',
+    choices: ['Some doors must stay open', 'It only works at night', 'It cannot read ports', 'It turns off when busy'], answer: 0,
+    why: 'Attacks can hide inside traffic on an open door, like the website door.' },
+];
+
+Lesson.mount(document.getElementById('lesson'), { id: 'm4', state: { r1: [true, true, true, true], r2: null, r3: null, blockFirst: false }, scene, quiz });
+</script>
+</body>
+</html>

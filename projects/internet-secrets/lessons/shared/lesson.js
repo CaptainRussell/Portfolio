@@ -74,6 +74,7 @@
     }
     function caption() {
       const m = sc.steps[step].meta;
+      dots.querySelectorAll('.lz-dot').forEach((d, i) => d.setAttribute('aria-label', `Step ${i + 1}: ${sc.steps[i].meta.head || ''}`));
       $('.lz-count').textContent = `Step ${step + 1} of ${N}`;
       $('.lz-head').innerHTML = rich(m.head || '');
       $('.lz-body').innerHTML = rich(m.body || '');
