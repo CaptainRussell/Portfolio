@@ -21,7 +21,8 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 | `shared/portfolio.js` | Light/dark toggle, remembered per browser (`pf-theme`). |
 | `shared/img/` | Header photo and the Det 250 patch used on the Storm HQ card. |
 | `projects/daniels-cipher/` | Creative component page, `slides/index.html` (the defense deck) and the paper PDF. Moved here from the old `CaptainRussell/Creative-Component` repo (deleted). |
-| `projects/internet-secrets/` | CYBSC 5300 project: page and the proposal PDF (opens in `view/?d=secrets-proposal`). The lessons will live here as they are built; update the Status column on the page as each one lands. |
+| `projects/internet-secrets/` | CYBSC 5300 project: page and the proposal PDF (opens in `view/?d=secrets-proposal`). Lessons live in `lessons/<module>/`; update the Status column on the page as each one lands. |
+| `projects/internet-secrets/lessons/` | The lesson player, in a cyber palette (dark navy, cyan, green, red) instead of the ISU colors. `shared/engine.js` is the keyframe animation engine from the cipher slides plus `node` and `packet` kinds; `shared/lesson.js` is the player (caption, Back/Replay/Next, step dots, arrow keys, reduced motion, five-question self-check, 80% to pass, best score in `ihks-lessons-v1`); `shared/lesson.css` is its look. `template/` is a demo lesson: copy it to start a module. |
 | `projects/ads/` | ADS project page plus the whole former `CaptainRussell/CYBSC5360Project` repo (now private): `tool/` (source, tests, browser edition), `paper/`, `project3/`, drafts, and the tool ZIPs. `downloads/sample_drive.img` is the try-it sample. |
 
 ## Adding a project
