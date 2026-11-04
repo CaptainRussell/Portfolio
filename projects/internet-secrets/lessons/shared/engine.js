@@ -94,6 +94,8 @@
     mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 7 8.5-7"/>',
     hash: '<path d="M9 3 7 21M17 3l-2 18M4 8.5h17M3 15.5h17"/>',
     hand: '<path d="M8 13V5.5a1.5 1.5 0 0 1 3 0V11M11 10.5V4a1.5 1.5 0 0 1 3 0v6.5M14 10.5V5.5a1.5 1.5 0 0 1 3 0V11M17 9.5a1.5 1.5 0 0 1 3 0V14c0 4.4-3 7-7 7-2.6 0-4.4-1.2-5.8-3.3L4.3 13.6a1.5 1.5 0 0 1 2.4-1.8L8 13.5"/>',
+    blender: '<path d="M6 3h12l-1.6 11H7.6z"/><path d="M7.6 14h8.8l.6 3H7z"/><rect x="6" y="17" width="12" height="4" rx="1"/><path d="M10 7.5l4 3M14 7.5l-4 3"/>',
+    salt: '<path d="M8 9h8l1 12H7z"/><path d="M8 9a4 4 0 0 1 8 0"/><path d="M10.5 5.5h.01M12 4.5h.01M13.5 5.5h.01"/>',
     scissors: '<circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/>',
   };
 
@@ -267,6 +269,45 @@
       if (h.sl !== tag) { h.lab.textContent = tag || ''; h.sl = tag; }
     },
   };
+  // A fingerprint (Lesson 3): bars colored and sized from a hex hash, with the start of the hash under them.
+  //   cfg: w, h (bar area, default 520 by 90), n (bars, default 16), size (hash text, default 24), text (false hides it)
+  //   props: hex (the hash; bars blend when it changes), edge
+  const hsl = (h, s, l) => {
+    s /= 100; l /= 100;
+    const k = (n) => (n + h / 30) % 12, a = s * Math.min(l, 1 - l);
+    const f = (n) => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)));
+    return [255 * f(0), 255 * f(8), 255 * f(4)];
+  };
+  function barSpec(hex, i) {
+    if (!hex) return { c: [60, 76, 104], f: 0.5 };
+    const b1 = parseInt(hex.substr((i * 2) % 64, 2), 16), b2 = parseInt(hex.substr((i * 2 + 32) % 64, 2), 16);
+    return { c: hsl((b1 / 256) * 360, 78, 58), f: 0.35 + 0.65 * (b2 / 255) };
+  }
+  KINDS.barcode = {
+    defaults: { hex: '', edge: C.line },
+    create(g, cfg) {
+      const W = cfg.w || 520, H = cfg.h || 90, n = cfg.n || 16, r = el('g', {}, g);
+      const frame = el('rect', { x: -W / 2 - 12, y: -H / 2 - 12, width: W + 24, height: H + 24, rx: 14, fill: C.panel, 'stroke-width': 2 }, r);
+      const bw = W / n, bars = [];
+      for (let i = 0; i < n; i++) bars.push(el('rect', { x: -W / 2 + i * bw + bw * 0.12, width: bw * 0.76, rx: 3 }, r));
+      const mk = () => el('text', { x: 0, y: H / 2 + 46, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': cfg.size || 24, 'font-weight': 600, fill: C.soft }, r);
+      return { root: r, frame, bars, W, H, n, a: mk(), b: mk(), cfg, sa: null, sb: null };
+    },
+    update(h, p, from, to, e) {
+      setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      setA(h.root, 'opacity', p.o.toFixed(3)); setA(h.frame, 'stroke', p.edge);
+      h.bars.forEach((bar, i) => {
+        const A = barSpec(from.hex, i), B = barSpec(to.hex, i), f = lerp(A.f, B.f, e);
+        const c = 'rgb(' + A.c.map((v, j) => Math.round(lerp(v, B.c[j], e))).join(',') + ')';
+        setA(bar, 'fill', c); setA(bar, 'height', (h.H * f).toFixed(2)); setA(bar, 'y', (h.H / 2 - h.H * f).toFixed(2));
+      });
+      const lab = (q) => (h.cfg.text === false || !q.hex ? '' : q.hex.slice(0, 16) + '…');
+      const ca = lab(from), cb = lab(to), cross = ca !== cb;
+      if (h.sa !== ca) { h.a.textContent = ca; h.sa = ca; }
+      if (h.sb !== cb) { h.b.textContent = cb; h.sb = cb; }
+      setA(h.a, 'opacity', cross ? (1 - e).toFixed(3) : '0'); setA(h.b, 'opacity', cross ? e.toFixed(3) : '1');
+    },
+  };
   // A small piece of data on the move: a rounded chip with a short monospace label, centered on (x, y).
   //   cfg: text, w (default fits the text)
   //   props: fill, ink (label color), glow (0 to 1), content (changes the label, crossfading)
@@ -392,5 +433,5 @@
     }
   }
 
-  root.Anim = { Scene, Player, KINDS, ICONS, C, el, easeInOut, fmtNum, FONT, MONO };
+  root.Anim = { Scene, Player, KINDS, ICONS, C, el, easeInOut, fmtNum, FONT, MONO, barSpec };
 })(this);
