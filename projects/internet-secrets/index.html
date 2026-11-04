@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How the Internet Keeps Secrets · Scott D. Russell</title>
+<meta name="description" content="How the Internet Keeps Secrets: short animated, interactive lessons that teach the foundations of network security to anyone, from packets and key exchange to passwords and firewalls.">
+<link rel="icon" href="../../shared/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="../../shared/portfolio.css">
+<script src="../../shared/portfolio.js"></script>
+<style>
+table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
+td:first-child{font-family:var(--mono);font-weight:700;white-space:nowrap}
+.tablewrap{overflow-x:auto;max-width:760px}
+.state{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid var(--line);color:var(--soft)}
+.state.now{border-color:var(--tone);color:var(--ink);background:color-mix(in srgb,var(--tone) 18%,transparent)}
+</style>
+</head>
+<body style="--tone:#0d9488">
+<header class="pf-bar">
+  <a class="pf-up" href="../../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>All projects</span><span class="pf-brand"><span class="pf-mark" aria-hidden="true">SR</span><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<div class="proj-head"><div class="wrap">
+  <div class="proj-title"><span class="proj-icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="6" r="2.2"/><circle cx="19" cy="6" r="2.2"/><circle cx="12" cy="18" r="2.2"/><path d="M7.2 6h9.6M6.1 7.9l4.8 8.2M17.9 7.9l-4.8 8.2"/><path d="m10.3 4.6 1.7 1.4-1.7 1.4" /></svg></span>
+  <div><p class="kicker">Visualization project · Network Security (CYBSC 5300)</p>
+  <h1>How the Internet Keeps Secrets</h1>
+  <p class="sub">Short animated, interactive lessons that teach anyone how the internet moves and protects their information, no cyber background needed.</p></div></div>
+  <ul class="facts">
+    <li><b>Course:</b> CYBSC 5300, Iowa State University</li>
+    <li><b>Year:</b> Fall 2026</li>
+    <li><b>Role:</b> Sole designer, developer and author</li>
+    <li><b>Built with:</b> HTML, JavaScript and SVG</li>
+    <li><b>Status:</b> In progress, due December 2026</li>
+  </ul>
+  <div class="pcards">
+    <a class="pcard" href="../../view/?d=secrets-proposal" style="--i:0"><span class="icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span><span class="body"><span class="name">Read the proposal</span><span class="blurb">Scope, learning objectives, references and timeline. PDF, 4 pages.</span></span></a>
+  </div>
+</div></div>
+
+<main class="wrap">
+  <div class="prose">
+    <h2>The idea</h2>
+    <p>Most people use the internet every day without knowing what happens to a message after they press send, or what keeps their password safe. This project is a website of short lessons, each built around one animation, that explains those ideas with everyday comparisons: postcards, mixing paint, fingerprints and a bouncer at the door.</p>
+    <p>It is written at a high school level for students, parents and the general public, and for the AFROTC cadets I teach as the detachment's Cybersecurity Liaison. Learners step through each animation at their own pace and finish with a five-question self-check quiz.</p>
+
+    <h2>The four lessons</h2>
+    <div class="tablewrap"><table>
+      <thead><tr><th>#</th><th>Lesson</th><th>What the learner sees and does</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><b>Postcards on the internet</b></td><td>A message is chopped into packets and passed hand to hand across a map of routers, readable like a postcard by anyone holding it.</td><td><span class="state">Planned</span></td></tr>
+        <tr><td>2</td><td><b>Mixing secret colors</b></td><td>Two people each add a private paint color to a shared public one, swap the mixtures, and end up with the same secret color (Diffie-Hellman key exchange).</td><td><span class="state">Planned</span></td></tr>
+        <tr><td>3</td><td><b>Crack the password</b></td><td>A "blender" shows how changing one letter completely changes a password's fingerprint (hash), which is what websites store instead of the password.</td><td><span class="state">Planned</span></td></tr>
+        <tr><td>4</td><td><b>Guard the gate</b></td><td>Packets line up at the network's door, and learners set simple firewall rules, scored on attacks blocked versus real visitors turned away. Time permitting, a flood of traffic (DDoS) round.</td><td><span class="state">Planned</span></td></tr>
+      </tbody>
+    </table></div>
+
+    <h2>What a learner should be able to do</h2>
+    <ul>
+      <li>Describe how a message is split into packets and passed from router to router.</li>
+      <li>Explain how two people can agree on a shared secret while someone watches everything they send.</li>
+      <li>Explain why websites store a password's hash instead of the password, and why a long passphrase takes far longer to guess than a short password.</li>
+      <li>Describe how a firewall decides which traffic to let in, and why a flood of traffic can knock a website offline even when nothing is stolen.</li>
+    </ul>
+    <div class="callout"><p><b>How I'll know it works:</b> 3 to 5 testers with no cyber background take a short quiz before and after the lessons. The goal is for scores to go up, with 80% (4 of 5) or better on each lesson's quiz.</p></div>
+
+    <p>The full scope, sources and schedule are in <a href="../../view/?d=secrets-proposal">the proposal</a>. The lessons will be linked here as each one is finished.</p>
+  </div>
+</main>
+
+<footer class="pf-foot">
+  <div class="foot-mark" aria-hidden="true">SR</div>
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">M.S. Cybersecurity · Iowa State University</p>
+  <p class="source-line">How the Internet Keeps Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">All projects</a></p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
+</footer>
+</body>
+</html>
