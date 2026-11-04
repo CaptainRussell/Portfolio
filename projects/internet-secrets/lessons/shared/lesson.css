@@ -48,8 +48,18 @@
 .lz-act .hint{color:var(--c-faint);font-size:13px;flex-basis:100%;margin:0}
 .lz-act .err{color:var(--c-red)}
 .lz-btn.wait{opacity:.55}
-.lz.acting .lz-head::after{content:"Your turn";margin-left:10px;padding:2px 8px;border-radius:999px;vertical-align:3px;background:var(--c-cyan);color:#04111a;
+.lz.acting .lz-head::after{content:"Your turn";display:inline-block;white-space:nowrap;margin-left:10px;padding:2px 8px;border-radius:999px;vertical-align:3px;background:var(--c-cyan);color:#04111a;
   font:800 11px/1.4 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.08em;text-transform:uppercase}
+/* drag a piece onto a target */
+.lz-hit.lz-src{touch-action:none;cursor:grab;border-style:solid;border-color:var(--c-ink);border-radius:50%;opacity:.92}
+.lz-hit.lz-src.drag{animation:none;cursor:grabbing;z-index:3;box-shadow:0 0 0 4px rgba(34,211,238,.35),0 10px 24px rgba(0,0,0,.5)}
+.lz-hit.lz-src.drag span{display:none}
+.lz-hit.lz-src.clear{background:rgba(34,211,238,.08);border-color:var(--c-cyan);border-style:dashed;border-radius:16px}
+.lz-drop{position:absolute;transform:translate(-50%,-50%);border-radius:50%;border:2px dashed var(--c-green);pointer-events:none;
+  background:rgba(52,245,164,.06)}
+.lz-drop span{position:absolute;left:50%;bottom:100%;transform:translate(-50%,-6px);white-space:nowrap;padding:3px 8px;border-radius:8px;
+  background:rgba(7,11,20,.88);border:1px solid var(--c-line);font:700 12px/1.2 system-ui,sans-serif;color:var(--c-green)}
+.lz-drop.over{border-style:solid;background:rgba(52,245,164,.2);box-shadow:0 0 0 6px rgba(52,245,164,.18)}
 /* draggable chips (put things in order) */
 .lz-chip{position:absolute;transform:translate(-50%,-50%);display:grid;place-items:center;border-radius:12px;border:3px solid var(--c-cyan);background:var(--c-panel2);
   color:var(--c-ink);font:700 16px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;cursor:grab;touch-action:none;

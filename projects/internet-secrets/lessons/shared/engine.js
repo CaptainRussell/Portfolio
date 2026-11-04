@@ -232,6 +232,41 @@
       setA(h.root, 'opacity', p.o.toFixed(3)); setA(h.ic, 'stroke', p.tint);
     },
   };
+  // A paint can (Lesson 2), centered on (x, y). cfg: size (body width, default 110).
+  //   props: paint (color; colors blend smoothly), edge, glow, rot (tilt, for pouring),
+  //   cover (0 to 1: a face-down cover with a "?" hides the paint), tag (label under the can).
+  KINDS.can = {
+    defaults: { paint: C.cyan, edge: C.soft, glow: 0, rot: 0, cover: 0, tag: '' },
+    create(g, cfg) {
+      const W = cfg.size || 110, H = W * 0.92, top = -H / 2 + 12, r = el('g', {}, g);
+      const halo = el('rect', { x: -W / 2 - 14, y: -H / 2 - 30, width: W + 28, height: H + 44, rx: 22, fill: 'none', 'stroke-width': 6 }, r);
+      const body = el('g', {}, r);
+      const handle = el('path', { d: `M ${-W * 0.42} ${top} C ${-W * 0.42} ${top - W * 0.42}, ${W * 0.42} ${top - W * 0.42}, ${W * 0.42} ${top}`,
+        fill: 'none', 'stroke-width': 4 }, body);
+      const can = el('path', { d: `M ${-W / 2} ${top} L ${W / 2} ${top} L ${W * 0.43} ${H / 2 - 6} Q ${W * 0.42} ${H / 2} ${W * 0.36} ${H / 2} L ${-W * 0.36} ${H / 2} Q ${-W * 0.42} ${H / 2} ${-W * 0.43} ${H / 2 - 6} Z`,
+        'stroke-width': 3, 'stroke-linejoin': 'round' }, body);
+      const shine = el('path', { d: `M ${-W * 0.3} ${top + 16} L ${-W * 0.26} ${H / 2 - 14}`, stroke: '#ffffff', 'stroke-width': 5, 'stroke-linecap': 'round', opacity: 0.28 }, body);
+      const rim = el('ellipse', { cx: 0, cy: top, rx: W / 2, ry: W * 0.11, 'stroke-width': 3 }, body);
+      const cover = el('g', {}, body);
+      el('path', { d: `M ${-W / 2 - 3} ${top} L ${W / 2 + 3} ${top} L ${W * 0.45} ${H / 2 + 2} L ${-W * 0.45} ${H / 2 + 2} Z`, fill: C.panel2, stroke: C.faint, 'stroke-width': 3 }, cover);
+      el('ellipse', { cx: 0, cy: top, rx: W / 2 + 3, ry: W * 0.11 + 3, fill: C.panel2, stroke: C.faint, 'stroke-width': 3 }, cover);
+      const q = el('text', { x: 0, y: W * 0.2, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': W * 0.5, 'font-weight': 800, fill: C.soft }, cover);
+      q.textContent = '?';
+      const lab = el('text', { x: 0, y: H / 2 + 34, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 26, 'font-weight': 650, fill: C.ink }, r);
+      return { root: r, halo, body, handle, can, shine, rim, cover, lab, W, H, sl: null };
+    },
+    update(h, p, from, to, e) {
+      setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      setA(h.root, 'opacity', p.o.toFixed(3));
+      setA(h.body, 'transform', `rotate(${p.rot.toFixed(2)})`);
+      setA(h.can, 'fill', p.paint); setA(h.rim, 'fill', p.paint);
+      setA(h.can, 'stroke', p.edge); setA(h.rim, 'stroke', p.edge); setA(h.handle, 'stroke', p.edge);
+      setA(h.halo, 'stroke', p.edge); setA(h.halo, 'opacity', (p.glow * 0.6).toFixed(3));
+      setA(h.cover, 'opacity', p.cover.toFixed(3));
+      const tag = e < 0.5 ? from.tag : to.tag;
+      if (h.sl !== tag) { h.lab.textContent = tag || ''; h.sl = tag; }
+    },
+  };
   // A small piece of data on the move: a rounded chip with a short monospace label, centered on (x, y).
   //   cfg: text, w (default fits the text)
   //   props: fill, ink (label color), glow (0 to 1), content (changes the label, crossfading)

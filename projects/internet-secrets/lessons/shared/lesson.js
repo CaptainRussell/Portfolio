@@ -7,7 +7,9 @@
  *                                  // meta.act(ctx) makes it a "your turn" step: build controls with ctx.hit()
  *                                  // (a tap target on the stage), ctx.slot (space under the caption) or ctx.ov
  *                                  // (the stage overlay), then call ctx.done({choices}) to rebuild the scene
- *                                  // with those choices and play the next step.
+ *                                  // with those choices and play the next step. ctx.drag() makes a piece the
+ *                                  // learner drags (or taps) onto a target. meta.optional: the controls show but
+ *                                  // Next is not blocked (extras such as a math peek).
  *     quiz: [{q, choices: [...], answer: 0, why: 'one sentence'}],   // five questions
  *     pass: 4,                     // correct answers needed (default 4 of 5, 80%)
  *   });
@@ -59,7 +61,8 @@
     let player = new root.Anim.Player(svg, sc);
     let step = -1, raf = 0, playing = false, t0 = 0, reached = 0;
     const doneActs = {};
-    const pending = () => !!(sc.steps[step].meta.act && !doneActs[step]);
+    const pending = () => { const m = sc.steps[step].meta; return !!(m.act && !m.optional && !doneActs[step]); };
+    const hasAct = () => { const m = sc.steps[step].meta; return !!(m.act && (m.optional || !doneActs[step])); };
 
     function paint(frac) {
       dots.querySelectorAll('.lz-dot').forEach((d, i) => {
@@ -86,8 +89,8 @@
     function showAll() { hidden.forEach((id) => { const n = player.h[id] && player.h[id]._node; if (n) n.style.visibility = ''; }); hidden.clear(); }
     function startAct() {
       clearAct();
-      if (!pending()) return;
-      host.classList.add('acting');
+      if (!hasAct()) return;
+      if (pending()) host.classList.add('acting');
       const k = step;
       const ctx = {
         state, ov, slot, scene: sc,
@@ -102,6 +105,41 @@
           b.innerHTML = `<span>${esc(label)}</span>`;
           b.addEventListener('click', () => onTap(b));
           ov.appendChild(b); return b;
+        },
+        // a piece the learner drags onto a target (to = {x, y, r, label}); a plain tap or Enter also drops it,
+        // so it works without dragging. color fills the piece. onDrop() runs once.
+        drag(x, y, w, h, label, to, onDrop, opt) {
+          opt = opt || {};
+          const t = document.createElement('div');
+          t.className = 'lz-drop';
+          Object.assign(t.style, ctx.pos(to.x, to.y), { width: (2 * to.r / sc.w * 100) + '%', height: (2 * to.r / sc.h * 100) + '%' });
+          t.innerHTML = `<span>${esc(to.label || 'Drop here')}</span>`;
+          ov.appendChild(t);
+          const b = ctx.hit(x, y, w, h, label, () => {}, 'lz-src' + (opt.cls ? ' ' + opt.cls : ''));
+          if (opt.color) b.style.background = opt.color;
+          let sx = 0, sy = 0, bx = 0, by = 0, moved = false, fired = false;
+          const near = () => {
+            const k = sc.w / ov.clientWidth, cx = b.offsetLeft * k, cy = b.offsetTop * k;
+            return Math.hypot(cx - to.x, cy - to.y) < to.r + Math.max(w, h) * 0.35;
+          };
+          const fire = () => { if (fired) return; fired = true; t.classList.add('over'); b.disabled = true; onDrop(); };
+          const home = () => { Object.assign(b.style, ctx.pos(x, y)); };
+          b.addEventListener('pointerdown', (e) => { sx = e.clientX; sy = e.clientY; bx = b.offsetLeft; by = b.offsetTop; moved = false; b.setPointerCapture(e.pointerId); });
+          b.addEventListener('pointermove', (e) => {
+            if (!b.hasPointerCapture(e.pointerId)) return;
+            const dx = e.clientX - sx, dy = e.clientY - sy;
+            if (!moved && Math.hypot(dx, dy) < 6) return;
+            moved = true; b.classList.add('drag');
+            b.style.left = (bx + dx) + 'px'; b.style.top = (by + dy) + 'px';
+            t.classList.toggle('over', near());
+          });
+          b.addEventListener('pointerup', () => {
+            if (!moved) return;
+            b.classList.remove('drag'); b.dataset.dragged = '1';
+            if (near()) fire(); else { home(); t.classList.remove('over'); }
+          });
+          b.addEventListener('click', () => { if (b.dataset.dragged) { delete b.dataset.dragged; return; } fire(); });
+          return b;
         },
         hide(ids) { ids.forEach((id) => { const n = player.h[id] && player.h[id]._node; if (n) { n.style.visibility = 'hidden'; hidden.add(id); } }); },
         toast(msg) {
