@@ -50,7 +50,7 @@ code,kbd{font-family:var(--mono);font-size:.92em}
 /* ---------- top bar (Storm HQ style: dark strip, cardinal rule, gold name) ---------- */
 .pf-bar{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:10px;min-height:40px;padding:6px 16px;background:#16161a;color:#ececee;border-bottom:2px solid #c8102e;font:600 13px/1.2 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
 .pf-brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;min-width:0}
-.pf-mark{flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,#c8102e,#7a0a1c);color:#fff;font:700 11px/1 var(--mono)}
+.pf-mark{flex:none;width:26px;height:26px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px #c8102e}
 .pf-name{color:#f1be48;font-weight:800;letter-spacing:.02em;white-space:nowrap}
 .pf-sub{color:#b2b3b8;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pf-bar nav{margin-left:auto;display:flex;gap:6px;align-items:center;flex:none}
@@ -123,10 +123,12 @@ figcaption{margin-top:8px;font-size:13px;color:var(--soft)}
 /* ---------- footer (Storm HQ style) ---------- */
 .pf-foot{margin-top:48px;padding:30px 16px 40px;border-top:1px solid var(--line);color:var(--soft);font-size:13px;line-height:1.5;text-align:center}
 .pf-foot p{margin:0}
-.pf-foot .foot-mark{width:52px;height:52px;margin:0 auto 10px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#c8102e,#7a0a1c);color:#fff;font:700 18px/1 var(--mono);box-shadow:0 6px 14px rgba(200,16,46,.3)}
+.pf-foot .foot-mark{display:block;width:52px;height:52px;margin:0 auto 10px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 3px #c8102e,0 6px 14px rgba(200,16,46,.3)}
 .pf-foot .motto{font-style:italic;font-size:15px;color:var(--ink);opacity:.85}
 .pf-foot .tagline{margin-top:4px;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
 .pf-foot .source-line{max-width:560px;margin:12px auto 0;font-size:12.5px;line-height:1.55}
+.pf-foot .gh{display:inline-flex;align-items:center;gap:6px;margin:10px auto 0;padding:6px 12px;border:1px solid var(--line);border-radius:999px;background:var(--surface);color:var(--ink);font-weight:700;font-size:13px;text-decoration:none;transition:border-color .15s,background .15s}
+.pf-foot .gh:hover,.pf-foot .gh:focus-visible{border-color:#c8102e;background:#c8102e;color:#fff}
 .pf-foot .created-by{display:inline-block;margin-top:14px;padding-top:12px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink);opacity:.85}
 .pf-foot a{color:inherit}
 

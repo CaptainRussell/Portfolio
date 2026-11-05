@@ -21,7 +21,7 @@ body.app{overflow-x:hidden}
 .pfstrip .up:hover .back,.pfstrip .up:focus-visible .back{background:#c8102e;border-color:#c8102e;color:#fff}
 .pf-hosted .top{top:42px}.pf-hosted .tabs{top:96px}
 .pfstrip .back svg{transition:transform .25s cubic-bezier(.2,.7,.2,1)}.pfstrip .up:hover .back svg{transform:translateX(-3px)}
-.pfstrip .mk{flex:none;width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:linear-gradient(135deg,#c8102e,#7a0a1c);color:#fff;font:700 11px/1 ui-monospace,Menlo,Consolas,monospace}
+.pfstrip .mk{flex:none;width:26px;height:26px;border-radius:50%;object-fit:cover;box-shadow:0 0 0 2px #c8102e}
 .pfstrip .who{color:#f1be48;font-weight:800;letter-spacing:.02em;white-space:nowrap}
 .pfstrip .sub{color:#b2b3b8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 @media (max-width:520px){.pfstrip .sub{display:none}}
@@ -164,7 +164,7 @@ button.drop:disabled{cursor:progress;opacity:.7}
 </style>
 </head>
 <body class="app">
-<div class="pfstrip" id="pfstrip" hidden><a class="up" href="../"><span class="back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ADS</span><span class="mk" aria-hidden="true">SR</span><span class="who">Scott D. Russell</span><span class="sub">Cybersecurity Portfolio</span></a></div>
+<div class="pfstrip" id="pfstrip" hidden><a class="up" href="../"><span class="back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>ADS</span><img class="mk" src="../../../shared/img/scott-russell-sm.jpg" alt="" width="26" height="26"><span class="who">Scott D. Russell</span><span class="sub">Cybersecurity Portfolio</span></a></div>
 <script>if (/^https?:$/.test(location.protocol) && /\/projects\/ads\/tool\//.test(location.pathname)) { document.getElementById("pfstrip").hidden = false; document.documentElement.classList.add("pf-hosted"); }</script>
 <div class="view on" id="v-home">
 <header class="top"><div class="wrap">
