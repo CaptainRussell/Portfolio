@@ -53,7 +53,7 @@ const P = { alice: [140, 300], wifi: [470, 300], eve: [295, 690], A: [700, 200],
 const LINKS = [['wifi', 'A'], ['wifi', 'B'], ['A', 'D'], ['B', 'D'], ['A', 'F'], ['B', 'G'], ['D', 'F'], ['D', 'G'], ['F', 'bob'], ['G', 'bob']];
 const ROW_Y = 470, STRIP_X = 295, CH = 18, HEAD_Y = 165;          // the message strip: 30px monospace letters, about 18 units wide each
 const TRAY = { x: 1300, y: 800, gap: 118 };
-const MSGS = ['MEET AT 6', 'HI BOB', 'LUNCH AT 12', 'SEE YOU SOON', 'CALL ME'];
+const MSGS = ['PIN IS 4821', 'GATE CODE 59', 'KEY IN PLANT', 'PW IS TIGER9', 'SAFE 31-7-9'];   // private things Eve should never read (12 characters at most, to fit the postcards)
 const MAP_S = 0.75, TRAY_S = 0.9;
 const LOST = [1060, 380];                            // where #1 is lost, on the jammed road from D to F
 const PIX = Array.from({ length: 18 }, (_, i) => [Math.round(Math.cos(i * 2.4) * (40 + (i % 4) * 22)), Math.round(Math.sin(i * 2.4) * (30 + (i % 5) * 16) + 40)]);
@@ -298,7 +298,7 @@ const quiz = [
     why: 'Every router, and Eve watching them, could read it. Lesson 2 fixes that.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 1 · Postcards on the Internet', id: 'm1', state: { msg: 'MEET AT 6' }, scene, quiz, next: Lessons.next('m1') });
+Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 1 · Postcards on the Internet', id: 'm1', state: { msg: 'PIN IS 4821' }, scene, quiz, next: Lessons.next('m1') });
 </script>
 </body>
 </html>

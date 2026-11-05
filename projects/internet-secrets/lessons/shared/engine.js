@@ -387,6 +387,33 @@
       setA(h.halo, 'stroke', p.paint); setA(h.halo, 'opacity', (p.glow * 0.6).toFixed(3));
     },
   };
+  // A salt shaker (Lesson 3), mouth up, centered on (x, y). cfg.style 'tall' (a slim glass shaker) or 'round'
+  //   (a squat grinder), so two sites' salts look different. props: rot (tilt), grain (salt color), glow
+  KINDS.shaker = {
+    defaults: { rot: 0, grain: '#ffffff', glow: 0 },
+    create(g, cfg) {
+      const r = el('g', {}, g), round = cfg.style === 'round';
+      const halo = el('circle', { cx: 0, cy: 0, r: 70, fill: 'none', 'stroke-width': 6 }, r);
+      let fill;
+      if (round) {
+        fill = el('circle', { cx: 0, cy: 14, r: 34, opacity: 0.85 }, r);
+        el('circle', { cx: 0, cy: 14, r: 40, fill: 'rgba(230,241,255,.08)', stroke: '#e6f1ff', 'stroke-width': 4 }, r);
+        el('rect', { x: -30, y: -40, width: 60, height: 20, rx: 6, fill: '#8a5a2b', stroke: '#e6f1ff', 'stroke-width': 3 }, r);
+        el('rect', { x: -8, y: -56, width: 16, height: 18, rx: 4, fill: '#8a5a2b', stroke: '#e6f1ff', 'stroke-width': 3 }, r);
+      } else {
+        fill = el('rect', { x: -18, y: -14, width: 36, height: 58, rx: 6, opacity: 0.85 }, r);
+        el('rect', { x: -22, y: -30, width: 44, height: 78, rx: 10, fill: 'rgba(230,241,255,.08)', stroke: '#e6f1ff', 'stroke-width': 4 }, r);
+        el('path', { d: 'M -22 -30 C -22 -58 22 -58 22 -30 Z', fill: '#94a3b8', stroke: '#e6f1ff', 'stroke-width': 3 }, r);
+        [[-8, -40], [0, -46], [8, -40]].forEach(([x, y]) => el('circle', { cx: x, cy: y, r: 2.6, fill: '#0a0f1c' }, r));
+      }
+      return { root: r, halo, fill };
+    },
+    update(h, p) {
+      setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) rotate(${p.rot.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      setA(h.root, 'opacity', p.o.toFixed(3)); setA(h.fill, 'fill', p.grain);
+      setA(h.halo, 'stroke', p.grain); setA(h.halo, 'opacity', (p.glow * 0.6).toFixed(3));
+    },
+  };
   // A padlock seen from the front, with a keyhole a key can slide into (Lesson 2).
   //   props: open (0 shut to 1 shackle up), turn (keyhole angle, degrees), tint, glow
   KINDS.padlock = {
