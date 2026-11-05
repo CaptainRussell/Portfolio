@@ -59,10 +59,10 @@
       why: 'Salt changes what goes into the blender, so the fingerprints differ.' },
     { l: 3, q: 'Which password would take the longest to guess?', choices: ['A short word with symbols', "Your pet's name and birthday", 'A long four-word passphrase', 'The same one on every site'], answer: 2,
       why: 'Length wins. Four random words beat a short, tricky password.' },
-    { l: 4, q: 'Door 22 (remote login) gets only attacks. You should:', choices: ['Leave it open', 'Shut that door', 'Open every door', 'Shut every door'], answer: 1,
-      why: 'Shut the doors nobody real uses. Shutting every door turns real visitors away too.' },
-    { l: 4, q: 'A flood of traffic (DDoS) is best fought by:', choices: ['Closing every door', 'Changing passwords', 'Filtering it early', 'Turning off the firewall'], answer: 2,
-      why: 'Filtering upstream and spreading the load keep the door open for real visitors.' },
+    { l: 4, q: 'Gate 22 (remote login) gets only attacks. You should:', choices: ['Leave it open', 'Shut that gate', 'Open every gate', 'Shut every gate'], answer: 1,
+      why: 'Shut the gates nobody real uses. Shutting every gate burns real visitors too.' },
+    { l: 4, q: 'A flood of traffic (DDoS) is best fought by:', choices: ['Closing every gate', 'Changing passwords', 'Filtering it early', 'Turning off the firewall'], answer: 2,
+      why: 'Filtering upstream and spreading the load keep the gate open for real visitors.' },
   ];
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const ic = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
