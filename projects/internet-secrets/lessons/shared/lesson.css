@@ -147,3 +147,10 @@
 }
 
 a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+/* pick one of several (messages): all look the same until picked */
+.lz-btn.lz-pick[aria-pressed="true"]{border-color:var(--c-cyan);color:var(--c-ink);box-shadow:0 0 0 3px rgba(34,211,238,.3);background:rgba(34,211,238,.12)}
+/* a stage target picked before confirming, and a paint can the learner drags */
+.lz-hit.picked{background:rgba(34,211,238,.2);border-style:solid;border-color:var(--c-cyan)}
+.lz-hit.lz-src.can{border-radius:18px;border-style:dashed;border-color:var(--c-cyan);background:rgba(34,211,238,.08);display:grid;place-items:center}
+.lz-hit.lz-src.can svg{width:78%;height:78%;pointer-events:none}
+.lz-hit.lz-src.can span{display:none}

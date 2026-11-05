@@ -119,6 +119,7 @@
           ov.appendChild(t);
           const b = ctx.hit(x, y, w, h, label, () => {}, 'lz-src' + (opt.cls ? ' ' + opt.cls : ''));
           if (opt.color) b.style.background = opt.color;
+          if (opt.html) b.insertAdjacentHTML('afterbegin', opt.html);
           let sx = 0, sy = 0, bx = 0, by = 0, moved = false, fired = false;
           const near = () => {
             const k = sc.w / ov.clientWidth, cx = b.offsetLeft * k, cy = b.offsetTop * k;

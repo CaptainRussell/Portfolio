@@ -47,13 +47,13 @@
    the best check score from each lesson (out of 20) plus this review (out of 8). Code organized with help from Claude (Anthropic). */
 (function () {
   const Q = [
-    { l: 1, q: 'Why does each packet carry a number?', choices: ['So Bob can put them in order', 'So routers can read them', 'So Eve can find them', 'So they travel faster'], answer: 0,
-      why: 'Packets can arrive out of order. The numbers let Bob rebuild the message.' },
+    { l: 1, q: 'Why does each packet carry a number?', choices: ['So the receiver can sort them', 'So routers can read them all', 'So Eve can find them faster', 'So they travel to Bob faster'], answer: 0,
+      why: 'Packets can arrive out of order. The numbers let the receiver (Bob) rebuild the message.' },
     { l: 1, q: 'A router that passes your plain packet along can:', choices: ['Change your password', 'Read what it says', 'Stop the internet', 'Lock it with a key'], answer: 1,
       why: 'A plain packet is like a postcard: anyone holding it can read it.' },
-    { l: 2, q: 'Alice and Bob end up with the same secret color because:', choices: ['Eve sends it to them', 'They mail it to each other', 'Each adds a secret to a mix', 'The public color is secret'], answer: 2,
+    { l: 2, q: 'The sender (Alice) and receiver (Bob) end up with the same secret color because:', choices: ['Eve sends it to them', 'They mail it to each other', 'Each adds a secret to a mix', 'The public color is secret'], answer: 2,
       why: 'Public + Alice + Bob lands in both cans, in either order, and the secrets are never sent.' },
-    { l: 2, q: 'After Alice locks a message with the shared key, Eve copies it. She sees:', choices: ['The whole message', "Alice's password", 'The secret color', 'Only scrambled letters'], answer: 3,
+    { l: 2, q: 'After the sender (Alice) locks a message with the shared key, Eve copies it. She sees:', choices: ['The whole message', "Alice's password", 'The secret color', 'Only scrambled letters'], answer: 3,
       why: 'Without the key, the locked message is just scramble.' },
     { l: 3, q: 'Two sites add different salt. The same password gets:', choices: ['Different fingerprints', 'The same fingerprint', 'No fingerprint at all', 'A shorter fingerprint'], answer: 0,
       why: 'Salt changes what goes into the blender, so the fingerprints differ.' },

@@ -15,6 +15,8 @@
 .badge.done{border-color:#16a34a;color:#22c55e}
 .badge.next{border-color:var(--tone);color:var(--ink);background:color-mix(in srgb,var(--tone) 22%,transparent)}
 .overall{margin:18px 0 0;color:var(--soft);font-size:14.5px}
+.reset{margin-top:12px;cursor:pointer}
+.reset[hidden]{display:none}
 </style>
 </head>
 <body style="--tone:#0d9488">
@@ -29,6 +31,7 @@
   <p class="sub">Four short lessons, about 10 minutes each. Each ends with a five-question check. Finish all four for the final review and your overall score.</p>
   <div class="pcards" id="list"></div>
   <p class="overall" id="overall"></p>
+  <button class="pf-pill reset" id="reset" type="button">Reset progress</button>
 </div></div>
 
 <footer class="pf-foot">
@@ -51,6 +54,13 @@
   }).join('') + card('complete/', '✓', 'Final review', 'Eight questions across all four lessons, then your overall score.',
     sc.final != null ? `<span class="badge done">Review ${sc.final}/8</span>` : !nextUp ? '<span class="badge next">Ready</span>' : '', 4);
   const done = Lessons.LIST.filter((l) => sc[l.id] != null).length;
+  const reset = document.getElementById('reset');
+  reset.hidden = !Object.keys(sc).length;
+  reset.addEventListener('click', () => {
+    if (!confirm('Clear all lesson and final review scores on this device?')) return;
+    try { localStorage.removeItem(Lessons.STORE); } catch (e) {}
+    location.reload();
+  });
   document.getElementById('overall').textContent = done ? `${done} of 4 lessons checked on this device.` : 'Your scores are kept on this device only.';
 })();
 </script>
