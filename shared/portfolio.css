@@ -156,4 +156,18 @@ figcaption{margin-top:8px;font-size:13px;color:var(--soft)}
 .pcard .body{min-width:0;flex:1}
 .pcard .name{display:block;font-size:17px;font-weight:800;line-height:1.25}
 .pcard .blurb{display:block;margin-top:4px;color:var(--soft);font-size:14px}
+/* .pcards.feature: the first card (the thing to try: the tool, the slides) is the big one on the left,
+   the rest stack small on the right, like Internet Secrets. */
+.pcards.feature{grid-template-columns:minmax(0,2fr) minmax(0,1fr);grid-auto-flow:row dense;align-items:start}
+.pcards.feature>.pcard:first-child{grid-row:1 / span var(--rows,1);grid-column:1;align-self:stretch;padding:24px 22px}
+.pcards.feature>.pcard:not(:first-child){grid-column:2}
+.pcards.feature>.pcard:first-child .name{font-size:20px}
+.pcards.feature>.pcard:first-child .blurb{font-size:15px}
+.pcards.feature>.pcard:first-child .icon{width:64px;height:64px;border-radius:16px}
+.pcards.feature>.pcard:first-child .icon svg{width:32px;height:32px}
+.pcards.feature>.pcard:not(:first-child){padding:14px}
+.pcards.feature>.pcard:not(:first-child) .icon{width:44px;height:44px;border-radius:12px}
+.pcards.feature>.pcard:not(:first-child) .icon svg{width:22px;height:22px}
+.pcards.feature>.pcard:not(:first-child) .name{font-size:15px}
+@media (max-width:640px){.pcards.feature{grid-template-columns:1fr}.pcards.feature>.pcard{grid-row:auto!important;grid-column:auto!important}}
 @media (max-width:640px){.pcard{padding:16px 14px 14px;gap:14px}.pcard .icon{width:48px;height:48px;border-radius:12px}}
