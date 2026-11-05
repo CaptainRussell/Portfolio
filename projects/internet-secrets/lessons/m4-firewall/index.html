@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lesson 4: Guard the Gate · How the Internet Keeps Secrets · Scott D. Russell</title>
-<meta name="description" content="Lesson 4 of How the Internet Keeps Secrets: how a firewall decides which traffic gets in, and how a flood of traffic (DDoS) can shut a site even when nothing is stolen.">
+<title>Lesson 4: Guard the Gate · Internet Secrets · Scott D. Russell</title>
+<meta name="description" content="Lesson 4 of Internet Secrets: how a firewall decides which traffic gets in, and how a flood of traffic (DDoS) can shut a site even when nothing is stolen.">
 <link rel="icon" href="../../../../shared/favicon.png" type="image/png">
 <link rel="stylesheet" href="../../../../shared/portfolio.css">
 <link rel="stylesheet" href="../shared/lesson.css">
@@ -61,7 +61,7 @@
   <img class="foot-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="52" height="52">
   <p class="motto">Capt Scott D. Russell, USAF</p>
   <p class="tagline">M.S. Cybersecurity · Iowa State University</p>
-  <p class="source-line">How the Internet Keeps Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="source-line">Internet Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">Project page</a></p>
   <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
 </footer>
 
@@ -273,7 +273,7 @@ function actFlip(ctx) {
       const t = document.createElement('div'); t.className = 'm4-peek'; t.style.borderColor = 'var(--c-cyan)';
       t.innerHTML = `From: 52.4.1.${10 + i}<br>Wants: <b>door ${PORTS[v.p]}</b> (${NAMES[v.p].toLowerCase()})`;
       Object.assign(t.style, ctx.pos(x + 40, y - 120)); ctx.ov.appendChild(t);
-      setTimeout(() => ctx.done({}), 1800);
+      ctx.ready({});
     }, 'quiet');
   }
 }
@@ -297,7 +297,7 @@ function actPorts(ctx) {
       b.classList.add('got'); b.innerHTML = narrow ? `${NAMES[i]}: ${p}` : String(p); b.disabled = true;
       const c = chips.find((o) => +o.dataset.p === p); c.disabled = true; c.classList.add('done'); c.setAttribute('aria-pressed', 'false');
       pick = null; msg.textContent = HINTS[i]; msg.className = 'm4-msg ok';
-      if (--left === 0) setTimeout(() => ctx.done({}), 900);
+      if (--left === 0) ctx.ready({});
     };
     let h;
     if (narrow) { h = document.createElement('button'); h.className = 'm4-flat m4-sign'; h.textContent = NAMES[i]; h.addEventListener('click', () => onTap(h)); row.appendChild(h); }
@@ -319,7 +319,7 @@ function actSort(ctx) {
       if ((b.dataset.in === '1') !== want) { msg.textContent = 'Check the list: only doors 443 and 25 get in.'; msg.className = 'm4-msg bad'; return; }
       row.dataset.done = '1'; b.classList.add('good'); row.querySelectorAll('button').forEach((o) => { o.disabled = true; });
       msg.textContent = want ? 'In. It is on the list.' : 'Turned away. It is not on the list.'; msg.className = 'm4-msg ok';
-      if (--left === 0) setTimeout(() => ctx.done({}), 900);
+      if (--left === 0) ctx.ready({});
     }));
   });
 }
@@ -376,7 +376,7 @@ function actSneak(ctx, at) {
     Object.assign(t.style, ctx.pos(520, 560)); ctx.ov.appendChild(t);
     const m = document.createElement('p'); m.className = 'hint'; m.style.color = 'var(--c-amber)'; m.textContent = 'The door number was fine, so the firewall let it in. A firewall is one guard, not the whole defense.';
     ctx.slot.appendChild(m);
-    setTimeout(() => ctx.done({}), 3200);
+    ctx.ready({});
   }, 'top');
 }
 function actLaunch(ctx) {
@@ -393,7 +393,7 @@ function actJam(ctx) {
     const t = say[Math.min(tries, 1)]; tries++;
     b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake');
     ctx.toast(t); msg.textContent = t; msg.style.color = 'var(--c-red)';
-    if (tries === 2) setTimeout(() => ctx.done({}), 1800);
+    if (tries === 2) ctx.ready({});
   };
   if (isNarrow(ctx)) {
     const row = document.createElement('div'); row.className = 'm4-row'; ctx.slot.insertBefore(row, msg);
@@ -405,7 +405,7 @@ function actDefend(ctx) {
   const msg = document.createElement('p'); msg.className = 'hint';
   [['Filter upstream', 'Your internet provider drops flood traffic before it reaches you.'], ['Spread the load', 'More servers share the visitors, so no single door jams.']].forEach(([label, info]) => {
     const b = document.createElement('button'); b.className = 'lz-btn go'; b.innerHTML = `<span>${label}</span>`;
-    b.addEventListener('click', () => { if (b.disabled) return; b.disabled = true; msg.textContent = info; msg.style.color = 'var(--c-green)'; if (--left === 0) setTimeout(() => ctx.done({}), 1400); });
+    b.addEventListener('click', () => { if (b.disabled) return; b.disabled = true; msg.textContent = info; msg.style.color = 'var(--c-green)'; if (--left === 0) ctx.ready({}); });
     ctx.slot.appendChild(b);
   });
   ctx.slot.appendChild(msg);

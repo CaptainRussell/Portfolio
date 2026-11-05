@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240">
+  <!-- Alice and Bob from the lessons, joined by a line: the project card icon -->
+  <defs>
+    <linearGradient id="t" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#14b8a6"/><stop offset="1" stop-color="#0f766e"/></linearGradient>
+    <clipPath id="ca"><circle cx="0" cy="0" r="74"/></clipPath>
+  </defs>
+  <rect width="240" height="240" rx="52" fill="url(#t)"/>
+  <path d="M 96 120 H 144" stroke="#e6f1ff" stroke-width="8" stroke-linecap="round"/><circle cx="120" cy="120" r="9" fill="#fbbf24"/>
+  <g transform="translate(56 120) scale(0.6)">
+    <circle r="76" fill="#121c31" stroke="#e6f1ff" stroke-width="6"/>
+    <g clip-path="url(#ca)"><g transform="translate(0 -6) scale(0.92)">
+      <path d="M -31 -12 C -33 -62 33 -62 31 -12 L 33 22 C 20 29 -20 29 -33 22 Z" fill="#1b1410" stroke="#c9b8a8" stroke-width="1.5"/>
+      <path d="M -46 64 C -46 27 -26 15 0 15 C 26 15 46 27 46 64 Z" fill="#c8102e" stroke="#0a0f1c" stroke-width="2"/>
+      <circle cy="-13" r="20" fill="#fff" stroke="#0a0f1c" stroke-width="3"/>
+    </g></g>
+  </g>
+  <g transform="translate(184 120) scale(0.6)">
+    <circle r="76" fill="#121c31" stroke="#e6f1ff" stroke-width="6"/>
+    <g clip-path="url(#ca)"><g transform="translate(0 -6) scale(0.92)">
+      <path d="M -46 64 C -46 27 -26 15 0 15 C 26 15 46 27 46 64 Z" fill="#5b6b86" stroke="#0a0f1c" stroke-width="2"/>
+      <circle cy="-15" r="23" fill="#fff" stroke="#0a0f1c" stroke-width="3"/>
+      <path d="M -25 -15 C -27 -50 27 -50 25 -15 C 19 -28 -11 -33 -25 -15 Z" fill="#1b1410" stroke="#c9b8a8" stroke-width="1.5"/>
+    </g></g>
+  </g>
+</svg>

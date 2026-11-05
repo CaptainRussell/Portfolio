@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Lesson 3: Crack the Password · How the Internet Keeps Secrets · Scott D. Russell</title>
-<meta name="description" content="Lesson 3 of How the Internet Keeps Secrets: why websites keep a fingerprint (hash) of your password instead of the password, and why a long passphrase beats tricky symbols.">
+<title>Lesson 3: Crack the Password · Internet Secrets · Scott D. Russell</title>
+<meta name="description" content="Lesson 3 of Internet Secrets: why websites keep a fingerprint (hash) of your password instead of the password, and why a long passphrase beats tricky symbols.">
 <link rel="icon" href="../../../../shared/favicon.png" type="image/png">
 <link rel="stylesheet" href="../../../../shared/portfolio.css">
 <link rel="stylesheet" href="../shared/lesson.css">
@@ -22,8 +22,17 @@
   font:700 14px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;cursor:pointer}
 .m3-chip:hover{border-color:var(--c-cyan)}
 .m3-chip.used{opacity:.45;cursor:default}
+@keyframes m3-flip{0%{transform:rotateX(90deg)}100%{transform:none}}
+.m3-chip.flip{border-color:var(--c-amber);color:var(--c-amber);animation:m3-flip .35s ease-out}
+@media (prefers-reduced-motion:reduce){.m3-chip.flip{animation:none}}
 .m3-chip.hit{border-color:var(--c-green);color:var(--c-green);opacity:1}
 .m3-chip[aria-pressed="true"]{border-color:var(--c-cyan);box-shadow:0 0 0 3px rgba(34,211,238,.25)}
+.m3-animals{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;flex-basis:100%}
+.m3-animal{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:14px;border:2px solid var(--c-line);background:var(--c-panel);color:var(--c-ink);font:700 17px/1.2 system-ui,sans-serif;cursor:pointer}
+.m3-animal span{font-size:40px;line-height:1}
+.m3-animal:hover{border-color:var(--c-cyan)}
+.m3-animal[aria-pressed="true"]{border-color:var(--c-green);color:var(--c-green);box-shadow:0 0 0 3px rgba(52,245,164,.25)}
+@media (max-width:520px){.m3-animal{font-size:14px}.m3-animal span{font-size:32px}}
 .m3-phrase{flex-basis:100%;margin:0;font:700 18px/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--c-green);min-height:24px}
 .m3-tag{position:absolute;transform:translate(0,-50%);padding:3px 8px;border-radius:8px;background:rgba(7,11,20,.9);border:1px solid var(--c-red);
   color:var(--c-red);font:800 12px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;pointer-events:none;white-space:nowrap;animation:lz-pop .25s ease-out}
@@ -46,7 +55,7 @@
   <img class="foot-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="52" height="52">
   <p class="motto">Capt Scott D. Russell, USAF</p>
   <p class="tagline">M.S. Cybersecurity · Iowa State University</p>
-  <p class="source-line">How the Internet Keeps Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="source-line">Internet Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">Project page</a></p>
   <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
 </footer>
 
@@ -63,7 +72,7 @@
    Sources: Morris and Thompson, "Password Security: A Case History" [4];
    NIST SP 800-63B [5]. The fingerprints are real SHA-256. Real sites also
    use deliberately slow blenders (such as bcrypt); that stays off the quiz.
-   Learner actions: sign up, break into the cabinet, blend twice, change a
+   learner actions: sign up, break into the cabinet, blend three times, change a
    letter, try to un-blend, log in twice, salt two sites, crack a stolen
    list, build a passphrase. Code organized with help from Claude (Anthropic).
    ===================================================================== */
@@ -135,8 +144,8 @@ const UNIVERSE = Math.log10(4.35e17);                                       // s
 // ---- the stolen list for the crack-it game
 const STOLEN = [['sam', 'password'], ['kim', 'dragon'], ['lee', 'blue moon rides bikes'], ['ana', 'letmein'], ['raj', 'seven owls drink tea']]
   .map(([n, p]) => ({ n, p, h: sha256(p) }));
-const WORDS = ['purple', 'tiger', 'tacos', 'river', 'cloud', 'banjo', 'pickle', 'rocket', 'maple', 'otter', 'lemon', 'canyon', 'piano', 'violet',
-  'walrus', 'pepper', 'comet', 'garden', 'mango', 'falcon', 'velvet', 'thunder', 'pebble', 'noodle', 'harbor', 'zebra', 'cactus', 'marble'];
+// Animals for the passphrase builder (all 5 letters or more, so 4 of them make a long password).
+const ANIMALS = [['penguin', '🐧'], ['giraffe', '🦒'], ['octopus', '🐙'], ['turtle', '🐢'], ['zebra', '🦓'], ['dolphin', '🐬'], ['elephant', '🐘'], ['koala', '🐨']];
 const SALT = ['x7Q', 'P2m'];
 const USERS = ['alice', 'ace_al', 'cyclone', 'stormy'], PWS = ['pizza123', 'sunshine1', 'Raven2026'];
 // One tap changes one character to the next one (a to b, 9 to 0).
@@ -144,10 +153,10 @@ const bump = (c) => /[a-y]|[A-Y]|[0-8]/.test(c) ? String.fromCharCode(c.charCode
 
 // Where things sit on the 1600 x 900 stage.
 const AL = [170, 250], SITE = [1340, 200], CAB = { x: 1120, y: 380, w: 400, h: 320 }, EVE = [900, 560];
-const LOCK = [CAB.x + CAB.w - 40, CAB.y + 38], PW_AT = [560, 340], USER_AT = [560, 250];
+const LOCK = [CAB.x + CAB.w - 40, CAB.y + 38], USER_AT = [AL[0], 55], PW_AT = [AL[0], 120];   // her picks hover over her head
 const BL = [800, 330], PW_L = [420, 330], BAR1 = [1220, 300], BAR1B = [1220, 640];
 const SA = [480, 250], SB = [1120, 250];
-const ROWS = [260, 400, 540, 680], X0 = 120, XW = 1360;
+const ROWS = [290, 470, 650], X0 = 120, XW = 1360;
 const barW = (L) => XW * Math.max(0.012, Math.min(1, (L + 1) / 31));
 const cardW = (t) => 40 + 17 * t.length;
 
@@ -161,7 +170,6 @@ function scene(st) {
   // ---- sign up and the filing cabinet
   S.add('alice', 'person', { who: 'alice' }, { x: AL[0], y: AL[1], o: 0, s: 0.6 });
   S.add('site', 'node', { icon: 'server', label: 'Website' }, { x: SITE[0], y: SITE[1], o: 0, s: 0.6, tint: C.violet });
-  S.add('signLbl', 'text', { size: 26, weight: 700, mono: true, anchor: 'middle', ls: 2 }, { x: USER_AT[0], y: USER_AT[1] - 62, content: 'SIGN UP', fill: C.faint, o: 0 });
   S.add('userBox', 'packet', { text: '@' + st.user, size: 30, w: cardW('@' + st.user) }, { x: USER_AT[0], y: USER_AT[1], o: 0, s: 0.8, edge: C.violet, z: 5 });
   S.add('pwBox', 'packet', { text: pw, size: 30, w: cardW(pw) }, { x: PW_AT[0], y: PW_AT[1], o: 0, s: 0.8, z: 5 });
   S.add('cab', 'rect', {}, { x: CAB.x, y: CAB.y, w: CAB.w, h: CAB.h, rx: 18, fill: C.panel2, fo: 0.9, stroke: C.violet, sw: 2, o: 0, z: -3 });
@@ -216,12 +224,12 @@ function scene(st) {
   });
 
   // ---- crack-time bars
-  const rowsTxt = [['Your password', pw], ['Tricky', 'Tiger7!'], ['Long', 'purple tiger eats tacos'], ['Your passphrase', st.phrase]];
+  const rowsTxt = [['Your password', pw], ['Short and tricky', 'Tiger7!'], ['Your passphrase, long and simple', st.phrase]];
   S.add('uni', 'path', { d: `M ${X0 + barW(UNIVERSE)} 190 L ${X0 + barW(UNIVERSE)} 800`, dash: '10 10' }, { stroke: C.faint, sw: 3, o: 0 });
   S.add('uniLbl', 'text', { size: 22, weight: 700, mono: true, anchor: 'middle' }, { x: X0 + barW(UNIVERSE), y: 176, content: 'AGE OF THE UNIVERSE', fill: C.faint, o: 0 });
   rowsTxt.forEach(([who, p], i) => {
     const L = log10Secs(p), w = barW(L), y = ROWS[i], end = X0 + w, inside = end > 1080;
-    const tint = i === 3 ? C.green : L === -Infinity || L < 6 ? C.red : L < UNIVERSE ? C.amber : C.green;
+    const tint = i === 2 ? C.green : L === -Infinity || L < 6 ? C.red : L < UNIVERSE ? C.amber : C.green;
     S.add('cl' + i, 'text', { size: 28, weight: 650 }, { x: X0, y: y - 36, content: `${who}: **${p}**`, fill: C.soft, o: 0 });
     S.add('cb' + i, 'rect', {}, { x: X0, y: y - 22, w: 0, h: 44, rx: 10, fill: tint, fo: 0.85, sw: 0, o: 0 });
     S.add('ct' + i, 'text', { size: 26, weight: 800, mono: true, anchor: inside ? 'end' : 'start' }, { x: inside ? end - 16 : end + 16, y: y + 10, content: crackTime(p), fill: inside ? C.bg : tint, o: 0 });
@@ -242,49 +250,53 @@ function scene(st) {
   };
 
   // 1. Sign up
-  S.step({ head: 'Make an account.', body: 'Alice is signing up. Pick a **username**, then pick one of three **passwords**.', act: actSignUp });
+  S.step({ head: 'Make an account.', body: 'Alice is signing up. Pick a **username** and one of three **passwords**, then press **Sign up**.', act: actSignUp });
   Anim.section(S, 'PART 1', 'Sign up');
   S.beat(1.0, (s) => {
       ['alice', 'site'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
-      s.signLbl.o = 1; Object.assign(s.userBox, { o: 1, s: 1 }); Object.assign(s.pwBox, { o: 1, s: 1 });
-    }, stagger(['alice', 'site', 'signLbl', 'userBox', 'pwBox'], 0.12));
+    }, stagger(['alice', 'site'], 0.12));
 
   // 2. Saved as is; be Eve
   S.step({ head: 'The bad way: save it as is.', body: 'The website keeps every password in a cabinet. Now be **Eve** and tap the lock.', act: actLock })
-    .beat(0.9, (s) => { Object.assign(s.pwBox, { x: SITE[0], y: SITE[1], s: 0.6 }); Object.assign(s.userBox, { x: SITE[0], y: SITE[1], s: 0.6, o: 0 }); s.signLbl.o = 0; s.site.glow = 1; })
+    .beat(0.3, (s) => { s.userBox.o = 1; s.pwBox.o = 1; })
+    .beat(0.9, (s) => { Object.assign(s.pwBox, { x: SITE[0], y: SITE[1], s: 0.6 }); Object.assign(s.userBox, { x: SITE[0], y: SITE[1], s: 0.6, o: 0 }); s.site.glow = 1; })
     .beat(0.8, (s) => { ['cab', 'cabLbl', 'lock'].forEach((id) => { s[id].o = 1; }); rs.slice(0, 3).forEach((id) => { s[id].o = 1; }); }, stagger(['cab', 'cabLbl', 'r0', 'r1', 'r2', 'lock'], 0.08))
     .beat(0.8, (s) => { Object.assign(s.pwBox, { x: CAB.x + 200, y: CAB.y + 110 + 52 * 3 - 8, o: 0, s: 0.5 }); s.r3.o = 1; s.site.glow = 0; })
     .beat(0.7, (s) => { Object.assign(s.eve, { o: 1, s: 1 }); s.eve.pulse = 1; });
 
   // 3. Everything spills; the blender
-  S.step({ head: 'Every password spilled out, yours too.', body: 'A **blender** fixes this. Drag your password into it.', act: actBlend })
+  S.step({ head: 'Every password spilled out, yours too.', body: 'A **blender** fixes this. **Tap** your password to drop it in.', act: actBlend })
     .beat(0.5, (s) => { s.lock.o = 0; s.unlock.o = 1; s.eve.pulse = 0; })
     .beat(1.1, (s) => rs.forEach((id, i) => Object.assign(s[id], { x: EVE[0] - 260, y: EVE[1] - 70 + 40 * i, fill: C.red })), stagger(rs, 0.1))
     .hold(0.6)
     .hold(0.2);
-  Anim.section(S, 'PART 2', 'The blender', (s) => fade(s, rs.concat(['cab', 'cabLbl', 'unlock', 'eve', 'site', 'alice'])));
+  Anim.section(S, 'PART 2', 'The blender', (s) => fade(s, rs.concat(['cab', 'cabLbl', 'unlock', 'eve', 'site'])));
   S.beat(0.8, (s) => { Object.assign(s.blender, { o: 1, s: 0.85 }); s.bLbl.o = 1; Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
 
   // 4. The fingerprint; blend again
-  S.step({ head: 'The blender makes a fingerprint.', body: 'It shreds the password into a **fingerprint**. Same password in, same fingerprint out. **Drag** it in again to check.', act: actBlend });
+  S.step({ head: 'The blender makes a fingerprint.', body: 'It shreds the password into a **fingerprint**. Same password in, same fingerprint out. **Tap** it again to check.', act: actBlend });
   blend('bar1', BAR1);
   S.beat(0.5, (s) => { Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
 
   // 5. Same again; change a letter
-  S.step({ head: 'Exactly the same.', body: 'Now tap **one letter** below to change it. Then watch the blender.', act: actChange });
+  S.step({ head: 'Exactly the same.', body: 'Now pick **one letter** below to change, then press **Change it**.', act: actChange });
   blend('bar1b', BAR1B, (s) => { s.same.o = 1; s.bar1.edge = C.green; s.bar1b.edge = C.green; });
   S.beat(0.5, (s) => { Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
 
   // 6. One letter changes everything; no way back
-  S.step({ head: 'One letter changes everything.', body: 'A brand new fingerprint, not a small change. Now try to **un-blend** it back into the password.', act: actUnblend })
-    .beat(0.6, (s) => { fade(s, ['bar1b', 'same']); Object.assign(s.bar1, { x: 480, y: 650, s: 0.8, edge: C.line }); s.t1.o = 1; s.pwBox.content = pw2; s.pwBox.ink = C.amber; });
+  S.step({ head: 'One letter changed.', body: 'Her password is now one letter off. **Tap** it to blend it.', act: actBlend })
+    .beat(0.6, (s) => { fade(s, ['bar1b', 'same']); Object.assign(s.bar1, { x: 480, y: 650, s: 0.8, edge: C.line }); s.t1.o = 1; })
+    .beat(0.4, (s) => { s.pwBox.s = 1.15; s.pwBox.glow = 1; s.pwBox.edge = C.amber; })
+    .beat(0.6, (s) => { s.pwBox.content = pw2; s.pwBox.ink = C.amber; })
+    .beat(0.4, (s) => { s.pwBox.s = 1; s.pwBox.glow = 0; });
+  S.step({ head: 'One letter changes everything.', body: 'A brand new fingerprint, not a small change. Now try to **un-blend** it back into the password.', act: actUnblend });
   blend('bar2', [1120, 650], (s) => { s.t2.o = 1; s.bar2.edge = C.amber; });
   S.beat(0.5, (s) => { s.matchTxt.o = 1; s.pwBox.o = 0; })
     .beat(0.7, (s) => { s.back.o = 1; s.back.draw = 1; s.backQ.o = 1; });
 
   // 7. Sites keep the fingerprint; log in
   const fpRow = (n, p) => `${n.padEnd(8, ' ')}${sha256(p).slice(0, 14)}…`;
-  S.step({ head: 'Sites keep only the fingerprint.', body: 'At login they blend what you type and compare. **Log in** twice: once right, once with a typo.', act: (ctx) => actLogin(ctx, pw) })
+  S.step({ head: 'Sites keep only the fingerprint.', body: 'At login they blend what you type and compare. **Log in** twice: once with her password, once with a wrong one.', act: (ctx) => actLogin(ctx, pw, pw2) })
     .beat(0.6, (s) => { fade(s, ['blender', 'bLbl', 'bar1', 'bar2', 't1', 't2', 'back', 'backQ', 'matchTxt']); })
     .beat(0.9, (s) => {
       ['alice', 'site', 'cab', 'cabLbl', 'lock'].forEach((id) => { s[id].o = 1; });
@@ -294,7 +306,7 @@ function scene(st) {
 
   // 8. Salt
   S.step({ head: 'A pinch of salt.', body: 'Two sites, same password, same fingerprint. Tap each **salt shaker**.', act: actSalt });
-  Anim.section(S, 'PART 3', 'A pinch of salt', (s) => fade(s, ['alice', 'site', 'cab', 'cabLbl', 'lock'].concat(rs)));
+  Anim.section(S, 'PART 3', 'A pinch of salt', (s) => fade(s, ['site', 'cab', 'cabLbl', 'lock'].concat(rs)));
   S.beat(0.9, (s) => {
       ['siteA', 'siteB'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
       ['pwA', 'pwB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame'].forEach((id) => { s[id].o = 1; });
@@ -320,56 +332,73 @@ function scene(st) {
 
   // 10. Be the thief
   const lst = ['list', 'listLbl'].concat(STOLEN.flatMap((_, i) => ['sn' + i, 'sb' + i, 'sh' + i]));
-  S.step({ head: 'Be the thief.', body: 'Eve stole a list of fingerprints. She can only **guess, blend and compare**. Tap guesses below.', act: actCrack })
-    .beat(0.6, (s) => { fade(s, ['siteA', 'siteB', 'pwA', 'pwB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame']); })
+  S.step({ head: 'Be the thief.', body: 'Eve stole a list of fingerprints. She can only **guess, blend and compare**. Press **Try them all** below.', act: actCrack })
+    .beat(0.6, (s) => { fade(s, ['alice', 'siteA', 'siteB', 'pwA', 'pwB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame']); })
     .beat(1.0, (s) => {
       Object.assign(s.eve, { x: 260, y: 420, o: 1, s: 1, pulse: 0, glow: 1 });
       lst.forEach((id) => { s[id].o = 1; });
     }, stagger(['eve'].concat(lst), 0.04));
 
   // 11. Crack time
-  S.step({ head: 'Length beats tricky symbols.', body: 'How long each would take to guess. Build your own **4-word passphrase** below.', act: actPhrase });
+  S.step({ head: 'Length beats tricky symbols.', body: 'How long each would take to guess. Now build a **long** one: tap **4 animals** below.', act: actPhrase });
   Anim.section(S, 'PART 4', 'Strong passwords', (s) => fade(s, ['eve'].concat(lst)));
-  S.beat(0.5, (s) => { s.uni.o = 1; s.uniLbl.o = 1; [0, 1, 2].forEach((i) => { s['cl' + i].o = 1; }); })
-    .beat(1.6, (s) => { [0, 1, 2].forEach((i) => { Object.assign(s['cb' + i], { o: 1, w: rowsTxt[i].w }); s['ct' + i].o = 1; }); }, stagger(['cb0', 'ct0', 'cb1', 'ct1', 'cb2', 'ct2'], 0.07));
+  S.beat(0.5, (s) => { s.uni.o = 1; s.uniLbl.o = 1; [0, 1].forEach((i) => { s['cl' + i].o = 1; }); })
+    .beat(1.6, (s) => { [0, 1].forEach((i) => { Object.assign(s['cb' + i], { o: 1, w: rowsTxt[i].w }); s['ct' + i].o = 1; }); }, stagger(['cb0', 'ct0', 'cb1', 'ct1'], 0.1));
 
   // 12. The passphrase wins
   S.step({ head: 'Your passphrase wins.', body: 'Pick a long passphrase that is easy to remember, and use a **different one on each site**.' })
-    .beat(0.4, (s) => { s.cl3.o = 1; })
-    .beat(1.4, (s) => { Object.assign(s.cb3, { o: 1, w: rowsTxt[3].w }); s.ct3.o = 1; })
+    .beat(0.4, (s) => { s.cl2.o = 1; })
+    .beat(1.4, (s) => { Object.assign(s.cb2, { o: 1, w: rowsTxt[2].w }); s.ct2.o = 1; })
     .beat(0.5, (s) => { s.how.o = 1; });
   return S;
 }
 
 // ---------------------------------------------------------------- learner actions
+// The picks hover over Alice's head until Sign up confirms them.
+function bubble(ctx, at, size) {
+  const b = document.createElement('div'); b.className = 'lz-bubble'; b.setAttribute('aria-live', 'polite'); b.textContent = '?';
+  b.style.left = (at[0] / 16) + '%'; b.style.top = (at[1] / 9) + '%';
+  const fit = () => { b.style.fontSize = (size * ctx.ov.clientWidth / 1600) + 'px'; };
+  fit(); window.addEventListener('resize', fit); ctx.ov.appendChild(b); return b;
+}
 function actSignUp(ctx) {
-  let user = null;
-  ctx.slot.innerHTML = `<p class="m3-msg">1. Username</p><div class="m3-row" data-u>${USERS.map((u) => `<button class="m3-chip" data-user="${u}" aria-pressed="false">@${u}</button>`).join('')}</div>
-    <p class="m3-msg">2. Password (practice only)</p><div class="m3-row" data-p>${PWS.map((p) => `<button class="m3-chip" data-pw="${p}" disabled>${p}</button>`).join('')}</div>`;
-  const pws = [...ctx.slot.querySelectorAll('[data-pw]')];
-  ctx.slot.querySelectorAll('[data-user]').forEach((b) => b.addEventListener('click', () => {
-    user = b.dataset.user;
-    ctx.slot.querySelectorAll('[data-user]').forEach((x) => x.setAttribute('aria-pressed', x === b));
-    pws.forEach((x) => { x.disabled = false; }); pws[0].focus();
+  let user = null, pw = null;
+  const bu = bubble(ctx, USER_AT, 24), bp = bubble(ctx, PW_AT, 24);
+  ctx.slot.innerHTML = `<p class="m3-msg">1. Username</p><div class="m3-row">${USERS.map((u) => `<button class="m3-chip" data-user="${u}" aria-pressed="false">@${u}</button>`).join('')}</div>
+    <p class="m3-msg">2. Password (practice only)</p><div class="m3-row">${PWS.map((p) => `<button class="m3-chip" data-pw="${p}" aria-pressed="false">${p}</button>`).join('')}</div>
+    <div class="m3-row"><button class="lz-btn go" data-send disabled><span>Sign up</span></button></div>`;
+  const go = ctx.slot.querySelector('[data-send]');
+  const pick = (attr, set) => ctx.slot.querySelectorAll(`[data-${attr}]`).forEach((b) => b.addEventListener('click', () => {
+    ctx.slot.querySelectorAll(`[data-${attr}]`).forEach((x) => x.setAttribute('aria-pressed', x === b)); set(b.dataset[attr]); go.disabled = !(user && pw);
   }));
-  pws.forEach((b) => b.addEventListener('click', () => { if (user) ctx.done({ user, pw: b.dataset.pw, pw2: null }); }));
+  pick('user', (v) => { user = v; bu.textContent = '@' + v; bu.classList.add('on'); });
+  pick('pw', (v) => { pw = v; bp.textContent = v; bp.classList.add('on'); });
+  go.addEventListener('click', () => { if (user && pw) ctx.done({ user, pw, pw2: null }); });
 }
 function actLock(ctx) {
   ctx.hit(LOCK[0], LOCK[1], 110, 110, 'Break in', () => ctx.done({}), 'top');
 }
 function actBlend(ctx) {
-  ctx.drag(PW_L[0], PW_L[1], Math.min(380, cardW(ctx.state.pw)), 80, 'Drag into the blender', { x: BL[0], y: BL[1], r: 110, label: 'Blender' }, () => ctx.done({}), { cls: 'clear' });
+  ctx.hit(PW_L[0], PW_L[1], Math.min(380, cardW(ctx.state.pw2 || ctx.state.pw)), 80, 'Blend it', () => ctx.done({}), 'top');
 }
+// Pick a letter (it flips to the next one), then confirm the change.
 function actChange(ctx) {
   const pw = ctx.state.pw;
-  ctx.slot.innerHTML = `<div class="m3-row">${[...pw].map((c, i) => `<button class="m3-chip m3-letter" data-i="${i}" aria-label="Change ${c}">${c}</button>`).join('')}</div>
-    <p class="hint">Tap any letter or number. It changes to the next one (a becomes b).</p>`;
-  ctx.slot.querySelectorAll('.m3-letter').forEach((b) => b.addEventListener('click', () => {
-    const i = +b.dataset.i, v = pw.slice(0, i) + bump(pw[i]) + pw.slice(i + 1);
-    ctx.slot.querySelectorAll('.m3-letter').forEach((x) => { x.disabled = true; });
-    b.textContent = v[i]; b.classList.add('hit');
-    setTimeout(() => ctx.done({ pw2: v }), 600);
+  let v = null;
+  ctx.slot.innerHTML = `<div class="m3-row">${[...pw].map((c, i) => `<button class="m3-chip m3-letter" data-i="${i}" aria-pressed="false" aria-label="Change ${c}">${c}</button>`).join('')}</div>
+    <p class="m3-phrase" aria-live="polite"></p>
+    <div class="m3-row"><button class="lz-btn go" data-send disabled><span>Change it</span></button></div>
+    <p class="hint">Pick any letter or number. It becomes the next one (a becomes b).</p>`;
+  const out = ctx.slot.querySelector('.m3-phrase'), go = ctx.slot.querySelector('[data-send]'), btns = [...ctx.slot.querySelectorAll('.m3-letter')];
+  btns.forEach((b) => b.addEventListener('click', () => {
+    const i = +b.dataset.i;
+    v = pw.slice(0, i) + bump(pw[i]) + pw.slice(i + 1);
+    btns.forEach((x, k) => { x.setAttribute('aria-pressed', x === b); x.textContent = pw[k]; x.classList.remove('flip'); });
+    void b.offsetWidth; b.textContent = v[i]; b.classList.add('flip');
+    out.innerHTML = `${pw.slice(0, i)}<span style="color:var(--c-amber)">${v[i]}</span>${pw.slice(i + 1)}`;
+    go.disabled = false;
   }));
+  go.addEventListener('click', () => { if (v) ctx.done({ pw2: v }); });
 }
 function actUnblend(ctx) {
   ctx.hit(950, 515, 130, 100, 'Un-blend', (b) => {
@@ -377,29 +406,29 @@ function actUnblend(ctx) {
     b.disabled = true; b.classList.add('shake');
     const x = document.createElement('div'); x.className = 'm3-x'; x.textContent = '✕'; Object.assign(x.style, ctx.pos(950, 515)); ctx.ov.appendChild(x);
     ctx.toast('No way back. A blender only goes one way.');
-    setTimeout(() => ctx.done({}), 1500);
+    ctx.ready({});
   }, 'top');
 }
-function actLogin(ctx, pw) {
-  const want = sha256(pw);
+// Pick what to type at login: her password, the one-letter-off one, or another.
+function actLogin(ctx, pw, pw2) {
+  const want = sha256(pw), others = PWS.filter((p) => p !== pw);
+  const opts = [others[0], pw2, pw, others[1]];
   let right = false, wrong = false;
-  ctx.slot.innerHTML = `<form class="m3-row">
-      <input id="m3login" maxlength="16" autocomplete="off" spellcheck="false" aria-label="Log in password" placeholder="Your password" style="text-transform:none">
-      <button class="lz-btn go" type="submit"><span>Log in</span></button></form>
-    <p class="m3-msg">Saved: ${miniBC(want)} Type your password to log in.</p><div class="m3-log" aria-live="polite"></div>`;
-  const inp = ctx.slot.querySelector('input'), msg = ctx.slot.querySelector('.m3-msg'), log = ctx.slot.querySelector('.m3-log');
-  ctx.slot.querySelector('form').addEventListener('submit', (e) => {
-    e.preventDefault();
-    const v = inp.value; if (!v) return;
-    const h = sha256(v), ok = h === want;
+  ctx.slot.innerHTML = `<div class="m3-row">${opts.map((p) => `<button class="m3-chip" data-p="${p}">${p}</button>`).join('')}</div>
+    <p class="m3-msg">Saved: ${miniBC(want)} Tap a password to log in with it.</p><div class="m3-log" aria-live="polite"></div>`;
+  const msg = ctx.slot.querySelector('.m3-msg'), log = ctx.slot.querySelector('.m3-log'), chips = [...ctx.slot.querySelectorAll('.m3-chip')];
+  chips.forEach((b) => b.addEventListener('click', () => {
+    if (b.disabled) return;
+    const v = b.dataset.p, h = sha256(v), ok = h === want;
+    b.disabled = true; b.classList.add(ok ? 'hit' : 'used');
     if (ok) right = true; else wrong = true;
     const p = document.createElement('p');
-    p.innerHTML = `${miniBC(h)} <b>${v.replace(/[&<>"]/g, '')}</b> <span style="color:var(${ok ? '--c-green' : '--c-red'})">${ok ? 'Match. You are in.' : 'No match. Try again.'}</span>`;
-    log.appendChild(p); inp.value = '';
-    if (right && wrong) { msg.textContent = 'The site never needed your real password, only its fingerprint.'; msg.className = 'm3-msg ok'; inp.disabled = true; setTimeout(() => ctx.done({}), 1600); }
-    else if (right) { msg.textContent = 'Now log in with a typo.'; msg.className = 'm3-msg'; inp.focus(); }
-    else { msg.textContent = 'Now log in with the right password.'; msg.className = 'm3-msg'; inp.focus(); }
-  });
+    p.innerHTML = `${miniBC(h)} <b>${v}</b> <span style="color:var(${ok ? '--c-green' : '--c-red'})">${ok ? 'Match. You are in.' : 'No match. Try again.'}</span>`;
+    log.appendChild(p);
+    if (right && wrong) { msg.textContent = 'The site never needed her real password, only its fingerprint.'; msg.className = 'm3-msg ok'; chips.forEach((x) => { x.disabled = true; }); ctx.ready({}); }
+    else if (right) { msg.textContent = 'Now log in with a wrong one.'; msg.className = 'm3-msg'; }
+    else { msg.textContent = 'Now log in with her real password.'; msg.className = 'm3-msg'; }
+  }));
 }
 function actSalt(ctx) {
   let left = 2;
@@ -410,15 +439,15 @@ function actSalt(ctx) {
 }
 function actCrack(ctx) {
   let tried = 0, cracked = 0, over = false;
-  ctx.slot.innerHTML = `<div class="m3-row">${COMMON.map((p) => `<button class="m3-chip" data-p="${p}">${p}</button>`).join('')}
-    <button class="lz-btn ghost" data-all><span>Try them all</span></button></div>
-    <p class="m3-msg" aria-live="polite">The 20 most common passwords. Tap one to blend it and compare.</p>`;
+  ctx.slot.innerHTML = `<div class="m3-row"><button class="lz-btn go" data-all><span>Try them all</span></button></div>
+    <div class="m3-row">${COMMON.map((p) => `<button class="m3-chip" data-p="${p}">${p}</button>`).join('')}</div>
+    <p class="m3-msg" aria-live="polite">The 20 most common passwords. Press <b>Try them all</b>, or tap one at a time.</p>`;
   const msg = ctx.slot.querySelector('.m3-msg'), chips = [...ctx.slot.querySelectorAll('.m3-chip')];
   const finish = () => {
     if (over) return; over = true;
     chips.forEach((b) => { b.disabled = true; }); ctx.slot.querySelector('[data-all]').disabled = true;
     msg.textContent = `${cracked} cracked in seconds. The 2 passphrases never matched.`; msg.className = 'm3-msg ok';
-    setTimeout(() => ctx.done({}), 2200);
+    ctx.ready({});
   };
   const guess = (b) => {
     if (b.disabled || over) return;
@@ -438,13 +467,13 @@ function actCrack(ctx) {
   });
 }
 function actPhrase(ctx) {
-  const pool = WORDS.slice().sort(() => Math.random() - 0.5).slice(0, 12), pick = [];
-  ctx.slot.innerHTML = `<div class="m3-row">${pool.map((w) => `<button class="m3-chip" data-w="${w}" aria-pressed="false">${w}</button>`).join('')}</div>
+  const pick = [];
+  ctx.slot.innerHTML = `<div class="m3-animals">${ANIMALS.map(([w, e]) => `<button class="m3-animal" data-w="${w}" aria-pressed="false"><span aria-hidden="true">${e}</span>${w}</button>`).join('')}</div>
     <p class="m3-phrase" aria-live="polite"></p>
-    <button class="lz-btn go" data-test disabled><span>Test it</span></button><p class="hint">Tap 4 words.</p>`;
+    <button class="lz-btn go" data-test disabled><span>Test it</span></button><p class="hint">Tap 4 animals, in any order.</p>`;
   const out = ctx.slot.querySelector('.m3-phrase'), test = ctx.slot.querySelector('[data-test]');
   const show = () => { out.textContent = pick.join(' '); test.disabled = pick.length !== 4; };
-  ctx.slot.querySelectorAll('.m3-chip').forEach((b) => b.addEventListener('click', () => {
+  ctx.slot.querySelectorAll('.m3-animal').forEach((b) => b.addEventListener('click', () => {
     const w = b.dataset.w, i = pick.indexOf(w);
     if (i >= 0) pick.splice(i, 1); else if (pick.length < 4) pick.push(w); else return;
     b.setAttribute('aria-pressed', i < 0); show();
@@ -470,7 +499,7 @@ const quiz = [
     why: 'Each site adds its own salt, so the same password gets a different fingerprint.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 3 · Crack the Password', id: 'm3', state: { user: 'alice', pw: 'pizza123', pw2: null, phrase: 'otter piano comet maple' }, scene, quiz, next: Lessons.next('m3') });
+Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 3 · Crack the Password', id: 'm3', state: { user: 'alice', pw: 'pizza123', pw2: null, phrase: 'penguin zebra koala turtle' }, scene, quiz, next: Lessons.next('m3') });
 </script>
 </body>
 </html>

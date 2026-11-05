@@ -162,3 +162,7 @@ a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 .lz-bubble.on{color:var(--c-ink);border:2px solid var(--c-cyan);box-shadow:0 0 0 4px rgba(34,211,238,.18);animation:lz-float 1.8s ease-in-out infinite}
 @keyframes lz-float{50%{transform:translate(-50%,calc(-50% - 6px))}}
 @media (prefers-reduced-motion:reduce){.lz-bubble.on{animation:none}}
+/* Next lights up when an action's result is on screen and the learner can move on */
+.lz-btn.nudge{animation:lz-nudge 1.6s ease-in-out infinite}
+@keyframes lz-nudge{50%{box-shadow:0 0 0 5px rgba(34,211,238,.25),0 0 22px rgba(34,211,238,.5)}}
+@media (prefers-reduced-motion:reduce){.lz-btn.nudge{animation:none;box-shadow:0 0 0 4px rgba(34,211,238,.3)}}

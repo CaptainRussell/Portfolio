@@ -8,7 +8,7 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 |---|---|---|
 | Analysis of a Card-Shuffle Stream Cipher (M.S. Creative Component) | Cybersecurity projects | `projects/daniels-cipher/` |
 | Artifact Disagreement Scorer (Digital Forensics, CYBSC 5360) | Cybersecurity projects | `projects/ads/` |
-| How the Internet Keeps Secrets (CYBSC 5300 visualization project) | Cybersecurity projects | `projects/internet-secrets/` |
+| Internet Secrets (CYBSC 5300 visualization project) | Cybersecurity projects | `projects/internet-secrets/` |
 | Ashnar's Lair (released on Steam) | Professional projects | links to the Steam store page |
 | Storm HQ (AFROTC Det 250 tools) | Professional projects | links to the live site and repo |
 
