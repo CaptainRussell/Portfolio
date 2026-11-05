@@ -67,8 +67,9 @@ function pieces(msg) {
   for (let i = 0; i < n; i++) { const len = base + (i < extra ? 1 : 0); out.push(msg.slice(at, at + len)); at += len; }
   return out;
 }
-const cardText = (i, chunk) => `${i + 1} ${disp(chunk)}`;
-const cardW = (t) => 32 + 17 * t.length;
+// A postcard shows its number in a tab of its own, behind a divider, then its piece of the message.
+const TAB = 44, cardText = (i, chunk) => disp(chunk);
+const cardW = (t) => TAB + 26 + 17 * t.length;
 const arrival = (n) => [...Array(n).keys()].slice(1).concat([0]);   // the order the postcards reach Bob (#1 is lost and sent again)
 const slotX = (i, n) => TRAY.x + (i - (n - 1) / 2) * TRAY.gap;
 const stackY = (k, m) => (k - (m - 1) / 2) * 46;                // cards waiting at one router stack up and down
@@ -113,7 +114,7 @@ function scene(st) {
   const total = texts.reduce((a, t) => a + cardW(t), 0) + 10 * (n - 1);
   let rx = STRIP_X - total / 2;
   const rowX = texts.map((t) => { const x = rx + cardW(t) / 2; rx += cardW(t) + 10; return x; });
-  ids.forEach((id, i) => S.add(id, 'packet', { text: texts[i], size: 28, w: cardW(texts[i]) }, { x: STRIP_X, y: ROW_Y, o: 0, z: 4 }));
+  ids.forEach((id, i) => S.add(id, 'packet', { text: texts[i], num: i + 1, tab: TAB, size: 28, w: cardW(texts[i]) }, { x: STRIP_X, y: ROW_Y, o: 0, z: 4 }));
   S.add('tofrom', 'text', { size: 24, weight: 600, anchor: 'middle' }, { x: STRIP_X, y: ROW_Y + 78, content: 'To: Bob    From: Alice', fill: C.soft, o: 0 });
   S.add('miss', 'packet', { text: '#1 ?', size: 28, w: 120 }, { x: P.bob[0], y: P.bob[1] - 128, o: 0, s: 0.6, edge: C.amber, ink: C.amber, z: 6 });
   S.add('req', 'packet', { text: 'SEND #1', size: 24, w: 150 }, { x: P.bob[0], y: P.bob[1], o: 0, s: 0.7, edge: C.amber, ink: C.amber, z: 7 });
@@ -122,7 +123,7 @@ function scene(st) {
   const SPY = ['wifi', 'A', 'B', 'D', 'F', 'G'];
   SPY.forEach((r) => S.add('spy' + r, 'path', { d: `M ${P[r][0]} ${P[r][1]} L ${P.eve[0] + 40} ${P.eve[1] - 30}`, dash: '10 10' }, { stroke: C.red, sw: 3, o: 0, z: -2 }));
   const copyFrom = (i) => (i === 0 ? 'D' : 'G');
-  ids.forEach((id, i) => S.add('ec' + i, 'packet', { text: texts[i], size: 28, w: cardW(texts[i]) }, { x: P[copyFrom(i)][0], y: P[copyFrom(i)][1], o: 0, s: MAP_S, edge: C.red, ink: C.red, z: 8 }));
+  ids.forEach((id, i) => S.add('ec' + i, 'packet', { text: texts[i], num: i + 1, tab: TAB, size: 28, w: cardW(texts[i]) }, { x: P[copyFrom(i)][0], y: P[copyFrom(i)][1], o: 0, s: MAP_S, edge: C.red, ink: C.red, z: 8 }));
   S.add('eveMsg', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: 470, y: 600, o: 0, s: 0.8, edge: C.red, ink: C.red, z: 9 });
   Anim.addSection(S);
 
@@ -151,7 +152,7 @@ function scene(st) {
 
   // 3. The scissors snip it into numbered postcards; hand them to the Wi-Fi
   const lines = LINKS.map((_, i) => 'ln' + i), pcs = parts.map((_, i) => 'pc' + i);
-  const st3 = S.step({ head: 'Each piece is a numbered postcard.', body: "Each one gets a **number** and Bob's address. Tap **Send** to hand them to the café Wi-Fi.", act: actSend });
+  const st3 = S.step({ head: 'Each piece is a numbered postcard.', body: "Each one gets a **number** in its gold tab, plus Bob's address. Tap **Send** to hand them to the café Wi-Fi.", act: actSend });
   // the scissors move to each cut mark and snip down through the strip
   cuts.forEach((x, i) => {
     st3.beat(0.4, (s) => Object.assign(s.bigSc, { x, y: ROW_Y - 62, s: 0.75, rot: 90 }))
@@ -164,7 +165,7 @@ function scene(st) {
     .beat(0.6, (s) => pcs.forEach((id, i) => { s[id].x = chunkX[i] + (i - (n - 1) / 2) * 26; s[id].y = ROW_Y + (i % 2 ? 8 : -8); }))
     // each piece slides to where its postcard will be, lined up so its letters do not move again
     .beat(0.8, (s) => {
-      pcs.forEach((id, i) => Object.assign(s[id], { x: rowX[i] + CH * 28 / 30, y: ROW_Y, s: 28 / 30 }));
+      pcs.forEach((id, i) => Object.assign(s[id], { x: rowX[i] + TAB / 2, y: ROW_Y, s: 28 / 30 }));
       ids.forEach((id, i) => Object.assign(s[id], { x: rowX[i], y: ROW_Y, s: 0.94 }));
     }, stagger(pcs, 0.1))
     // then the number fades in on each one, left to right
