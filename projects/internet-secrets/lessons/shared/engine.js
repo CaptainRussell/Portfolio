@@ -558,7 +558,8 @@
   }
 
   // A small piece of data on the move: a rounded chip with a short monospace label, centered on (x, y).
-  //   cfg: text, w (default fits the text)
+  //   cfg: text, w (default fits the text), num (a packet number, shown in its own tab behind a divider
+  //   so it cannot be mistaken for the message), tab (that tab's width, default 44)
   //   props: fill, ink (label color), glow (0 to 1), content (changes the label, crossfading)
   KINDS.packet = {
     defaults: { fill: C.panel2, ink: C.ink, edge: C.cyan, glow: 0, content: null },
@@ -566,13 +567,21 @@
       const W = cfg.w || 44 + 26 * String(cfg.text || '').length, H = cfg.h || 64, r = el('g', {}, g);
       const halo = el('rect', { x: -W / 2 - 8, y: -H / 2 - 8, width: W + 16, height: H + 16, rx: 18, fill: 'none', 'stroke-width': 6 }, r);
       const box = el('rect', { x: -W / 2, y: -H / 2, width: W, height: H, rx: 12, 'stroke-width': 3 }, r);
-      const mk = () => el('text', { x: 0, y: 12, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': cfg.size || 34, 'font-weight': 700 }, r);
-      return { root: r, halo, box, a: mk(), b: mk(), cfg, sa: null, sb: null };
+      const T = cfg.num != null ? cfg.tab || 44 : 0, fs = cfg.size || 34;
+      let line = null;
+      if (T) {
+        el('path', { d: `M ${-W / 2 + 12} ${-H / 2} H ${-W / 2 + T} V ${H / 2} H ${-W / 2 + 12} A 12 12 0 0 1 ${-W / 2} ${H / 2 - 12} V ${-H / 2 + 12} A 12 12 0 0 1 ${-W / 2 + 12} ${-H / 2} Z`, fill: 'rgba(251,191,36,.16)' }, r);
+        line = el('path', { d: `M ${-W / 2 + T} ${-H / 2 + 3} V ${H / 2 - 3}`, 'stroke-width': 3 }, r);
+        const t = el('text', { x: -W / 2 + T / 2, y: 0.36 * fs * 0.85, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': fs * 0.85, 'font-weight': 800, fill: C.amber }, r);
+        t.textContent = String(cfg.num);
+      }
+      const mk = () => el('text', { x: T / 2, y: 12, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': fs, 'font-weight': 700 }, r);
+      return { root: r, halo, box, line, a: mk(), b: mk(), cfg, sa: null, sb: null };
     },
     update(h, p, from, to, e) {
       setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
       setA(h.root, 'opacity', p.o.toFixed(3));
-      setA(h.box, 'fill', p.fill); setA(h.box, 'stroke', p.edge);
+      setA(h.box, 'fill', p.fill); setA(h.box, 'stroke', p.edge); if (h.line) setA(h.line, 'stroke', p.edge);
       setA(h.halo, 'stroke', p.edge); setA(h.halo, 'opacity', (p.glow * 0.6).toFixed(3));
       const lab = (q) => (q.content == null ? String(h.cfg.text || '') : String(q.content));
       const ca = lab(from), cb = lab(to), cross = ca !== cb;

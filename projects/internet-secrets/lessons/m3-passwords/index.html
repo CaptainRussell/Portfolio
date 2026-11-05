@@ -228,7 +228,7 @@ function scene(st) {
   STOLEN.forEach((u, i) => {
     S.add('sn' + i, 'text', { size: 30, weight: 700, mono: true }, { x: 560, y: 240 + 110 * i, content: u.n, fill: C.ink, o: 0 });
     S.add('sb' + i, 'print', { r: 40, text: false }, { x: 760, y: 228 + 110 * i, o: 0, s: 0.85, hex: u.h });
-    S.add('sh' + i, 'text', { size: 24, weight: 600, mono: true }, { x: 840, y: 236 + 110 * i, content: u.h.slice(0, 20) + '…', fill: C.faint, o: 0 });
+    S.add('sh' + i, 'text', { size: 24, weight: 600, mono: true }, { x: 840, y: 236 + 110 * i, content: u.h.slice(0, 12) + '…', fill: C.faint, o: 0 });
   });
 
   // ---- crack-time bars
