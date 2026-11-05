@@ -146,7 +146,7 @@ const STOLEN = [['sam', 'password'], ['kim', 'dragon'], ['lee', 'blue moon rides
   .map(([n, p]) => ({ n, p, h: sha256(p) }));
 // Animals for the passphrase builder (all 5 letters or more, so 4 of them make a long password).
 const ANIMALS = [['penguin', '🐧'], ['giraffe', '🦒'], ['octopus', '🐙'], ['turtle', '🐢'], ['zebra', '🦓'], ['dolphin', '🐬'], ['elephant', '🐘'], ['koala', '🐨']];
-const SALT = ['x7Q', 'P2m'];
+const SALT = ['x7Q', 'P2m'], SALT_C = ['#ffffff', '#f9a8d4'];
 const USERS = ['alice', 'ace_al', 'cyclone', 'stormy'], PWS = ['pizza123', 'sunshine1', 'Raven2026'];
 // One tap changes one character to the next one (a to b, 9 to 0).
 const bump = (c) => /[a-y]|[A-Y]|[0-8]/.test(c) ? String.fromCharCode(c.charCodeAt(0) + 1) : c === 'z' ? 'a' : c === 'Z' ? 'A' : c === '9' ? '0' : 'x';
@@ -198,15 +198,12 @@ function scene(st) {
   S.add('siteB', 'node', { icon: 'server', label: 'Site B', size: 110 }, { x: SB[0], y: SB[1] - 60, o: 0, s: 0.6, tint: C.violet });
   S.add('pwA', 'packet', { text: 'sunshine', size: 28, w: 280 }, { x: SA[0], y: 420, o: 0, s: 0.9 });
   S.add('pwB', 'packet', { text: 'sunshine', size: 28, w: 280 }, { x: SB[0], y: 420, o: 0, s: 0.9 });
-  S.add('shA', 'glyph', { icon: 'salt', size: 80, sw: 1.8 }, { x: SA[0] + 210, y: 330, o: 0, tint: C.ink, rot: 0 });
-  S.add('shB', 'glyph', { icon: 'salt', size: 80, sw: 1.8 }, { x: SB[0] + 210, y: 330, o: 0, tint: C.ink, rot: 0 });
-  for (let i = 0; i < 6; i++) {
-    S.add('ga' + i, 'dot', {}, { x: SA[0] + 190 + (i % 3) * 8, y: 360, r: 5, fill: C.ink, o: 0 });
-    S.add('gb' + i, 'dot', {}, { x: SB[0] + 190 + (i % 3) * 8, y: 360, r: 5, fill: C.ink, o: 0 });
-  }
-  for (let i = 6; i < 18; i++) {
-    S.add('ga' + i, 'dot', {}, { x: SA[0] + 190, y: 360, r: 5, fill: C.ink, o: 0 });
-    S.add('gb' + i, 'dot', {}, { x: SB[0] + 190, y: 360, r: 5, fill: C.ink, o: 0 });
+  // two different salts: a tall shaker of fine white salt, and a round grinder of coarse pink salt
+  S.add('shA', 'shaker', { style: 'tall' }, { x: SA[0] + 210, y: 330, o: 0, grain: SALT_C[0] });
+  S.add('shB', 'shaker', { style: 'round' }, { x: SB[0] + 210, y: 330, o: 0, grain: SALT_C[1] });
+  for (let i = 0; i < 18; i++) {
+    S.add('ga' + i, 'dot', {}, { x: SA[0] + 210, y: 300, r: 4, fill: SALT_C[0], o: 0, z: 6 });
+    S.add('gb' + i, 'dot', {}, { x: SB[0] + 210, y: 300, r: 7, fill: SALT_C[1], o: 0, z: 6 });
   }
   S.add('blA', 'blender', {}, { x: SA[0], y: 525, o: 0, s: 0.33 });
   S.add('blB', 'blender', {}, { x: SB[0], y: 525, o: 0, s: 0.33 });
@@ -314,15 +311,25 @@ function scene(st) {
 
   // 9. Different fingerprints
   const NG = 18, gs = [...Array(NG).keys()].map((i) => 'ga' + i), gbs = [...Array(NG).keys()].map((i) => 'gb' + i);
-  // grains fall from the tipped shaker in a stream and land scattered across the password
-  const fall = (s, list, x0) => list.forEach((id, i) => Object.assign(s[id], { o: 1, x: x0 - 110 + ((i * 47) % 220), y: 404 + ((i * 13) % 26) }));
-  S.step({ head: 'Same password, different fingerprints.', body: 'Each site shakes in its own salt, then blends. A thief who cracks one site still has to start over on the other.' })
-    .beat(0.5, (s) => { s.shA.rot = 150; s.shB.rot = 150; [...gs, ...gbs].forEach((id) => { s[id].o = 1; }); })
-    .beat(0.25, (s) => { s.shA.rot = 125; s.shB.rot = 175; })
-    .beat(0.25, (s) => { s.shA.rot = 170; s.shB.rot = 130; })
-    .beat(1.1, (s) => { fall(s, gs, SA[0]); fall(s, gbs, SB[0]); s.shA.rot = 150; s.shB.rot = 150; }, stagger(gs.concat(gbs).sort((a, b) => a.slice(2) - b.slice(2)), 0.025))
+  // each shaker tips over its password and moves along it, shaking; three grains fall on every shake
+  const SHAKES = 6, sides = [['shA', SA, gs, 50], ['shB', SB, gbs, 56]];
+  const shX = (base, k) => base[0] + 110 - 40 * k, shRot = (k) => (k % 2 ? -118 : -146);
+  const mouth = (base, k, d) => { const a = shRot(k) * Math.PI / 180; return [shX(base, k) + d * Math.sin(a), 335 - d * Math.cos(a)]; };
+  const st9 = S.step({ head: 'Same password, different fingerprints.', body: 'Each site shakes in its **own salt**, then blends. A thief who cracks one site still has to start over on the other.' })
+    .beat(0.7, (s) => sides.forEach(([sh, base, grains, d]) => {
+      Object.assign(s[sh], { x: shX(base, 0), y: 335, rot: -130 });
+      grains.forEach((g, i) => { const m = mouth(base, Math.floor(i / 3), d); Object.assign(s[g], { x: m[0], y: m[1], o: 0 }); });
+    }));
+  for (let k = 0; k < SHAKES; k++) {
+    const now = [0, 1, 2].map((j) => 3 * k + j);
+    st9.beat(0.24, (s) => sides.forEach(([sh, base, grains, d]) => {
+      Object.assign(s[sh], { x: shX(base, k + 1), rot: shRot(k + 1) });
+      now.forEach((i, j) => { const m = mouth(base, k, d); Object.assign(s[grains[i]], { o: 1, x: m[0] - 14 + 14 * j, y: 398 + ((i * 7) % 24) }); });
+    }), (id) => { const i = +id.slice(2); return /^g[ab]\d/.test(id) && now.includes(i) ? { w: [(i % 3) * 0.12, Math.min(1, (i % 3) * 0.12 + 0.75)] } : null; });
+  }
+  st9.beat(0.5, (s) => sides.forEach(([sh, base]) => Object.assign(s[sh], { x: base[0] + 210, y: 330, rot: 0 })))
     .beat(0.6, (s) => {
-      gs.concat(gbs).forEach((id) => { s[id].o = 0; s[id].y += 20; }); s.shA.rot = 0; s.shB.rot = 0;
+      gs.concat(gbs).forEach((id) => { s[id].o = 0; s[id].y += 20; });
       s.pwA.content = 'sunshine + ' + SALT[0]; s.pwB.content = 'sunshine + ' + SALT[1]; s.pwA.edge = C.amber; s.pwB.edge = C.amber;
     })
     .beat(0.5, (s) => { Object.assign(s.pwA, { y: 500, s: 0.3, o: 0 }); Object.assign(s.pwB, { y: 500, s: 0.3, o: 0 }); s.blA.glow = 1; s.blB.glow = 1; })

@@ -79,7 +79,8 @@ const pickB = (i) => [1170 + 150 * (i % 3), 465 + 175 * Math.floor(i / 3)];     
 const eveCopy = (i) => [630 + 170 * i, 590];                                             // Eve's copies, under her eye
 const PAD_DY = 66, KEY_S = 0.6, KEY_TIP = 96 * KEY_S;   // padlock under the message; a key's tip sits this far from its center
 const KEY_A = [290, 660], KEY_B = [1310, 660], MSG_A = [AL[0] + 140, 74], MSG_B = [BO[0] - 140, 74], E_LOCK = [800, 730];
-const MSGS = ['MEET AT 6', 'HI BOB', 'LUNCH AT 12', 'SEE YOU SOON', 'CALL ME'];
+const E_TRY = [800, 690], KEY_E = [640, 830];   // Eve's copy of the locked message, and the key she mixes to try on it
+const MSGS = ['PIN IS 4821', 'GATE CODE 59', 'KEY IN PLANT', 'PW IS TIGER9', 'SAFE 31-7-9'];   // private things Eve should never read (12 characters at most, to fit the postcards)
 const disp = (t) => t.replace(/ /g, '·');
 const mw = (t) => 40 + 19 * t.length;
 // The locked message: each letter becomes a symbol, so it is the same length but unreadable.
@@ -129,6 +130,12 @@ function scene(st) {
   // the padlock hangs from the message; its shackle hooks behind it and a key slides into the keyhole
   S.add('pad', 'padlock', {}, { x: MSG_A[0], y: MSG_A[1] + PAD_DY, o: 0, s: 0.75, open: 1, z: 4 });
   S.add('eL', 'packet', { text: LOCK, size: 30, w: mw(msg) }, { x: 800, y: ROAD, o: 0, s: 0.6, edge: C.red, ink: C.violet, z: 1 });
+  // Eve mixes her own key from the three paints she copied, and it does not fit
+  const EVE_MIX = mix(P, MA, MB);
+  S.add('kE', 'keyart', {}, { x: KEY_E[0], y: KEY_E[1], o: 0, s: 0.5, z: 3 });
+  S.add('padE', 'padlock', {}, { x: E_TRY[0], y: E_TRY[1] + PAD_DY * 0.75, o: 0, s: 0.56, tint: C.green, z: 4 });
+  S.add('dripE', 'path', { d: `M ${KEY_E[0] - 30} ${KEY_E[1] - 90} L ${KEY_E[0] - 30} ${KEY_E[1] - 15}` }, { stroke: P, sw: 12, o: 0, z: 2 });
+  S.add('nope', 'text', { size: 28, weight: 800, mono: true, anchor: 'middle' }, { x: 800, y: 850, content: "WRONG COLOR. IT WON'T TURN.", fill: C.red, o: 0 });
   S.add('bar', 'rect', {}, { x: 470, y: 800, w: 660, h: 76, rx: 38, fill: C.panel2, fo: 1, stroke: C.green, sw: 2, o: 0 });
   S.add('barLock', 'glyph', { icon: 'lock', size: 40, sw: 2.2 }, { x: 520, y: 838, o: 0, tint: C.green });
   S.add('barTxt', 'text', { size: 30, weight: 700, mono: true }, { x: 560, y: 849, content: 'https://bob.example', fill: C.green, o: 0 });
@@ -240,7 +247,8 @@ function scene(st) {
     .beat(0.5, (s) => { s.pad.o = 1; });
 
   // 14. Locked; it crosses the road; Eve copies only scramble
-  S.step({ head: 'Locked. Eve copies only scramble.', body: "Only the shared key opens it. **Tap** Bob's key to unlock it.", act: (ctx) => actTap(ctx, [[KEY_B, 'Unlock', 220]]) })
+  S.step({ head: 'Locked. Eve copies only scramble.', body: "Eve has a locked copy and every paint she copied. **Tap** her three paints to mix her own key.",
+    act: (ctx) => actTap(ctx, [[eveCopy(0), 'Pour'], [eveCopy(1), 'Pour'], [eveCopy(2), 'Pour']]) })
     // the key slides into the keyhole, turns, and the shackle snaps shut
     .beat(0.8, (s) => { Object.assign(s.kA, { x: MSG_A[0] - KEY_TIP - 60, y: MSG_A[1] + PAD_DY + 3, s: KEY_S }); s.alice.glow = 0; s.pad.glow = 1; })
     .beat(0.5, (s) => { s.kA.x = MSG_A[0] - KEY_TIP; })
@@ -253,11 +261,37 @@ function scene(st) {
     .beat(1.0, (s) => { Object.assign(s.msg, { x: MSG_B[0], y: MSG_B[1] }); Object.assign(s.pad, { x: MSG_B[0], y: MSG_B[1] + PAD_DY }); Object.assign(s.eL, { x: E_LOCK[0], y: E_LOCK[1], s: 0.75 }); })
     .beat(0.5, (s) => { spyOff(s); s.eve.look = 0.5; s.bob.glow = 1; });
 
-  // 15. Bob unlocks it with his key
+  // 15. Eve pours her three copies into a key; it will not turn in the lock
+  const ePour = (s, id, paint) => {
+    s.ePub.rot = 0; s.eA.rot = 0; s.eB.rot = 0;
+    Object.assign(s[id], { x: KEY_E[0] - 110, y: KEY_E[1] - 140, s: 0.55, rot: 70 }); s.dripE.stroke = s[id].paint; s.dripE.o = 1;
+  };
+  const eHome = (s) => [['ePub', 0], ['eA', 1], ['eB', 2]].forEach(([id, i]) => Object.assign(s[id], { x: eveCopy(i)[0], y: eveCopy(i)[1], s: 0.7, rot: 0 }));
+  S.step({ head: "Eve's key does not fit.", body: "Her mix is not the **shared color**, because she never had a secret. Only the right color turns the lock. **Tap** Bob's key to unlock the real message.",
+    act: (ctx) => actTap(ctx, [[KEY_B, 'Unlock', 220]]) })
+    .beat(0.7, (s) => { Object.assign(s.eL, { x: E_TRY[0], y: E_TRY[1], s: 0.7 }); s.padE.o = 1; Object.assign(s.kE, { o: 1, s: 0.55 }); s.bob.glow = 0; s.eve.glow = 1; })
+    .beat(0.6, (s) => ePour(s, 'ePub'))
+    .beat(0.5, (s) => { s.kE.paint = P; })
+    .beat(0.6, (s) => { s.dripE.o = 0; eHome(s); ePour(s, 'eA'); })
+    .beat(0.5, (s) => { s.kE.paint = mix(P, MA); })
+    .beat(0.6, (s) => { s.dripE.o = 0; eHome(s); ePour(s, 'eB'); })
+    .beat(0.5, (s) => { s.kE.paint = EVE_MIX; })
+    .beat(0.6, (s) => { s.dripE.o = 0; eHome(s); })
+    // the key slides into the keyhole of her copy, jams, and shakes
+    .beat(0.7, (s) => { Object.assign(s.kE, { x: E_TRY[0] - 96 * 0.55 - 50, y: E_TRY[1] + PAD_DY * 0.75 + 3 }); s.padE.glow = 1; })
+    .beat(0.4, (s) => { s.kE.x = E_TRY[0] - 96 * 0.55; })
+    .beat(0.15, (s) => { s.kE.rot = -10; })
+    .beat(0.15, (s) => { s.kE.rot = 10; })
+    .beat(0.15, (s) => { s.kE.rot = -10; })
+    .beat(0.15, (s) => { s.kE.rot = 0; s.padE.tint = C.red; s.nope.o = 1; s.eve.look = -0.4; })
+    .beat(0.5, (s) => { s.kE.x = E_TRY[0] - 96 * 0.55 - 50; s.padE.glow = 0; s.bob.glow = 1; });
+
+  // 16. Bob unlocks it with his key
   S.step({ head: 'Bob unlocks it.', body: "Bob's key matches, so the message opens for him alone. The **padlock** and **https://** in your browser mean your traffic is locked like this.",
     act: actPeek, optional: true })
     // Bob's key comes in from his side, turns the other way, and the shackle pops open
-    .beat(0.8, (s) => { Object.assign(s.kB, { x: MSG_B[0] + KEY_TIP + 60, y: MSG_B[1] + PAD_DY + 3, s: KEY_S, rot: 180 }); s.bob.glow = 0; s.pad.glow = 1; })
+    .beat(0.8, (s) => { Object.assign(s.kB, { x: MSG_B[0] + KEY_TIP + 60, y: MSG_B[1] + PAD_DY + 3, s: KEY_S, rot: 180 }); s.bob.glow = 0; s.pad.glow = 1;
+      ['kE', 'padE', 'nope'].forEach((id) => { s[id].o = 0; }); Object.assign(s.eL, { x: E_LOCK[0], y: E_LOCK[1], s: 0.75 }); s.eve.glow = 0; s.eve.look = 0.5; })
     .beat(0.5, (s) => { s.kB.x = MSG_B[0] + KEY_TIP; })
     .beat(0.6, (s) => { s.kB.turn = 180; s.pad.turn = 0; })
     .beat(0.4, (s) => { s.pad.open = 1; s.pad.tint = C.soft; s.msg.content = disp(msg); s.msg.ink = C.ink; s.msg.edge = C.cyan; })
@@ -352,7 +386,7 @@ const quiz = [
     why: 'They mean the traffic is encrypted with a shared key. It does not promise the site itself is safe.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 2 · Mixing Secret Colors', id: 'm2', state: { pub: 0, sec: 0, bob: 3, msg: 'MEET AT 6' }, scene, quiz, next: Lessons.next('m2') });
+Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 2 · Mixing Secret Colors', id: 'm2', state: { pub: 0, sec: 0, bob: 3, msg: 'PIN IS 4821' }, scene, quiz, next: Lessons.next('m2') });
 </script>
 </body>
 </html>
