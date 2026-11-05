@@ -154,9 +154,10 @@ const bump = (c) => /[a-y]|[A-Y]|[0-8]/.test(c) ? String.fromCharCode(c.charCode
 // Where things sit on the 1600 x 900 stage.
 const AL = [170, 250], SITE = [1340, 200], CAB = { x: 1120, y: 380, w: 400, h: 320 }, EVE = [900, 560];
 const LOCK = [CAB.x + CAB.w - 40, CAB.y + 38], USER_AT = [AL[0], 55], PW_AT = [AL[0], 120];   // her picks hover over her head
+const PLAIN = { x: 620, y: 380, w: 400, h: 320 };                  // the bad cabinet, shown next to the good one
 const BL = [800, 330], PW_L = [420, 330], BAR1 = [1220, 300], BAR1B = [1220, 640];
 const SA = [480, 250], SB = [1120, 250];
-const ROWS = [290, 470, 650], X0 = 120, XW = 1360;
+const ROWS = [290, 470, 690], X0 = 120, XW = 1360;
 const barW = (L) => XW * Math.max(0.012, Math.min(1, (L + 1) / 31));
 const cardW = (t) => 40 + 17 * t.length;
 
@@ -178,6 +179,16 @@ function scene(st) {
   S.add('lock', 'glyph', { icon: 'lock', size: 48, sw: 2 }, { x: LOCK[0], y: LOCK[1], o: 0, tint: C.amber });
   S.add('unlock', 'glyph', { icon: 'unlock', size: 48, sw: 2 }, { x: LOCK[0], y: LOCK[1], o: 0, tint: C.red });
   S.add('eve', 'eye', { size: 120 }, { x: EVE[0], y: EVE[1], o: 0, s: 0.6 });
+  S.add('noPw', 'text', { size: 26, weight: 800, mono: true, anchor: 'middle' }, { x: CAB.x + CAB.w / 2, y: CAB.y + CAB.h + 44, content: 'NO PASSWORDS, ONLY FINGERPRINTS', fill: C.green, o: 0 });
+  // a second cabinet for the good way: each username with only its fingerprint
+  S.add('cabP', 'rect', {}, { x: PLAIN.x, y: PLAIN.y, w: PLAIN.w, h: PLAIN.h, rx: 18, fill: C.panel2, fo: 0.9, stroke: C.red, sw: 2, o: 0, z: -3 });
+  S.add('cabPLbl', 'text', { size: 22, weight: 700, mono: true }, { x: PLAIN.x + 22, y: PLAIN.y + 44, content: 'BAD: PASSWORDS', fill: C.red, o: 0 });
+  cabRows.forEach(([n, p], i) => {
+    const y = CAB.y + 110 + 52 * i, h = sha256(p);
+    S.add('fn' + i, 'text', { size: 24, weight: 600, mono: true }, { x: CAB.x + 24, y, content: n, fill: i === 3 ? C.cyan : C.ink, o: 0 });
+    S.add('fp' + i, 'print', { r: 40, text: false }, { x: CAB.x + 184, y: y - 8, o: 0, s: 0.5, hex: h });
+    S.add('fh' + i, 'text', { size: 20, weight: 600, mono: true }, { x: CAB.x + 214, y, content: h.slice(0, 11) + '…', fill: C.faint, o: 0 });
+  });
 
   // ---- the blender and fingerprints
   S.add('blender', 'blender', {}, { x: BL[0], y: BL[1], o: 0, s: 0.6 });
@@ -227,11 +238,20 @@ function scene(st) {
   rowsTxt.forEach(([who, p], i) => {
     const L = log10Secs(p), w = barW(L), y = ROWS[i], end = X0 + w, inside = end > 1080;
     const tint = i === 2 ? C.green : L === -Infinity || L < 6 ? C.red : L < UNIVERSE ? C.amber : C.green;
-    S.add('cl' + i, 'text', { size: 28, weight: 650 }, { x: X0, y: y - 36, content: `${who}: **${p}**`, fill: C.soft, o: 0 });
+    // the passphrase row puts each animal's picture above its word, so its label sits on a line of its own
+    S.add('cl' + i, 'text', { size: 28, weight: 650 }, { x: X0, y: i === 2 ? y - 130 : y - 36, content: i === 2 ? `${who}:` : `${who}: **${p}**`, fill: C.soft, o: 0 });
     S.add('cb' + i, 'rect', {}, { x: X0, y: y - 22, w: 0, h: 44, rx: 10, fill: tint, fo: 0.85, sw: 0, o: 0 });
     S.add('ct' + i, 'text', { size: 26, weight: 800, mono: true, anchor: inside ? 'end' : 'start' }, { x: inside ? end - 16 : end + 16, y: y + 10, content: crackTime(p), fill: inside ? C.bg : tint, o: 0 });
     rowsTxt[i].w = w;
   });
+  const CW = 28 * 0.6, words = st.phrase.split(' ');   // monospace letters are 0.6 of the font size wide
+  let at = 0;
+  const ws = words.map((wd, k) => {
+    const cx = X0 + (at + wd.length / 2) * CW; at += wd.length + 1;
+    S.add('pwW' + k, 'text', { size: 28, weight: 800, mono: true, anchor: 'middle' }, { x: cx, y: ROWS[2] - 36, content: wd, fill: C.cyan, o: 0 });
+    S.add('pwE' + k, 'text', { size: 40, anchor: 'middle' }, { x: cx, y: ROWS[2] - 76, content: (ANIMALS.find((a) => a[0] === wd) || ['', ''])[1], fill: C.ink, o: 0 });
+    return ['pwE' + k, 'pwW' + k];
+  }).flat();
   Anim.addSection(S);
   S.add('how', 'text', { size: 22, weight: 500 }, { x: X0, y: 860, content: 'How we counted: (possible characters) to the power of (length), at 10 billion guesses a second.', fill: C.faint, o: 0 });
 
@@ -270,13 +290,28 @@ function scene(st) {
   Anim.section(S, 'PART 2', 'The blender', (s) => fade(s, rs.concat(['cab', 'cabLbl', 'unlock', 'eve', 'site'])));
   S.beat(0.8, (s) => { Object.assign(s.blender, { o: 1, s: 0.85 }); s.bLbl.o = 1; Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
 
-  // 4. The fingerprint; blend again
-  S.step({ head: 'The blender makes a fingerprint.', body: 'It shreds the password into a **fingerprint**. Same password in, same fingerprint out. **Tap** it again to check.', act: actBlend });
+  // 4. The fingerprint is filed with her username in a good cabinet; be Eve again
+  const fns = cabRows.map((_, i) => 'fn' + i), fps = cabRows.map((_, i) => 'fp' + i), fhs = cabRows.map((_, i) => 'fh' + i);
+  const goodRows = (k) => [fns[k], fps[k], fhs[k]];
+  const ROW3 = [CAB.x + 184, CAB.y + 110 + 52 * 3 - 8];
+  const goodCab = (s) => { Object.assign(s.cabLbl, { o: 1, content: 'GOOD: FINGERPRINTS', fill: C.green }); s.cab.stroke = C.green; s.cab.o = 1; };
+  S.step({ head: 'The blender makes a fingerprint.', body: "It shreds the password into a **fingerprint**. A good site files only that, next to her username. Be **Eve** again and tap the lock.", act: actLock });
   blend('bar1', BAR1);
-  S.beat(0.5, (s) => { Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
+  S.beat(0.5, (s) => { Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); })
+    .beat(0.8, (s) => { goodCab(s); s.lock.o = 1; [0, 1, 2].forEach((k) => goodRows(k).forEach((id) => { s[id].o = 1; })); s.fn3.o = 1; },
+      stagger(['cab', 'cabLbl', 'lock'].concat(goodRows(0), goodRows(1), goodRows(2), ['fn3']), 0.04))
+    .beat(0.9, (s) => { Object.assign(s.bar1, { x: ROW3[0], y: ROW3[1], s: 0.17 }); })
+    .beat(0.4, (s) => { s.bar1.o = 0; s.fp3.o = 1; s.fh3.o = 1; s.fh3.fill = C.cyan; });
+
+  // 4b. Eve breaks in and finds only fingerprints; blend again
+  S.step({ head: 'Eve finds only fingerprints.', body: 'No passwords inside, so there is nothing to read. Same password in, same fingerprint out. **Tap** the password to blend it again and check.', act: actBlend })
+    .beat(0.5, (s) => { s.lock.o = 0; s.unlock.o = 1; Object.assign(s.eve, { o: 1, s: 1, pulse: 1 }); })
+    .beat(0.8, (s) => { fhs.forEach((id) => { s[id].fill = C.red; }); s.noPw.o = 1; s.eve.look = -0.5; }, stagger(fhs.concat(['noPw']), 0.1));
 
   // 5. Same again; change a letter
-  S.step({ head: 'Exactly the same.', body: 'Now pick **one letter** below to change, then press **Change it**.', act: actChange });
+  S.step({ head: 'Exactly the same.', body: 'Now pick **one letter** below to change, then press **Change it**.', act: actChange })
+    .beat(0.6, (s) => { fade(s, ['cab', 'cabLbl', 'unlock', 'eve', 'noPw'].concat(fns, fps, fhs)); s.eve.pulse = 0; s.eve.look = 0; s.bar1.o = 1; })
+    .beat(0.8, (s) => { Object.assign(s.bar1, { x: BAR1[0], y: BAR1[1], s: 0.75 }); });
   blend('bar1b', BAR1B, (s) => { s.same.o = 1; s.bar1.edge = C.green; s.bar1b.edge = C.green; });
   S.beat(0.5, (s) => { Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
 
@@ -292,18 +327,24 @@ function scene(st) {
     .beat(0.7, (s) => { s.back.o = 1; s.back.draw = 1; s.backQ.o = 1; });
 
   // 7. Sites keep the fingerprint; log in
-  const fpRow = (n, p) => `${n.padEnd(8, ' ')}${sha256(p).slice(0, 14)}…`;
-  S.step({ head: 'Sites keep only the fingerprint.', body: 'At login they blend what you type and compare. **Log in** twice: once with her password, once with a wrong one.', act: (ctx) => actLogin(ctx, pw, pw2) })
-    .beat(0.6, (s) => { fade(s, ['blender', 'bLbl', 'bar1', 'bar2', 't1', 't2', 'back', 'backQ', 'matchTxt']); })
+  S.step({ head: 'Good sites keep only the fingerprint.', body: 'Left, the bad way: real passwords. Right, the good way: each **username** with only its **fingerprint**. At login the site blends what you type and compares. **Log in** twice: once with her password, once with a wrong one.',
+    act: (ctx) => actLogin(ctx, pw, pw2) })
+    .beat(0.6, (s) => { fade(s, ['blender', 'bLbl', 'bar2', 't1', 't2', 'back', 'backQ', 'matchTxt']); })
+    // the bad cabinet comes back with the plain passwords; the good one fills with fingerprints
     .beat(0.9, (s) => {
-      ['alice', 'site', 'cab', 'cabLbl', 'lock'].forEach((id) => { s[id].o = 1; });
-      s.cabLbl.content = 'SAVED FINGERPRINTS';
-      rs.forEach((id, i) => Object.assign(s[id], { x: CAB.x + 24, y: CAB.y + 110 + 52 * i, fill: i === 3 ? C.cyan : C.ink, content: fpRow(...cabRows[i]), o: 1 }));
-    }, stagger(['alice', 'site', 'cab', 'cabLbl', 'lock'].concat(rs), 0.06));
+      ['cabP', 'cabPLbl', 'site', 'cab', 'lock'].forEach((id) => { s[id].o = 1; });
+      goodCab(s); fhs.forEach((id, i) => { s[id].fill = i === 3 ? C.cyan : C.faint; });
+      rs.forEach((id, i) => Object.assign(s[id], { x: PLAIN.x + 24, y: PLAIN.y + 110 + 52 * i, fill: i === 3 ? C.cyan : C.ink, content: row(...cabRows[i]), o: 1 }));
+      [0, 1, 2].forEach((k) => goodRows(k).forEach((id) => { s[id].o = 1; }));
+    }, stagger(['cabP', 'cabPLbl', 'site', 'cab', 'cabLbl', 'lock'].concat(rs, goodRows(0), goodRows(1), goodRows(2)), 0.04))
+    // her fingerprint from the blender files into her row, next to her username
+    .beat(0.5, (s) => { s.fn3.o = 1; })
+    .beat(0.9, (s) => { Object.assign(s.bar1, { x: ROW3[0], y: ROW3[1], s: 0.17, edge: C.line }); })
+    .beat(0.4, (s) => { s.bar1.o = 0; s.fp3.o = 1; s.fh3.o = 1; });
 
   // 8. Salt
   S.step({ head: 'A pinch of salt.', body: 'Two sites, same password, same fingerprint. Tap each **salt shaker**.', act: actSalt });
-  Anim.section(S, 'PART 3', 'A pinch of salt', (s) => fade(s, ['site', 'cab', 'cabLbl', 'lock'].concat(rs)));
+  Anim.section(S, 'PART 3', 'A pinch of salt', (s) => fade(s, ['site', 'cab', 'cabLbl', 'lock', 'cabP', 'cabPLbl'].concat(rs, fns, fps, fhs)));
   S.beat(0.9, (s) => {
       ['siteA', 'siteB'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
       ['pwA', 'pwB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame'].forEach((id) => { s[id].o = 1; });
@@ -354,7 +395,7 @@ function scene(st) {
 
   // 12. The passphrase wins
   S.step({ head: 'Your passphrase wins.', body: 'Pick a long passphrase that is easy to remember, and use a **different one on each site**.' })
-    .beat(0.4, (s) => { s.cl2.o = 1; })
+    .beat(0.7, (s) => { s.cl2.o = 1; ws.forEach((id) => { s[id].o = 1; }); }, stagger(['cl2'].concat(ws), 0.06))
     .beat(1.4, (s) => { Object.assign(s.cb2, { o: 1, w: rowsTxt[2].w }); s.ct2.o = 1; })
     .beat(0.5, (s) => { s.how.o = 1; });
   return S;
