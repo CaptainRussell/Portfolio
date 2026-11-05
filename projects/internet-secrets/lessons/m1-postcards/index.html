@@ -17,12 +17,7 @@
   <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
 </header>
 
-<div class="proj-head"><div class="wrap">
-  <p class="kicker">How the Internet Keeps Secrets · Lesson 1 of 4</p>
-  <h1>Postcards on the Internet</h1>
-  <p class="sub">You are Alice. Pick a message for Bob and follow it across the internet, one router at a time.</p>
-</div></div>
-
+<h1 class="vh">Postcards on the Internet</h1>
 <main class="wrap">
   <div id="lesson"></div>
   <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
@@ -279,7 +274,7 @@ const quiz = [
     why: 'Every router, and Eve watching them, could read it. Lesson 2 fixes that.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { id: 'm1', state: { msg: 'MEET AT 6' }, scene, quiz, next: Lessons.next('m1') });
+Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 1 · Postcards on the Internet', id: 'm1', state: { msg: 'MEET AT 6' }, scene, quiz, next: Lessons.next('m1') });
 </script>
 </body>
 </html>

@@ -9,13 +9,12 @@
 <link rel="stylesheet" href="../../shared/portfolio.css">
 <script src="../../shared/portfolio.js"></script>
 <style>
-table{width:100%;border-collapse:collapse;font-size:14px;margin:12px 0}
-th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
-td:first-child{font-family:var(--mono);font-weight:700;white-space:nowrap}
-.tablewrap{overflow-x:auto;max-width:760px}
-.state{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700;white-space:nowrap;border:1px solid var(--line);color:var(--soft)}
-.state.now{border-color:var(--tone);color:var(--ink);background:color-mix(in srgb,var(--tone) 18%,transparent)}
+.proj-head .pcards{grid-template-columns:minmax(0,2fr) minmax(0,1fr);align-items:stretch}
+.pcard.small{padding:14px;align-self:start}
+.pcard.small .icon{width:44px;height:44px;border-radius:12px}
+.pcard.small .icon svg{width:22px;height:22px}
+.pcard.small .name{font-size:15px}
+@media (max-width:640px){.proj-head .pcards{grid-template-columns:1fr}}
 </style>
 </head>
 <body style="--tone:#0d9488">
@@ -37,8 +36,8 @@ td:first-child{font-family:var(--mono);font-weight:700;white-space:nowrap}
     <li><b>Status:</b> In progress, due December 2026</li>
   </ul>
   <div class="pcards">
-    <a class="pcard" href="../../view/?d=secrets-proposal" style="--i:0"><span class="icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span><span class="body"><span class="name">Read the proposal</span><span class="blurb">Scope, learning objectives, references and timeline. PDF, 4 pages.</span></span></a>
-    <a class="pcard" href="lessons/" style="--i:1"><span class="icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z" fill="currentColor"/></svg></span><span class="body"><span class="name">Take the lessons</span><span class="blurb">Four short animated lessons, each with a quick check, then a final review and your overall score.</span></span></a>
+    <a class="pcard" href="lessons/" style="--i:0"><span class="icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m10 8.5 5 3.5-5 3.5z" fill="currentColor"/></svg></span><span class="body"><span class="name">Lessons</span><span class="blurb">Four short animated lessons, each with a quick check, then a final review and your overall score.</span></span></a>
+    <a class="pcard small" href="../../view/?d=secrets-proposal" style="--i:1"><span class="icon" aria-hidden="true"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></svg></span><span class="body"><span class="name">Read the proposal</span><span class="blurb">Scope, objectives and timeline. PDF.</span></span></a>
   </div>
 </div></div>
 
@@ -48,17 +47,6 @@ td:first-child{font-family:var(--mono);font-weight:700;white-space:nowrap}
     <p>Most people use the internet every day without knowing what happens to a message after they press send, or what keeps their password safe. This project is a website of short lessons, each built around one animation, that explains those ideas with everyday comparisons: postcards, mixing paint, fingerprints and a bouncer at the door.</p>
     <p>It is written at a high school level for students, parents and the general public, and for the AFROTC cadets I teach as the detachment's Cybersecurity Liaison. Learners step through each animation at their own pace and finish with a five-question self-check quiz.</p>
 
-    <h2>The four lessons</h2>
-    <div class="tablewrap"><table>
-      <thead><tr><th>#</th><th>Lesson</th><th>What the learner sees and does</th><th>Status</th></tr></thead>
-      <tbody>
-        <tr><td>1</td><td><b><a href="lessons/m1-postcards/">Postcards on the internet</a></b></td><td>A message is chopped into packets and passed hand to hand across a map of routers, readable like a postcard by anyone holding it.</td><td><span class="state">Ready for review</span></td></tr>
-        <tr><td>2</td><td><b><a href="lessons/m2-colors/">Mixing secret colors</a></b></td><td>Two people each add a private paint color to a shared public one, swap the mixtures, and end up with the same secret color (Diffie-Hellman key exchange).</td><td><span class="state">Ready for review</span></td></tr>
-        <tr><td>3</td><td><b><a href="lessons/m3-passwords/">Crack the password</a></b></td><td>A "blender" shows how changing one letter completely changes a password's fingerprint (hash), which is what websites store instead of the password.</td><td><span class="state">Ready for review</span></td></tr>
-        <tr><td>4</td><td><b><a href="lessons/m4-firewall/">Guard the gate</a></b></td><td>Packets line up at the network's door, and learners set simple firewall rules, scored on attacks blocked versus real visitors turned away. Time permitting, a flood of traffic (DDoS) round.</td><td><span class="state">Ready for review</span></td></tr>
-      </tbody>
-    </table></div>
-
     <h2>What a learner should be able to do</h2>
     <ul>
       <li>Describe how a message is split into packets and passed from router to router.</li>
@@ -66,9 +54,6 @@ td:first-child{font-family:var(--mono);font-weight:700;white-space:nowrap}
       <li>Explain why websites store a password's hash instead of the password, and why a long passphrase takes far longer to guess than a short password.</li>
       <li>Describe how a firewall decides which traffic to let in, and why a flood of traffic can knock a website offline even when nothing is stolen.</li>
     </ul>
-    <div class="callout"><p><b>How I'll know it works:</b> 3 to 5 testers with no cyber background work through the lessons and take the five-question check at the end of each one. The goal is 80% (4 of 5) or better on every lesson.</p></div>
-
-    <p>The full scope, sources and schedule are in <a href="../../view/?d=secrets-proposal">the proposal</a>. Start the lessons from <a href="lessons/">the lesson picker</a>.</p>
   </div>
 </main>
 

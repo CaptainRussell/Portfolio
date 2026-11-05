@@ -36,12 +36,7 @@
   <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
 </header>
 
-<div class="proj-head"><div class="wrap">
-  <p class="kicker">How the Internet Keeps Secrets · Lesson 3 of 4</p>
-  <h1>Crack the Password</h1>
-  <p class="sub">You are Alice, signing up for a website. See what the website keeps, then play the thief.</p>
-</div></div>
-
+<h1 class="vh">Crack the Password</h1>
 <main class="wrap">
   <div id="lesson"></div>
   <p class="muted" style="color:var(--soft);font-size:13.5px">Make up a practice password. Never type a real one. Nothing you type leaves this page. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
@@ -475,7 +470,7 @@ const quiz = [
     why: 'Each site adds its own salt, so the same password gets a different fingerprint.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { id: 'm3', state: { user: 'alice', pw: 'pizza123', pw2: null, phrase: 'otter piano comet maple' }, scene, quiz, next: Lessons.next('m3') });
+Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 3 · Crack the Password', id: 'm3', state: { user: 'alice', pw: 'pizza123', pw2: null, phrase: 'otter piano comet maple' }, scene, quiz, next: Lessons.next('m3') });
 </script>
 </body>
 </html>

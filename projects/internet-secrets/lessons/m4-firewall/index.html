@@ -51,12 +51,7 @@
   <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
 </header>
 
-<div class="proj-head"><div class="wrap">
-  <p class="kicker">How the Internet Keeps Secrets · Lesson 4 of 4</p>
-  <h1>Guard the Gate</h1>
-  <p class="sub">Run the firewall for Alice's home network. Let real visitors in, keep attacks out, then face a flood.</p>
-</div></div>
-
+<h1 class="vh">Guard the Gate</h1>
 <main class="wrap">
   <div id="lesson"></div>
   <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Tap a door to open or shut it. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
@@ -434,7 +429,7 @@ const quiz = [
     why: 'Attacks can hide inside traffic on an open door, like the website door.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { id: 'm4', state: { r1: [true, true, true, true], r2: null, r3: null, blockFirst: false }, scene, quiz, next: Lessons.next('m4') });
+Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 4 · Guard the Gate', id: 'm4', state: { r1: [true, true, true, true], r2: null, r3: null, blockFirst: false }, scene, quiz, next: Lessons.next('m4') });
 </script>
 </body>
 </html>
