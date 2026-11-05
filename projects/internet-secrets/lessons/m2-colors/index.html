@@ -31,7 +31,7 @@
 <h1 class="vh">Mixing Secret Colors</h1>
 <main class="wrap">
   <div id="lesson"></div>
-  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Drag a paint can onto its target, or just tap it. Tap a glowing can or key when asked. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Tap a glowing paint can or key when asked, and watch it pour or turn. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
 </main>
 
 <footer class="pf-foot">
@@ -85,9 +85,6 @@ const mw = (t) => 40 + 19 * t.length;
 // The locked message: each letter becomes a symbol, so it is the same length but unreadable.
 const SCR = 'Q#7K&W!X%Z@9$J+R?2*V';
 const scramble = (t, salt) => [...t].map((c, i) => SCR[(c.charCodeAt(0) * 7 + i * 13 + (salt || 0)) % SCR.length]).join('');
-// A paint can drawn for the controls a learner drags (the same shape as the stage can).
-const canSVG = (c) => `<svg viewBox="-60 -66 120 124" aria-hidden="true"><path d="M -46 -34 C -46 -76 46 -76 46 -34" fill="none" stroke="#cbd5e1" stroke-width="5"/>
-  <path d="M -52 -34 L 52 -34 L 45 48 Q 44 54 38 54 L -38 54 Q -44 54 -45 48 Z" fill="${c}" stroke="#cbd5e1" stroke-width="4" stroke-linejoin="round"/></svg>`;
 
 function scene(st) {
   const S = new Scene('m2');
@@ -177,11 +174,11 @@ function scene(st) {
     .beat(0.8, (s) => { sbs.forEach((id, i) => Object.assign(s[id], { o: i === st.sec ? 0.15 : 1, s: 1 })); }, stagger(sbs, 0.08));
 
   // 5. Alice mixes her secret in
-  S.step({ head: 'Alice mixes her secret in.', body: "**Drag** Alice's secret can into her public can.", act: (ctx) => actPour(ctx, [{ id: 'aSec', from: aSecSpot, to: aSpot, color: 'a', label: 'Pour into her can' }]) })
+  S.step({ head: 'Alice mixes her secret in.', body: "**Tap** Alice's secret can to pour it into her public can.", act: (ctx) => actTap(ctx, [[aSecSpot, 'Pour into her can']]) })
     .beat(0.6, (s) => { sbs.forEach((id) => { s[id].o = 0; }); Object.assign(s.bSec, { o: 1, x: bSecSpot[0], y: bSecSpot[1], s: 1 }); s.bPub.o = 1; s.bob.glow = 0; });
 
   // 6. Bob mixes his secret in
-  S.step({ head: 'Bob mixes his secret in.', body: "**Drag** Bob's secret can into his public can.", act: (ctx) => actPour(ctx, [{ id: 'bSec', from: bSecSpot, to: bSpot, color: 'b', label: 'Pour into his can' }]) })
+  S.step({ head: 'Bob mixes his secret in.', body: "**Tap** Bob's secret can to pour it into his public can.", act: (ctx) => actTap(ctx, [[bSecSpot, 'Pour into his can']]) })
     .beat(0.7, (s) => { pourA(s, aSpot); })
     .beat(0.8, (s) => { s.aPub.paint = MA; s.aPub.tag = "Alice's mix"; })
     .beat(0.6, (s) => { homeA(s); });
@@ -194,8 +191,8 @@ function scene(st) {
     .beat(0.6, (s) => { homeB(s); });
 
   // 8. The mixes cross; Eve copies both; each pours their secret into the other's mix
-  S.step({ head: 'Add each secret to the mix that arrived.', body: "The mixes crossed, and Eve copied both. **Drag** each secret into the mix that arrived.",
-    act: (ctx) => actPour(ctx, [{ id: 'aSec', from: aSecSpot, to: aSpot, color: 'a', label: "Bob's mix" }, { id: 'bSec', from: bSecSpot, to: bSpot, color: 'b', label: "Alice's mix" }]) })
+  S.step({ head: 'Add each secret to the mix that arrived.', body: "The mixes crossed, and Eve copied both. **Tap** each secret to pour it into the mix that arrived.",
+    act: (ctx) => actTap(ctx, [[aSecSpot, "Pour into Bob's mix"], [bSecSpot, "Pour into Alice's mix"]]) })
     .beat(0.5, (s) => { Object.assign(s.aPub, { y: ROAD, s: 0.8 }); Object.assign(s.bPub, { y: ROAD, s: 0.8 }); })
     .beat(0.8, (s) => { s.aPub.x = 740; s.bPub.x = 860; })
     .beat(0.4, (s) => { spyOn(s); s.eA.o = 1; s.eB.o = 1; s.eA.x = 740; s.eB.x = 860; })
@@ -214,7 +211,7 @@ function scene(st) {
     .beat(0.8, (s) => { ['ePub', 'eA', 'eB'].forEach((id) => { s[id].glow = 1; }); s.noMix.o = 1; s.eve.look = -0.6; });
 
   // 10. Alice paints her white key (Alice's shared can is bPub, the mix that came from Bob)
-  S.step({ head: 'Alice paints her key.', body: "Here are two plain **white keys**. **Drag** Alice's shared paint onto her key.", act: actPaintA });
+  S.step({ head: 'Alice paints her key.', body: "Here are two plain **white keys**. **Tap** Alice's shared paint to pour it on her key.", act: (ctx) => actTap(ctx, [[aSpot, 'Paint her key']]) });
   Anim.section(S, 'PART 2', 'Paint a key', (s) => {
     ['aSec', 'bSec', 'same', 'noMix'].forEach((id) => { s[id].o = 0; });
     ['ePub', 'eA', 'eB'].forEach((id) => { s[id].glow = 0; });
@@ -223,7 +220,7 @@ function scene(st) {
   S.beat(0.8, (s) => { Object.assign(s.kA, { o: 1, s: 1 }); Object.assign(s.kB, { o: 1, s: 1 }); }, stagger(['kA', 'kB'], 0.2));
 
   // 11. Alice's paint pours; Bob paints his
-  S.step({ head: 'Bob paints his key.', body: "Alice's key is now the shared color. **Drag** Bob's shared paint onto his key.", act: actPaintB })
+  S.step({ head: 'Bob paints his key.', body: "Alice's key is now the shared color. **Tap** Bob's shared paint to pour it on his key.", act: (ctx) => actTap(ctx, [[bSpot, 'Paint his key']]) })
     .beat(0.6, (s) => { Object.assign(s.bPub, { x: KEY_A[0] - 110, y: KEY_A[1] - 150, s: 0.7, rot: 70 }); })
     .beat(0.4, (s) => { s.drip.o = 1; })
     .beat(1.0, (s) => { s.kA.paint = SHARED; s.kA.glow = 1; })
@@ -298,23 +295,6 @@ function actTap(ctx, list) {
     if (h.disabled) return; h.disabled = true; h.classList.add('used');
     if (--left === 0) setTimeout(() => ctx.done({}), 300);
   }, w ? '' : 'quiet'));
-}
-// Drag each listed can onto its target (a tap also works); the step moves on after the last one.
-function actPour(ctx, list) {
-  let left = list.length;
-  const col = { a: SEC[ctx.state.sec].c, b: SEC[ctx.state.bob].c };
-  ctx.hide(list.map((q) => q.id));
-  list.forEach((q) => ctx.drag(q.from[0], q.from[1], 120, 120, q.label, { x: q.to[0], y: q.to[1], r: 85, label: q.label },
-    () => { if (--left === 0) setTimeout(() => ctx.done({}), 300); }, { cls: 'can', html: canSVG(col[q.color]) }));
-}
-const shared = (st) => mix(PUB[st.pub].c, SEC[st.sec].c, SEC[st.bob].c);
-function actPaintA(ctx) {
-  ctx.hide(['bPub']);
-  ctx.drag(aSpot[0], aSpot[1], 120, 120, "Alice's shared paint", { x: KEY_A[0], y: KEY_A[1], r: 110, label: "Alice's key" }, () => ctx.done({}), { cls: 'can', html: canSVG(shared(ctx.state)) });
-}
-function actPaintB(ctx) {
-  ctx.hide(['aPub']);
-  ctx.drag(bSpot[0], bSpot[1], 120, 120, "Bob's shared paint", { x: KEY_B[0], y: KEY_B[1], r: 110, label: "Bob's key" }, () => ctx.done({}), { cls: 'can', html: canSVG(shared(ctx.state)) });
 }
 function actMsg(ctx) {
   // the picked message hovers over Alice until it is confirmed

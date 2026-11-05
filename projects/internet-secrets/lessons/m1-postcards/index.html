@@ -162,8 +162,14 @@ function scene(st) {
   // the strip falls apart into pieces, then each piece becomes a numbered postcard
   st3.beat(0.3, (s) => { s.bigSc.o = 0; s.strip.o = 0; pcs.forEach((id) => { s[id].o = 1; }); cuts.forEach((_, i) => { s['cut' + i].o = 0; }); })
     .beat(0.6, (s) => pcs.forEach((id, i) => { s[id].x = chunkX[i] + (i - (n - 1) / 2) * 26; s[id].y = ROW_Y + (i % 2 ? 8 : -8); }))
-    .beat(0.4, (s) => { pcs.forEach((id) => { s[id].o = 0; }); ids.forEach((id, i) => Object.assign(s[id], { o: 1, x: s['pc' + i].x, y: s['pc' + i].y })); })
-    .beat(0.8, (s) => { ids.forEach((id, i) => Object.assign(s[id], { x: rowX[i], y: ROW_Y })); s.tofrom.o = 1; }, stagger(ids, 0.12));
+    // each piece slides to where its postcard will be, lined up so its letters do not move again
+    .beat(0.8, (s) => {
+      pcs.forEach((id, i) => Object.assign(s[id], { x: rowX[i] + CH * 28 / 30, y: ROW_Y, s: 28 / 30 }));
+      ids.forEach((id, i) => Object.assign(s[id], { x: rowX[i], y: ROW_Y, s: 0.94 }));
+    }, stagger(pcs, 0.1))
+    // then the number fades in on each one, left to right
+    .beat(1.0, (s) => { pcs.forEach((id) => { s[id].o = 0; }); ids.forEach((id) => { s[id].o = 1; s[id].s = 1; }); s.tofrom.o = 1; },
+      (id) => { const k = Math.max(pcs.indexOf(id), ids.indexOf(id)); return k < 0 ? null : { w: [k * 0.15, k * 0.15 + 0.5] }; });
 
   // 4. Router to router; a road jams and one postcard is lost on it
   S.step({ head: 'Routers pass postcards hand to hand.', body: 'Each router picks the next hop. Then a road jams and **#1** is lost. Tap a **clear road** for the rest.',
