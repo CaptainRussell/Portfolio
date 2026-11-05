@@ -46,9 +46,9 @@
    by different paths; a lost one is sent again and the numbers put the
    message back in order. Anyone holding a packet can read it.
    Source: Kurose and Ross, Computer Networking, 8th ed. [1].
-   Learner actions: pick the message, cut it, pick the first router,
-   reroute around a jam, ask for the lost postcard, put the postcards in
-   order, read Eve's copy. Code organized with help from Claude (Anthropic).
+   Learner actions: pick and send the message, cut it, send it to the
+   Wi-Fi, reroute around a jam, ask for the lost postcard, put the
+   postcards in order, read Eve's copies. Code organized with help from Claude (Anthropic).
    ===================================================================== */
 const { Scene, C } = Anim;
 
@@ -60,6 +60,8 @@ const ROW_Y = 470, STRIP_X = 295, CH = 18;          // the message strip: 30px m
 const TRAY = { x: 1300, y: 800, gap: 118 };
 const MSGS = ['MEET AT 6', 'HI BOB', 'LUNCH AT 12', 'SEE YOU SOON', 'CALL ME'];
 const MAP_S = 0.75, TRAY_S = 0.9;
+const LOST = [1060, 380];                            // where #1 is lost, on the jammed road from D to F
+const PIX = Array.from({ length: 18 }, (_, i) => [Math.round(Math.cos(i * 2.4) * (40 + (i % 4) * 22)), Math.round(Math.sin(i * 2.4) * (30 + (i % 5) * 16) + 40)]);
 const mid = (a, b) => [(P[a][0] + P[b][0]) / 2, (P[a][1] + P[b][1]) / 2];
 const disp = (t) => t.replace(/ /g, '·');           // a space shows as a dot so it can be seen
 
@@ -72,14 +74,14 @@ function pieces(msg) {
 }
 const cardText = (i, chunk) => `${i + 1} ${disp(chunk)}`;
 const cardW = (t) => 32 + 17 * t.length;
-const arrival = (n) => (n === 4 ? [0, 2, 3, 1] : [0, 2, 1]);      // the order the postcards reach Bob
+const arrival = (n) => [...Array(n).keys()].slice(1).concat([0]);   // the order the postcards reach Bob (#1 is lost and sent again)
 const slotX = (i, n) => TRAY.x + (i - (n - 1) / 2) * TRAY.gap;
 const stackY = (k, m) => (k - (m - 1) / 2) * 46;                // cards waiting at one router stack up and down
 
 function scene(st) {
   const S = new Scene('m1');
   const msg = st.msg, parts = pieces(msg), n = parts.length, texts = parts.map((p, i) => cardText(i, p));
-  const ids = texts.map((_, i) => 'c' + i), arr = arrival(n), first = st.first;
+  const ids = texts.map((_, i) => 'c' + i), arr = arrival(n), rest = ids.slice(1);
 
   // ---- the café, the map and the people
   S.add('cafe', 'rect', {}, { x: 30, y: 140, w: 530, h: 690, rx: 26, fill: C.panel2, fo: 0.55, stroke: C.line, sw: 2, z: -5, o: 0 });
@@ -106,18 +108,21 @@ function scene(st) {
   const cuts = []; let acc = 0;
   parts.slice(0, -1).forEach((p) => { acc += p.length; cuts.push(STRIP_X - (CH * msg.length) / 2 + CH * acc); });
   cuts.forEach((x, i) => S.add('sc' + i, 'glyph', { icon: 'scissors', size: 40 }, { x, y: ROW_Y - 64, o: 0, tint: C.amber, rot: 90 }));
+  S.add('bigSc', 'glyph', { icon: 'scissors', size: 76 }, { x: STRIP_X, y: 388, o: 0, s: 0.6, tint: C.amber, rot: 90 });
+  // the pixels a lost postcard breaks into
+  PIX.forEach((d, i) => S.add('px' + i, 'rect', {}, { x: LOST[0] - 6, y: LOST[1] - 6, w: 12, h: 12, rx: 1, fill: i % 3 ? C.red : C.amber, fo: 1, sw: 0, o: 0, z: 7 }));
   const total = texts.reduce((a, t) => a + cardW(t), 0) + 10 * (n - 1);
   let rx = STRIP_X - total / 2;
   const rowX = texts.map((t) => { const x = rx + cardW(t) / 2; rx += cardW(t) + 10; return x; });
   ids.forEach((id, i) => S.add(id, 'packet', { text: texts[i], size: 28, w: cardW(texts[i]) }, { x: STRIP_X, y: ROW_Y, o: 0, z: 4 }));
   S.add('tofrom', 'text', { size: 24, weight: 600, anchor: 'middle' }, { x: STRIP_X, y: ROW_Y + 78, content: 'To: Bob    From: Alice', fill: C.soft, o: 0 });
-  S.add('miss', 'packet', { text: '#2 ?', size: 28, w: 120 }, { x: P.bob[0], y: P.bob[1] - 128, o: 0, s: 0.6, edge: C.amber, ink: C.amber, z: 6 });
-  S.add('req', 'packet', { text: 'SEND #2', size: 24, w: 150 }, { x: P.bob[0], y: P.bob[1], o: 0, s: 0.7, edge: C.amber, ink: C.amber, z: 7 });
+  S.add('miss', 'packet', { text: '#1 ?', size: 28, w: 120 }, { x: P.bob[0], y: P.bob[1] - 128, o: 0, s: 0.6, edge: C.amber, ink: C.amber, z: 6 });
+  S.add('req', 'packet', { text: 'SEND #1', size: 24, w: 150 }, { x: P.bob[0], y: P.bob[1], o: 0, s: 0.7, edge: C.amber, ink: C.amber, z: 7 });
   S.add('bobMsg', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: TRAY.x, y: TRAY.y, o: 0, s: 0.8, edge: C.green, z: 6 });
   // Eve's view of every router: a red line from each router to her eye, and a copy of each postcard.
   const SPY = ['wifi', 'A', 'B', 'D', 'F', 'G'];
   SPY.forEach((r) => S.add('spy' + r, 'path', { d: `M ${P[r][0]} ${P[r][1]} L ${P.eve[0] + 40} ${P.eve[1] - 30}`, dash: '10 10' }, { stroke: C.red, sw: 3, o: 0, z: -2 }));
-  const copyFrom = (i) => (i === 0 ? 'F' : i === 1 ? first : 'G');
+  const copyFrom = (i) => (i === 0 ? 'D' : 'G');
   ids.forEach((id, i) => S.add('ec' + i, 'packet', { text: texts[i], size: 28, w: cardW(texts[i]) }, { x: P[copyFrom(i)][0], y: P[copyFrom(i)][1], o: 0, s: MAP_S, edge: C.red, ink: C.red, z: 8 }));
   S.add('eveMsg', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: 470, y: 600, o: 0, s: 0.8, edge: C.red, ink: C.red, z: 9 });
   Anim.addSection(S);
@@ -140,83 +145,67 @@ function scene(st) {
     }, stagger(['cafe', 'cafeLbl', 'alice', 'wifi', 'eve', 'bob'], 0.08));
 
   // 2. Cut it into postcards
-  S.step({ head: 'Too big to send in one piece.', body: 'Tap each pair of **scissors** to cut it into postcards.',
-    act: (ctx) => actCut(ctx, cuts) })
+  S.step({ head: 'Too big to send in one piece.', body: 'Tap the **scissors** to cut it into postcards.', act: actCut })
     .beat(0.7, (s) => { Object.assign(s.strip, { o: 1, s: 1 }); s.alice.glow = 1; })
-    .beat(0.6, (s) => { cuts.forEach((_, i) => { s['sc' + i].o = 1; }); s.alice.glow = 0; });
+    .beat(0.6, (s) => { Object.assign(s.bigSc, { o: 1, s: 1 }); s.alice.glow = 0; });
 
-  // 3. The postcards and the map; pick the first router
-  const lines = LINKS.map((_, i) => 'ln' + i);
-  S.step({ head: 'Routers pass postcards hand to hand.', body: 'Each postcard has a **number** and an address. Pick the first router.',
-    act: actRouter });
-  Anim.section(S, 'PART 2', 'Router to router');
-  S.beat(0.8, (s) => {
-      s.strip.o = 0; cuts.forEach((_, i) => { s['sc' + i].o = 0; });
-      ids.forEach((id, i) => Object.assign(s[id], { o: 1, x: rowX[i] }));
-      s.tofrom.o = 1;
-    }, stagger(ids, 0.12))
-    .beat(1.0, (s) => { ['A', 'B', 'D', 'F', 'G'].forEach((r) => Object.assign(s[r], { o: 1, s: 1 })); lines.forEach((l) => { s[l].draw = 1; }); },
-      (id) => { const k = lines.indexOf(id); return k < 0 ? null : { w: [k * 0.05, k * 0.05 + 0.5] }; })
-    .beat(0.7, (s) => { s.A.pulse = 1; s.B.pulse = 1; s.A.tint = C.cyan; s.B.tint = C.cyan; });
+  // 3. The scissors snip it into numbered postcards; hand them to the Wi-Fi
+  const lines = LINKS.map((_, i) => 'ln' + i), scs = cuts.map((_, i) => 'sc' + i);
+  S.step({ head: 'Each piece is a numbered postcard.', body: "Each one gets a **number** and Bob's address. Tap **Send** to hand them to the café Wi-Fi.", act: actSend })
+    .beat(0.4, (s) => { s.bigSc.o = 0; scs.forEach((id) => { s[id].o = 1; }); })
+    .beat(0.8, (s) => scs.forEach((id) => { s[id].y = ROW_Y + 4; }), stagger(scs, 0.2))
+    .beat(0.3, (s) => { scs.forEach((id) => { s[id].o = 0; }); s.strip.o = 0; ids.forEach((id) => { s[id].o = 1; }); })
+    .beat(0.8, (s) => { ids.forEach((id, i) => Object.assign(s[id], { x: rowX[i] })); s.tofrom.o = 1; }, stagger(ids, 0.12));
 
-  // 4. Travel to D; two go on, one is lost on the way; the road jams for the rest
-  const ahead = ids.slice(0, 2), behind = ids.slice(2);
-  S.step({ head: 'A road is jammed.', body: 'Two postcards got through before the jam. Tap a **clear road** to send the rest another way.',
-    act: actRoad })
-    .beat(0.5, (s) => { s.tofrom.o = 0; s.A.tint = C.soft; s.B.tint = C.soft; s[first].tint = C.cyan; });
-  hop(1.0, ids, 'wifi');
-  hop(1.0, ids, first);
-  hop(1.0, ids, 'D');
-  S.beat(1.0, (s) => {
-    ahead.forEach((id, k) => Object.assign(s[id], { x: P.F[0], y: P.F[1] + stackY(k, 2) }));
-    behind.forEach((id, k) => Object.assign(s[id], { y: P.D[1] + stackY(k, behind.length) }));
-    unglow(s); s.F.glow = 0.8;
-  }, stagger(ahead));
-  S.beat(1.0, (s) => {
-    Object.assign(s.c0, { x: P.bob[0], y: P.bob[1], s: MAP_S });
-    const m = mid('F', 'bob');
-    Object.assign(s.c1, { x: m[0] + 20, y: m[1] + 110, o: 0, edge: C.red, ink: C.red });
-    unglow(s); s.bob.glow = 1;
-  });
-  S.beat(0.9, (s) => { Object.assign(s.c0, { x: slotX(arr.indexOf(0), n), y: TRAY.y, s: TRAY_S }); s.tray.o = 1; s.trayLbl.o = 1; s.bob.glow = 0; });
-  S.beat(0.8, (s) => { s.jam.draw = 1; s.jamTxt.o = 1; });
+  // 4. Router to router; a road jams and one postcard is lost on it
+  S.step({ head: 'Routers pass postcards hand to hand.', body: 'Each router picks the next hop. Then a road jams and **#1** is lost. Tap a **clear road** for the rest.',
+    act: actRoad });
+  Anim.section(S, 'PART 2', 'Router to router', (s) => { s.tofrom.o = 0; });
+  S.beat(1.0, (s) => { ['A', 'B', 'D', 'F', 'G'].forEach((r) => Object.assign(s[r], { o: 1, s: 1 })); lines.forEach((l) => { s[l].draw = 1; }); },
+    (id) => { const k = lines.indexOf(id); return k < 0 ? null : { w: [k * 0.05, k * 0.05 + 0.5] }; });
+  hop(0.9, ids, 'wifi');
+  hop(0.9, ids, 'A');
+  hop(0.9, ids, 'D');
+  S.beat(0.8, (s) => { Object.assign(s.c0, { x: LOST[0], y: LOST[1] }); rest.forEach((id, k) => Object.assign(s[id], { y: P.D[1] + stackY(k, rest.length) })); unglow(s); });
+  S.beat(0.5, (s) => { s.jam.draw = 1; s.jamTxt.o = 1; s.c0.edge = C.red; s.c0.ink = C.red; });
+  // the lost postcard glitches, then breaks into pixels that scatter and fade
+  S.beat(0.25, (s) => { s.c0.content = '#▓▒░▓'; });
+  S.beat(0.25, (s) => { s.c0.content = '▒░▓#▒'; });
+  S.beat(0.7, (s) => {
+    Object.assign(s.c0, { o: 0, s: 0.4 });
+    PIX.forEach((d, i) => Object.assign(s['px' + i], { o: 0, x: LOST[0] + d[0], y: LOST[1] + d[1], w: 6, h: 6 }));
+  }, (id) => (id.startsWith('px') ? { w: [0, 1] } : null));
 
-  // 5. The rest go around; Bob sees a gap
-  S.step({ head: 'One postcard got lost.', body: 'Bob can see **#2** is missing. Tap it to ask Alice to send it again.',
+  // 5. The rest go around the jam; Bob sees a gap
+  S.step({ head: 'One postcard got lost.', body: 'The rest went around the jam. Bob, the **receiver**, sees **#1** is missing. Tap it to ask for it again.',
     act: actAsk });
-  hop(1.0, behind, 'G');
-  S.beat(0.9, (s) => { behind.forEach((id, k) => Object.assign(s[id], { x: P.bob[0], y: P.bob[1] + stackY(k, behind.length) })); unglow(s); s.bob.glow = 1; }, stagger(behind));
+  hop(1.0, rest, 'G');
+  S.beat(0.9, (s) => { rest.forEach((id, k) => Object.assign(s[id], { x: P.bob[0], y: P.bob[1] + stackY(k, rest.length) })); unglow(s); s.bob.glow = 1; }, stagger(rest));
   S.beat(1.0, (s) => {
-    behind.forEach((id) => Object.assign(s[id], { x: slotX(arr.indexOf(+id.slice(1)), n), y: TRAY.y, s: TRAY_S }));
-    s.bob.glow = 0;
-  }, stagger(behind));
+    rest.forEach((id) => Object.assign(s[id], { x: slotX(arr.indexOf(+id.slice(1)), n), y: TRAY.y, s: TRAY_S }));
+    s.tray.o = 1; s.trayLbl.o = 1; s.bob.glow = 0;
+  }, stagger(rest));
   S.beat(0.7, (s) => { Object.assign(s.miss, { o: 1, s: 1 }); s.bob.pulse = 1; });
 
-  // 6. The resend; then put them in order
-  const back = ['G', 'D', first, 'wifi', 'alice'], again = ['wifi', first, 'D', 'G'];
-  S.step({ head: 'Put them back in order.', body: 'The numbers tell Bob where each piece goes. **Drag** the postcards into number order.',
-    act: (ctx) => actOrder(ctx, ids, texts, arr) })
+  // 6. Bob asks; Alice sends #1 again; put them in order
+  const back = ['G', 'D', 'A', 'wifi', 'alice'], again = ['wifi', 'A', 'D', 'G', 'bob'];
+  S.step({ head: 'Alice sends #1 again.', body: "The numbers tell Bob where each piece goes. Tap **Bob's phone** to put them in order.", act: actOrder })
     .beat(0.3, (s) => { Object.assign(s.req, { o: 1 }); s.miss.o = 0; s.bob.pulse = 0; });
   back.forEach((at) => S.beat(0.45, (s) => { Object.assign(s.req, { x: P[at][0], y: P[at][1] - 70 }); }));
-  S.beat(0.3, (s) => {
-    s.req.o = 0;
-    Object.assign(s.c1, { x: P.alice[0], y: P.alice[1], o: 1, edge: C.cyan, ink: C.ink, s: MAP_S });
-    s.alice.glow = 1;
-  });
-  again.concat(['bob']).forEach((at) => hop(0.6, ['c1'], at));
-  S.beat(0.9, (s) => { Object.assign(s.c1, { x: slotX(n - 1, n), y: TRAY.y, s: TRAY_S }); s.alice.glow = 0; unglow(s); s.bob.glow = 0; });
-  // numbered slots light up under the postcards
+  // the new copy appears at Alice (placed first while hidden, so it never slides across the map)
+  S.beat(0.05, (s) => { Object.assign(s.c0, { x: P.alice[0], y: P.alice[1], s: MAP_S, content: texts[0], edge: C.cyan, ink: C.ink }); });
+  S.beat(0.35, (s) => { s.req.o = 0; s.c0.o = 1; s.alice.glow = 1; });
+  again.forEach((at) => hop(0.6, ['c0'], at));
+  S.beat(0.9, (s) => { Object.assign(s.c0, { x: slotX(n - 1, n), y: TRAY.y, s: TRAY_S }); s.alice.glow = 0; unglow(s); s.bob.glow = 0; });
   S.beat(0.7, (s) => ids.forEach((_, i) => { s['sl' + i].o = 1; s['sn' + i].o = 1; }), stagger(ids.map((_, i) => 'sl' + i), 0.1));
-  // once the learner has sorted them, they rest in order (no snapping back)
-  if (st.sorted) S.beat(0.5, (s) => ids.forEach((id, i) => Object.assign(s[id], { x: slotX(i, n), edge: C.green })));
 
-  // 7. Bob reads the whole message
+  // 7. One tap sorted them: Bob reads the whole message
   S.step({ head: 'Bob has the whole message.', body: 'The numbers put it back together, even when the pieces arrive out of order.' })
-    .beat(0.5, (s) => ids.forEach((id, i) => Object.assign(s[id], { x: slotX(i, n), edge: C.green })))
+    .beat(0.9, (s) => ids.forEach((id, i) => Object.assign(s[id], { x: slotX(i, n), edge: C.green })), stagger(ids, 0.12))
     .beat(0.9, (s) => { ids.forEach((id, i) => { Object.assign(s[id], { o: 0, x: TRAY.x }); s['sl' + i].o = 0; s['sn' + i].o = 0; }); Object.assign(s.bobMsg, { o: 1, s: 1 }); s.bob.glow = 1; s.jam.o = 0.35; s.jamTxt.o = 0; });
 
   // 8. Eve copies a postcard
-  const touched = ['wifi', first, 'D', 'F', 'G'];
+  const touched = ['wifi', 'A', 'D', 'G'];
   const ecs = ids.map((_, i) => 'ec' + i), spies = SPY.map((r) => 'spy' + r);
   S.step({ head: 'Anyone holding a postcard can read it.', body: 'Every router that held one could read it. **Eve** can see every router from the café Wi-Fi. Tap her copies.',
     act: actEve });
@@ -236,97 +225,37 @@ function scene(st) {
 
 // ---------------------------------------------------------------- learner actions
 function actPick(ctx) {
-  MSGS.forEach((m) => {
-    const b = document.createElement('button'); b.className = 'lz-btn' + (m === ctx.state.msg ? ' go' : ''); b.dataset.msg = m;
+  // every message looks the same until picked; Send confirms the pick
+  let pick = null;
+  const btns = MSGS.map((m) => {
+    const b = document.createElement('button'); b.className = 'lz-btn lz-pick'; b.dataset.msg = m; b.setAttribute('aria-pressed', 'false');
     b.innerHTML = `<span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.06em">${m}</span>`;
-    b.addEventListener('click', () => ctx.done({ msg: m, sorted: false })); ctx.slot.appendChild(b);
+    b.addEventListener('click', () => { pick = m; btns.forEach((x) => x.setAttribute('aria-pressed', x === b)); go.disabled = false; });
+    ctx.slot.appendChild(b); return b;
   });
+  const go = document.createElement('button'); go.className = 'lz-btn go'; go.dataset.send = ''; go.disabled = true;
+  go.innerHTML = '<span>Send this message</span>'; ctx.slot.appendChild(go);
+  go.addEventListener('click', () => { if (pick) ctx.done({ msg: pick }); });
 }
-function actCut(ctx, cuts) {
-  // Scissors on the stage, plus one Cut button under the caption (easier on a phone, and for the keyboard).
-  let left = cuts.length;
-  const btn = document.createElement('button');
-  btn.className = 'lz-btn go'; ctx.slot.appendChild(btn);
-  const label = () => { btn.innerHTML = `<span>Cut (${left} left)</span>`; };
-  const hits = cuts.map((x) => ctx.hit(x, ROW_Y - 20, 34, 150, 'Cut', (b) => cut(b), 'top thin'));
-  function cut(b) {
-    if (!b || b.disabled) return;
-    b.classList.add('used'); b.disabled = true; left--; label();
-    if (left === 0) { btn.disabled = true; setTimeout(() => ctx.done({}), 250); }
-  }
-  btn.addEventListener('click', () => cut(hits.find((h) => !h.disabled)));
-  label();
+function actCut(ctx) {
+  ctx.hit(STRIP_X, 388, 120, 110, 'Cut', () => ctx.done({}));
 }
-function actRouter(ctx) {
-  ['A', 'B'].forEach((r) => ctx.hit(P[r][0], P[r][1], 130, 130, 'Start here', () => ctx.done({ first: r })));
+function actSend(ctx) {
+  ctx.hit(P.wifi[0], P.wifi[1], 130, 130, 'Send', () => ctx.done({}));
+  const b = document.createElement('button'); b.className = 'lz-btn go'; b.innerHTML = '<span>Send</span>';
+  b.addEventListener('click', () => ctx.done({})); ctx.slot.appendChild(b);
 }
 function actRoad(ctx) {
   const g = mid('D', 'G'), f = mid('D', 'F');
-  ctx.hit(f[0] - 30, f[1] + 20, 90, 70, 'This road', (b) => { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); ctx.toast('That road is jammed. Try another.'); });
+  ctx.hit(f[0] + 40, f[1] - 30, 90, 70, 'This road', (b) => { b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); ctx.toast('That road is jammed. Try another.'); });
   ctx.hit(g[0], g[1], 90, 70, 'This road', () => ctx.done({}));
 }
 function actAsk(ctx) {
-  ctx.hit(P.bob[0], P.bob[1] - 128, 170, 90, 'Ask for #2 again', () => ctx.done({}), 'top');
+  ctx.hit(P.bob[0], P.bob[1] - 128, 170, 90, 'Ask for #1 again', () => ctx.done({}), 'top');
 }
-// Drag the postcards (or tap two to swap them) until they are in number order. On a narrow screen the
-// postcards are copied into big buttons under the caption, where tapping two swaps them.
-function actOrder(ctx, ids, texts, arr) {
-  const n = ids.length, order = arr.slice(), narrow = ctx.ov.clientWidth < 600;
-  const k = ctx.ov.clientWidth / 1600;
-  let sel = null;
-  const host = narrow ? ctx.slot : ctx.ov;
-  if (narrow) {
-    const hint = document.createElement('p'); hint.className = 'hint'; hint.textContent = 'Tap two postcards to swap them. Slot 1 is on the left.';
-    ctx.slot.appendChild(hint);
-  } else ctx.hide(ids);
-  const chips = order.map((c) => {
-    const b = document.createElement('button');
-    b.className = 'lz-chip' + (narrow ? ' flat' : ''); b.textContent = texts[c]; b.dataset.c = c;
-    b.setAttribute('aria-label', `Postcard ${c + 1}`);
-    if (!narrow) Object.assign(b.style, { width: (cardW(texts[c]) * TRAY_S * k) + 'px', height: (64 * TRAY_S * k) + 'px',
-      top: (TRAY.y / 900 * 100) + '%', fontSize: (28 * TRAY_S * k) + 'px' });
-    host.appendChild(b); return b;
-  });
-  const byC = (c) => chips.find((b) => +b.dataset.c === c);
-  const place = () => {
-    if (narrow) order.forEach((c) => host.appendChild(byC(c)));
-    else order.forEach((c, i) => { byC(c).style.left = (slotX(i, n) / 1600 * 100) + '%'; });
-  };
-  const check = () => {
-    place();
-    if (order.every((c, i) => c === i)) { chips.forEach((b) => { b.classList.add('ok'); b.disabled = true; }); setTimeout(() => ctx.done({ sorted: true }), 450); }
-  };
-  place();
-  chips.forEach((b) => {
-    if (!narrow) {
-      let sx = 0, moved = false, base = 0;
-      b.addEventListener('pointerdown', (e) => { sx = e.clientX; moved = false; base = b.offsetLeft; b.setPointerCapture(e.pointerId); });
-      b.addEventListener('pointermove', (e) => {
-        if (!b.hasPointerCapture(e.pointerId)) return;
-        const dx = e.clientX - sx;
-        if (Math.abs(dx) > 6) { moved = true; b.classList.add('drag'); b.style.left = (base + dx) + 'px'; }
-      });
-      b.addEventListener('pointerup', () => {
-        if (!moved) return;
-        b.classList.remove('drag');
-        const x = b.offsetLeft / k, c = +b.dataset.c;
-        let to = 0, best = 1e9;
-        for (let i = 0; i < n; i++) { const d = Math.abs(slotX(i, n) - x); if (d < best) { best = d; to = i; } }
-        order.splice(order.indexOf(c), 1); order.splice(to, 0, c);
-        b.dataset.dragged = '1'; check();
-      });
-    }
-    // a tap (or Enter) picks a card; picking a second swaps the two
-    b.addEventListener('click', () => {
-      if (b.dataset.dragged) { delete b.dataset.dragged; return; }
-      if (!sel) { sel = b; b.classList.add('sel'); return; }
-      if (sel !== b) {
-        const i = order.indexOf(+sel.dataset.c), j = order.indexOf(+b.dataset.c);
-        [order[i], order[j]] = [order[j], order[i]];
-      }
-      sel.classList.remove('sel'); sel = null; check();
-    });
-  });
+// One tap on Bob's phone puts the postcards in number order.
+function actOrder(ctx) {
+  ctx.hit(TRAY.x, TRAY.y + 10, 560, 170, 'Put in order', () => ctx.done({}));
 }
 function actEve(ctx) {
   ctx.hit(470, 590, 200, 220, 'Read them', () => ctx.done({}));
@@ -341,16 +270,16 @@ const quiz = [
     why: 'Each router passes a packet one hop closer to where it is going.' },
   { q: 'Packets from one message:',
     choices: ['Can take different paths', 'Always take one path', 'Always arrive in order', 'Travel only at night'], answer: 0,
-    why: 'When a road jams, packets go another way. The numbers sort them out at the end.' },
+    why: 'When a road jams, packets go another way. The numbers let the receiver (Bob) sort them at the end.' },
   { q: 'When a packet goes missing:',
-    choices: ['The message is lost', 'Bob asks for it again', 'A router makes one up', 'Eve sends a new one'], answer: 1,
-    why: 'The numbers show the gap, so Bob asks Alice to send that one again.' },
+    choices: ['The whole message is lost', 'The receiver (Bob) asks again', 'A router makes up a new one', 'Eve sends in a new packet'], answer: 1,
+    why: 'The numbers show the gap, so the receiver (Bob) asks the sender (Alice) to send that one again.' },
   { q: 'A plain packet is like a postcard because:',
     choices: ['It needs a stamp', 'It is often lost', 'Anyone can read it', 'It goes one way'], answer: 2,
-    why: 'Every router, and Eve on the same Wi-Fi, could read it. Lesson 2 fixes that.' },
+    why: 'Every router, and Eve watching them, could read it. Lesson 2 fixes that.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { id: 'm1', state: { msg: 'MEET AT 6', first: 'A', sorted: false }, scene, quiz, next: Lessons.next('m1') });
+Lesson.mount(document.getElementById('lesson'), { id: 'm1', state: { msg: 'MEET AT 6' }, scene, quiz, next: Lessons.next('m1') });
 </script>
 </body>
 </html>
