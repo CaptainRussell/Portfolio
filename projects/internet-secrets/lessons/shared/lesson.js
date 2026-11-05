@@ -81,7 +81,7 @@
       $('.lz-body').innerHTML = rich(m.body || '');
       $('[data-act="back"]').disabled = step <= 0;
       const nb = $('[data-act="next"]'), wait = pending();
-      nb.disabled = wait; nb.classList.toggle('wait', wait);
+      nb.disabled = wait; nb.classList.toggle('wait', wait); nb.classList.remove('nudge');
       nb.querySelector('span').textContent = wait ? 'Your turn' : step === N - 1 ? 'Check yourself' : 'Next';
     }
 
@@ -148,6 +148,13 @@
         toast(msg) {
           const t = document.createElement('div'); t.className = 'lz-toast'; t.textContent = msg;
           ov.appendChild(t); setTimeout(() => t.remove(), 1600);
+        },
+        // the action is finished but its result stays on screen: Next lights up, and the learner moves on when ready
+        ready(patch) {
+          if (step !== k || doneActs[k]) return;
+          Object.assign(state, patch || {});
+          doneActs[k] = true; host.classList.remove('acting'); caption();
+          const nb = $('[data-act="next"]'); nb.classList.add('nudge'); nb.focus({ preventScroll: true });
         },
         done(patch) {
           if (step !== k) return;

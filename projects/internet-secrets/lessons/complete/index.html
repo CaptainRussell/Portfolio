@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Final Review · How the Internet Keeps Secrets · Scott D. Russell</title>
-<meta name="description" content="The final review for How the Internet Keeps Secrets: eight questions across all four lessons, then an overall score.">
+<title>Final Review · Internet Secrets · Scott D. Russell</title>
+<meta name="description" content="The final review for Internet Secrets: eight questions across all four lessons, then an overall score.">
 <link rel="icon" href="../../../../shared/favicon.png" type="image/png">
 <link rel="stylesheet" href="../../../../shared/portfolio.css">
 <link rel="stylesheet" href="../shared/lesson.css">
@@ -25,7 +25,7 @@
 </header>
 
 <div class="proj-head"><div class="wrap">
-  <p class="kicker">How the Internet Keeps Secrets · Complete</p>
+  <p class="kicker">Internet Secrets · Complete</p>
   <h1>Final review</h1>
   <p class="sub">Eight questions, two from each lesson. Then see your overall score.</p>
 </div></div>
@@ -38,7 +38,7 @@
   <img class="foot-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="52" height="52">
   <p class="motto">Capt Scott D. Russell, USAF</p>
   <p class="tagline">M.S. Cybersecurity · Iowa State University</p>
-  <p class="source-line">How the Internet Keeps Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="source-line">Internet Secrets · CYBSC 5300, Iowa State University, Fall 2026 · <a href="../../">Project page</a></p>
   <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
 </footer>
 <script src="../shared/lessons.js"></script>
@@ -101,7 +101,7 @@
     box.classList.add('scored');
     box.innerHTML = `<div class="lz-score ${pct >= 80 ? 'pass' : 'retry'}">
         <div class="lz-ring" style="--p:${got / of}"><b>${pct}%</b></div>
-        <div><p class="lz-count">How the Internet Keeps Secrets · Overall</p>
+        <div><p class="lz-count">Internet Secrets · Overall</p>
         <h2 tabindex="-1">${pct >= 80 ? 'Course complete' : 'Almost there'}</h2>
         <p class="lz-body">${got} of ${of} across the four lesson checks and this review. ${pct >= 80 ? 'You met the 80% goal.' : '80% or more meets the goal. Replay a lesson and retake its check.'}</p></div></div>
       <table class="fr-table">${rows.map(([l, v]) => `<tr><td><a href="../${l.href}">Lesson ${l.n}: ${esc(l.name)}</a></td><td>${v == null ? 'not taken' : v + '/5'}</td></tr>`).join('')}
