@@ -370,7 +370,7 @@
   };
   // A big key that can be painted (Lesson 2). props: paint (fill color), edge, glow, rot.
   KINDS.keyart = {
-    defaults: { paint: '#ffffff', edge: C.ink, glow: 0, rot: 0 },
+    defaults: { paint: '#ffffff', edge: C.ink, glow: 0, rot: 0, turn: 0 },
     create(g) {
       const r = el('g', {}, g), body = el('g', {}, r);
       const halo = el('circle', { cx: -60, cy: 0, r: 56, fill: 'none', 'stroke-width': 8 }, body);
@@ -381,9 +381,33 @@
     },
     update(h, p) {
       setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
-      setA(h.root, 'opacity', p.o.toFixed(3)); setA(h.body, 'transform', `rotate(${p.rot.toFixed(2)})`);
+      // turn (degrees) spins the key about its own shaft, the way a key turns in a lock
+      setA(h.root, 'opacity', p.o.toFixed(3)); setA(h.body, 'transform', `rotate(${p.rot.toFixed(2)}) scale(1 ${Math.cos(p.turn * Math.PI / 180).toFixed(4)})`);
       h.shapes.forEach((s) => { setA(s, 'fill', p.paint); setA(s, 'stroke', p.edge); });
       setA(h.halo, 'stroke', p.paint); setA(h.halo, 'opacity', (p.glow * 0.6).toFixed(3));
+    },
+  };
+  // A padlock seen from the front, with a keyhole a key can slide into (Lesson 2).
+  //   props: open (0 shut to 1 shackle up), turn (keyhole angle, degrees), tint, glow
+  KINDS.padlock = {
+    defaults: { open: 0, turn: 0, tint: C.soft, glow: 0 },
+    create(g) {
+      const r = el('g', {}, g);
+      const halo = el('rect', { x: -52, y: -42, width: 104, height: 88, rx: 18, fill: 'none', 'stroke-width': 6 }, r);
+      const shackle = el('path', { d: 'M -24 0 V -58 A 24 24 0 0 1 24 -58 V -30', fill: 'none', 'stroke-width': 11, 'stroke-linecap': 'round' }, r);
+      const body = el('rect', { x: -42, y: -32, width: 84, height: 68, rx: 12, 'stroke-width': 4 }, r);
+      const hole = el('g', {}, r);
+      el('circle', { cx: 0, cy: -2, r: 9, fill: C.bg }, hole);
+      el('path', { d: 'M -5 2 L -8 20 H 8 L 5 2 Z', fill: C.bg }, hole);
+      return { root: r, halo, shackle, body, hole };
+    },
+    update(h, p) {
+      setA(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      setA(h.root, 'opacity', p.o.toFixed(3));
+      setA(h.shackle, 'transform', `translate(0 ${(-20 * p.open).toFixed(2)})`); setA(h.shackle, 'stroke', p.tint);
+      setA(h.body, 'fill', C.panel2); setA(h.body, 'stroke', p.tint);
+      setA(h.hole, 'transform', `translate(0 6) rotate(${p.turn.toFixed(2)})`);
+      setA(h.halo, 'stroke', p.tint); setA(h.halo, 'opacity', (p.glow * 0.6).toFixed(3));
     },
   };
   // A blender (Lesson 3): a jar with blades that spin as spin grows (1 = one full turn), and a whirl of shreds.
