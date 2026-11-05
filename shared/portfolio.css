@@ -91,6 +91,8 @@ code,kbd{font-family:var(--mono);font-size:.92em}
 .kicker{margin:0;font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
 .proj-head h1{margin:2px 0 6px;font-size:clamp(24px,4.2vw,34px);line-height:1.15;letter-spacing:-.01em;font-weight:800}
 .proj-head .sub{margin:0;max-width:720px;font-size:16px;color:var(--soft)}
+.proj-icon.art{background:none;overflow:hidden}
+.proj-icon.art img{display:block;width:100%;height:100%;border-radius:inherit}
 @media (max-width:480px){.proj-title{gap:12px}.proj-icon{width:44px;height:44px;border-radius:12px}.proj-icon svg{width:23px;height:23px}}
 .facts{display:flex;flex-wrap:wrap;gap:6px 20px;margin:16px 0 0;padding:0;list-style:none;font-size:13.5px;color:var(--soft)}
 .facts b{color:var(--ink);font-weight:650}
