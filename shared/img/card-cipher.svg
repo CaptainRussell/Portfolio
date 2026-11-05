@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 56 56" width="224" height="224">
+  <!-- Card-Shuffle Stream Cipher card tile: the two decks, and the loop every arrangement sits on -->
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c8102e"/><stop offset="1" stop-color="#6e0919"/></linearGradient>
+    <marker id="ah" viewBox="0 0 6 6" refX="3" refY="3" markerWidth="4.2" markerHeight="4.2" orient="auto-start-reverse"><path d="M0 0 6 3 0 6z" fill="#f1be48"/></marker>
+  </defs>
+  <rect width="56" height="56" rx="14" fill="url(#bg)"/>
+  <!-- loop -->
+  <path d="M10.5 22a19 19 0 0 1 35 0" fill="none" stroke="#f1be48" stroke-width="2.2" stroke-linecap="round" marker-end="url(#ah)"/>
+  <path d="M45.5 41a19 19 0 0 1-35 0" fill="none" stroke="#f1be48" stroke-width="2.2" stroke-linecap="round" marker-end="url(#ah)"/>
+  <!-- deck one (red), stacked -->
+  <g transform="rotate(-10 19 32)">
+    <rect x="9.5" y="21" width="17" height="23" rx="2.4" fill="#fff" opacity=".45"/>
+    <rect x="10.5" y="19.5" width="17" height="23" rx="2.4" fill="#fff"/>
+    <text x="13" y="26" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-weight="800" font-size="6" fill="#c8102e">3</text>
+    <text x="19" y="36" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" text-anchor="middle" fill="#c8102e">&#9829;</text>
+  </g>
+  <!-- deck two (black), stacked -->
+  <g transform="rotate(10 37 32)">
+    <rect x="29.5" y="21" width="17" height="23" rx="2.4" fill="#fff" opacity=".45"/>
+    <rect x="28.5" y="19.5" width="17" height="23" rx="2.4" fill="#fff"/>
+    <text x="31" y="26" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-weight="800" font-size="6" fill="#1b1b1d">7</text>
+    <text x="37" y="36" font-family="system-ui,-apple-system,Segoe UI,Roboto,sans-serif" font-size="10" text-anchor="middle" fill="#1b1b1d">&#9824;</text>
+  </g>
+</svg>
