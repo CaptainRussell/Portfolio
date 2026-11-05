@@ -9,7 +9,7 @@
 <link rel="stylesheet" href="../../../../shared/portfolio.css">
 <link rel="stylesheet" href="../shared/lesson.css">
 <script src="../../../../shared/portfolio.js"></script>
-<style>.proj-head{padding-bottom:6px}</style>
+
 </head>
 <body style="--tone:#0d9488">
 <header class="pf-bar">
@@ -51,7 +51,7 @@ const { Scene, C } = Anim;
 const P = { alice: [140, 300], wifi: [470, 300], eve: [295, 690], A: [700, 200], B: [700, 680], D: [960, 440],
   F: [1210, 240], G: [1210, 640], bob: [1460, 440] };
 const LINKS = [['wifi', 'A'], ['wifi', 'B'], ['A', 'D'], ['B', 'D'], ['A', 'F'], ['B', 'G'], ['D', 'F'], ['D', 'G'], ['F', 'bob'], ['G', 'bob']];
-const ROW_Y = 470, STRIP_X = 295, CH = 18;          // the message strip: 30px monospace letters, about 18 units wide each
+const ROW_Y = 470, STRIP_X = 295, CH = 18, HEAD_Y = 165;          // the message strip: 30px monospace letters, about 18 units wide each
 const TRAY = { x: 1300, y: 800, gap: 118 };
 const MSGS = ['MEET AT 6', 'HI BOB', 'LUNCH AT 12', 'SEE YOU SOON', 'CALL ME'];
 const MAP_S = 0.75, TRAY_S = 0.9;
@@ -80,7 +80,7 @@ function scene(st) {
 
   // ---- the café, the map and the people
   S.add('cafe', 'rect', {}, { x: 30, y: 140, w: 530, h: 690, rx: 26, fill: C.panel2, fo: 0.55, stroke: C.line, sw: 2, z: -5, o: 0 });
-  S.add('cafeLbl', 'text', { size: 28, weight: 700, mono: true }, { x: 58, y: 186, content: 'CAFÉ', fill: C.soft, o: 0, z: -4 });
+  S.add('cafeLbl', 'text', { size: 28, weight: 700, mono: true, anchor: 'end' }, { x: 536, y: 186, content: 'CAFÉ', fill: C.soft, o: 0, z: -4 });
   LINKS.forEach(([a, b], i) => S.add('ln' + i, 'path', { d: `M ${P[a][0]} ${P[a][1]} L ${P[b][0]} ${P[b][1]}` }, { draw: 0, stroke: C.line, sw: 5, z: -3 }));
   S.add('jam', 'path', { d: `M ${P.D[0]} ${P.D[1]} L ${P.F[0]} ${P.F[1]}` }, { draw: 0, stroke: C.red, sw: 9, z: -2 });
   S.add('jamTxt', 'text', { size: 30, weight: 800, anchor: 'middle', mono: true }, { x: mid('D', 'F')[0] + 70, y: mid('D', 'F')[1] + 10, content: 'JAMMED', fill: C.red, o: 0 });
@@ -99,11 +99,15 @@ function scene(st) {
     S.add('sn' + i, 'text', { size: 22, weight: 800, mono: true, anchor: 'middle' }, { x: slotX(i, a.length), y: TRAY.y + 68, content: 'SLOT ' + (i + 1), fill: C.amber, o: 0 });
   });
   // ---- the message, its scissors and its postcards
-  S.add('strip', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: STRIP_X, y: ROW_Y, o: 0, s: 0.8, z: 3 });
-  const cuts = []; let acc = 0;
-  parts.slice(0, -1).forEach((p) => { acc += p.length; cuts.push(STRIP_X - (CH * msg.length) / 2 + CH * acc); });
-  cuts.forEach((x, i) => S.add('sc' + i, 'glyph', { icon: 'scissors', size: 40 }, { x, y: ROW_Y - 64, o: 0, tint: C.amber, rot: 90 }));
-  S.add('bigSc', 'glyph', { icon: 'scissors', size: 76 }, { x: STRIP_X, y: 388, o: 0, s: 0.6, tint: C.amber, rot: 90 });
+  // the message starts over Alice's head, where she picked it
+  S.add('strip', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: P.alice[0] + 20, y: HEAD_Y, o: 0, s: 0.8, z: 3 });
+  const stripL = STRIP_X - (CH * msg.length) / 2, cuts = [], chunkX = []; let acc = 0;
+  parts.forEach((p, i) => { chunkX.push(stripL + CH * (acc + p.length / 2)); acc += p.length; if (i < n - 1) cuts.push(stripL + CH * acc); });
+  // one cut line per snip, drawn as the scissors pass through the strip
+  cuts.forEach((x, i) => S.add('cut' + i, 'path', { d: `M ${x} ${ROW_Y - 40} L ${x} ${ROW_Y + 40}` }, { draw: 0, o: 0, stroke: C.amber, sw: 4, z: 5 }));
+  // the plain pieces the strip falls into, before they get their numbers
+  parts.forEach((p, i) => S.add('pc' + i, 'packet', { text: disp(p), size: 30, w: 18 + CH * p.length }, { x: chunkX[i], y: ROW_Y, o: 0, z: 4 }));
+  S.add('bigSc', 'glyph', { icon: 'scissors', size: 76 }, { x: STRIP_X, y: 380, o: 0, s: 0.6, tint: C.amber, rot: 90, z: 6 });
   // the pixels a lost postcard breaks into
   PIX.forEach((d, i) => S.add('px' + i, 'rect', {}, { x: LOST[0] - 6, y: LOST[1] - 6, w: 12, h: 12, rx: 1, fill: i % 3 ? C.red : C.amber, fo: 1, sw: 0, o: 0, z: 7 }));
   const total = texts.reduce((a, t) => a + cardW(t), 0) + 10 * (n - 1);
@@ -141,16 +145,25 @@ function scene(st) {
 
   // 2. Cut it into postcards
   S.step({ head: 'Too big to send in one piece.', body: 'Tap the **scissors** to cut it into postcards.', act: actCut })
-    .beat(0.7, (s) => { Object.assign(s.strip, { o: 1, s: 1 }); s.alice.glow = 1; })
-    .beat(0.6, (s) => { Object.assign(s.bigSc, { o: 1, s: 1 }); s.alice.glow = 0; });
+    .beat(0.4, (s) => { s.strip.o = 1; s.alice.glow = 1; })
+    .beat(0.9, (s) => { Object.assign(s.strip, { x: STRIP_X, y: ROW_Y, s: 1 }); s.alice.glow = 0; })
+    .beat(0.6, (s) => { Object.assign(s.bigSc, { o: 1, s: 1 }); });
 
   // 3. The scissors snip it into numbered postcards; hand them to the Wi-Fi
-  const lines = LINKS.map((_, i) => 'ln' + i), scs = cuts.map((_, i) => 'sc' + i);
-  S.step({ head: 'Each piece is a numbered postcard.', body: "Each one gets a **number** and Bob's address. Tap **Send** to hand them to the café Wi-Fi.", act: actSend })
-    .beat(0.4, (s) => { s.bigSc.o = 0; scs.forEach((id) => { s[id].o = 1; }); })
-    .beat(0.8, (s) => scs.forEach((id) => { s[id].y = ROW_Y + 4; }), stagger(scs, 0.2))
-    .beat(0.3, (s) => { scs.forEach((id) => { s[id].o = 0; }); s.strip.o = 0; ids.forEach((id) => { s[id].o = 1; }); })
-    .beat(0.8, (s) => { ids.forEach((id, i) => Object.assign(s[id], { x: rowX[i] })); s.tofrom.o = 1; }, stagger(ids, 0.12));
+  const lines = LINKS.map((_, i) => 'ln' + i), pcs = parts.map((_, i) => 'pc' + i);
+  const st3 = S.step({ head: 'Each piece is a numbered postcard.', body: "Each one gets a **number** and Bob's address. Tap **Send** to hand them to the café Wi-Fi.", act: actSend });
+  // the scissors move to each cut mark and snip down through the strip
+  cuts.forEach((x, i) => {
+    st3.beat(0.4, (s) => Object.assign(s.bigSc, { x, y: ROW_Y - 62, s: 0.75, rot: 90 }))
+      .beat(0.25, (s) => { Object.assign(s.bigSc, { y: ROW_Y - 22, rot: 72 }); Object.assign(s['cut' + i], { o: 1, draw: 0.45 }); })
+      .beat(0.25, (s) => { Object.assign(s.bigSc, { y: ROW_Y + 12, rot: 104 }); s['cut' + i].draw = 0.8; })
+      .beat(0.2, (s) => { Object.assign(s.bigSc, { y: ROW_Y + 40, rot: 90 }); s['cut' + i].draw = 1; });
+  });
+  // the strip falls apart into pieces, then each piece becomes a numbered postcard
+  st3.beat(0.3, (s) => { s.bigSc.o = 0; s.strip.o = 0; pcs.forEach((id) => { s[id].o = 1; }); cuts.forEach((_, i) => { s['cut' + i].o = 0; }); })
+    .beat(0.6, (s) => pcs.forEach((id, i) => { s[id].x = chunkX[i] + (i - (n - 1) / 2) * 26; s[id].y = ROW_Y + (i % 2 ? 8 : -8); }))
+    .beat(0.4, (s) => { pcs.forEach((id) => { s[id].o = 0; }); ids.forEach((id, i) => Object.assign(s[id], { o: 1, x: s['pc' + i].x, y: s['pc' + i].y })); })
+    .beat(0.8, (s) => { ids.forEach((id, i) => Object.assign(s[id], { x: rowX[i], y: ROW_Y })); s.tofrom.o = 1; }, stagger(ids, 0.12));
 
   // 4. Router to router; a road jams and one postcard is lost on it
   S.step({ head: 'Routers pass postcards hand to hand.', body: 'Each router picks the next hop. Then a road jams and **#1** is lost. Tap a **clear road** for the rest.',
@@ -221,11 +234,16 @@ function scene(st) {
 // ---------------------------------------------------------------- learner actions
 function actPick(ctx) {
   // every message looks the same until picked; Send confirms the pick
+  // the picked message hovers over Alice's head until Send confirms it
   let pick = null;
+  const bub = document.createElement('div'); bub.className = 'lz-bubble'; bub.setAttribute('aria-live', 'polite');
+  bub.style.left = ((P.alice[0] + 20) / 16) + '%'; bub.style.top = (HEAD_Y / 9) + '%'; bub.textContent = '?';
+  const fit = () => { const k = ctx.ov.clientWidth / 1600; bub.style.fontSize = (30 * 0.8 * k) + 'px'; };
+  fit(); window.addEventListener('resize', fit); ctx.ov.appendChild(bub);
   const btns = MSGS.map((m) => {
     const b = document.createElement('button'); b.className = 'lz-btn lz-pick'; b.dataset.msg = m; b.setAttribute('aria-pressed', 'false');
     b.innerHTML = `<span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.06em">${m}</span>`;
-    b.addEventListener('click', () => { pick = m; btns.forEach((x) => x.setAttribute('aria-pressed', x === b)); go.disabled = false; });
+    b.addEventListener('click', () => { pick = m; bub.textContent = disp(m); bub.classList.add('on'); btns.forEach((x) => x.setAttribute('aria-pressed', x === b)); go.disabled = false; });
     ctx.slot.appendChild(b); return b;
   });
   const go = document.createElement('button'); go.className = 'lz-btn go'; go.dataset.send = ''; go.disabled = true;

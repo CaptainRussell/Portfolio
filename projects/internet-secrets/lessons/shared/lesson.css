@@ -157,3 +157,8 @@ a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 /* the lesson's name rides in the step line (the page has no big header, so the stage sits right under the top bar) */
 .lz-count .lz-title{color:var(--c-soft)}
 .vh{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* a picked message hovering over the sender until it is confirmed */
+.lz-bubble{position:absolute;transform:translate(-50%,-50%);pointer-events:none!important;white-space:nowrap;font:700 1em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--c-faint);background:var(--c-panel2);border:2px dashed var(--c-line);border-radius:.5em;padding:.5em .75em;transition:color .2s,border-color .2s}
+.lz-bubble.on{color:var(--c-ink);border:2px solid var(--c-cyan);box-shadow:0 0 0 4px rgba(34,211,238,.18);animation:lz-float 1.8s ease-in-out infinite}
+@keyframes lz-float{50%{transform:translate(-50%,calc(-50% - 6px))}}
+@media (prefers-reduced-motion:reduce){.lz-bubble.on{animation:none}}

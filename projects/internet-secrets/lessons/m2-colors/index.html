@@ -63,9 +63,11 @@
 const { Scene, C } = Anim;
 
 // Paint. Mixing averages the colors in equal parts.
-const PUB = [{ n: 'Yellow', c: '#fde047' }, { n: 'Mint', c: '#bbf7d0' }, { n: 'White', c: '#ffffff' }];
-const SEC = [{ n: 'Purple', c: '#9333ea' }, { n: 'Red', c: '#b91c1c' }, { n: 'Green', c: '#15803d' },
-  { n: 'Blue', c: '#2563eb' }, { n: 'Pink', c: '#db2777' }, { n: 'Black', c: '#000000' }];
+// Two public paints and five secret paints, picked so every mix (Alice's, Bob's and the shared one)
+// looks clearly different from the others, whatever the learner picks.
+const PUB = [{ n: 'Yellow', c: '#fde047' }, { n: 'White', c: '#ffffff' }];
+const SEC = [{ n: 'Red', c: '#dc2626' }, { n: 'Blue', c: '#1d4ed8' }, { n: 'Green', c: '#15803d' },
+  { n: 'Purple', c: '#7e22ce' }, { n: 'Black', c: '#000000' }];
 const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const mix = (...cs) => '#' + [0, 1, 2].map((i) => Math.round(cs.reduce((s, c) => s + rgb(c)[i], 0) / cs.length).toString(16).padStart(2, '0')).join('');
 // Where things sit on the 1600 x 900 stage.
@@ -75,7 +77,8 @@ const aSpot = [150, 480], aSecSpot = [400, 480], bSpot = [1450, 480], bSecSpot =
 const pickA = (i) => [130 + 150 * (i % 3), 465 + 175 * Math.floor(i / 3)];             // cans to pick from, on Alice's side
 const pickB = (i) => [1170 + 150 * (i % 3), 465 + 175 * Math.floor(i / 3)];            // and on Bob's side
 const eveCopy = (i) => [630 + 170 * i, 590];                                             // Eve's copies, under her eye
-const KEY_A = [290, 660], KEY_B = [1310, 660], MSG_A = [AL[0] + 30, 70], MSG_B = [BO[0] - 30, 70], E_LOCK = [800, 730];
+const PAD_DY = 66, KEY_S = 0.6, KEY_TIP = 96 * KEY_S;   // padlock under the message; a key's tip sits this far from its center
+const KEY_A = [290, 660], KEY_B = [1310, 660], MSG_A = [AL[0] + 140, 74], MSG_B = [BO[0] - 140, 74], E_LOCK = [800, 730];
 const MSGS = ['MEET AT 6', 'HI BOB', 'LUNCH AT 12', 'SEE YOU SOON', 'CALL ME'];
 const disp = (t) => t.replace(/ /g, '·');
 const mw = (t) => 40 + 19 * t.length;
@@ -94,7 +97,7 @@ function scene(st) {
 
   // ---- the open road, Alice, Bob, Eve and the two private sides
   S.add('road', 'path', { d: `M ${AL[0] + 90} ${ROAD} L ${BO[0] - 90} ${ROAD}`, dash: '14 14' }, { stroke: C.line, sw: 5, o: 0, z: -5 });
-  S.add('roadLbl', 'text', { size: 24, weight: 700, mono: true, anchor: 'middle', ls: 3 }, { x: 800, y: ROAD - 30, content: 'THE OPEN INTERNET', fill: C.faint, o: 0 });
+  S.add('roadLbl', 'text', { size: 24, weight: 700, mono: true, anchor: 'middle', ls: 3 }, { x: 800, y: ROAD + 44, content: 'THE OPEN INTERNET', fill: C.faint, o: 0 });
   S.add('zoneA', 'rect', { dash: '12 10' }, { x: ZA.x, y: ZA.y, w: ZA.w, h: ZA.h, rx: 24, fill: C.panel2, fo: 0.5, stroke: C.cyan, sw: 2, o: 0, z: -6 });
   S.add('zoneB', 'rect', { dash: '12 10' }, { x: ZB.x, y: ZB.y, w: ZB.w, h: ZB.h, rx: 24, fill: C.panel2, fo: 0.5, stroke: C.green, sw: 2, o: 0, z: -6 });
   S.add('zoneAL', 'text', { size: 22, weight: 700, mono: true }, { x: ZA.x + 20, y: ZA.y + ZA.h - 18, content: "ALICE'S SIDE · EVE CAN'T SEE", fill: C.cyan, o: 0 });
@@ -121,12 +124,13 @@ function scene(st) {
   S.add('noMix', 'text', { size: 24, weight: 800, mono: true, anchor: 'middle' }, { x: 800, y: 700, content: 'NONE OF THESE IS THE SHARED COLOR', fill: C.red, o: 0 });
 
   // ---- the keys, the message and the browser
-  S.add('kA', 'keyart', {}, { x: KEY_A[0], y: KEY_A[1], o: 0, s: 0.5 });
-  S.add('kB', 'keyart', {}, { x: KEY_B[0], y: KEY_B[1], o: 0, s: 0.5 });
+  S.add('kA', 'keyart', {}, { x: KEY_A[0], y: KEY_A[1], o: 0, s: 0.5, z: 3 });
+  S.add('kB', 'keyart', {}, { x: KEY_B[0], y: KEY_B[1], o: 0, s: 0.5, z: 3 });
   S.add('drip', 'path', { d: `M ${KEY_A[0] - 40} ${KEY_A[1] - 120} L ${KEY_A[0] - 40} ${KEY_A[1] - 20}` }, { stroke: SHARED, sw: 16, o: 0, z: 2 });
   S.add('dripB', 'path', { d: `M ${KEY_B[0] - 40} ${KEY_B[1] - 120} L ${KEY_B[0] - 40} ${KEY_B[1] - 20}` }, { stroke: SHARED, sw: 16, o: 0, z: 2 });
   S.add('msg', 'packet', { text: disp(msg), size: 30, w: mw(msg) }, { x: MSG_A[0], y: MSG_A[1], o: 0, s: 0.6, z: 5 });
-  S.add('pad', 'glyph', { icon: 'lock', size: 48, sw: 2.4 }, { x: MSG_A[0], y: MSG_A[1] + 56, o: 0, tint: C.green, z: 6 });
+  // the padlock hangs from the message; its shackle hooks behind it and a key slides into the keyhole
+  S.add('pad', 'padlock', {}, { x: MSG_A[0], y: MSG_A[1] + PAD_DY, o: 0, s: 0.75, open: 1, z: 4 });
   S.add('eL', 'packet', { text: LOCK, size: 30, w: mw(msg) }, { x: 800, y: ROAD, o: 0, s: 0.6, edge: C.red, ink: C.violet, z: 1 });
   S.add('bar', 'rect', {}, { x: 470, y: 800, w: 660, h: 76, rx: 38, fill: C.panel2, fo: 1, stroke: C.green, sw: 2, o: 0 });
   S.add('barLock', 'glyph', { icon: 'lock', size: 40, sw: 2.2 }, { x: 520, y: 838, o: 0, tint: C.green });
@@ -235,26 +239,33 @@ function scene(st) {
   // 13. The message floats over Alice, the sender; tap her key to lock it
   S.step({ head: "Lock it with Alice's key.", body: 'The message floats over Alice, the **sender**. **Tap** her key to lock it.', act: (ctx) => actTap(ctx, [[KEY_A, 'Lock', 220]]) });
   Anim.section(S, 'PART 3', 'Lock and unlock');
-  S.beat(0.8, (s) => { Object.assign(s.msg, { o: 1, s: 1 }); s.alice.glow = 1; });
+  S.beat(0.8, (s) => { Object.assign(s.msg, { o: 1, s: 1 }); s.alice.glow = 1; })
+    .beat(0.5, (s) => { s.pad.o = 1; });
 
   // 14. Locked; it crosses the road; Eve copies only scramble
   S.step({ head: 'Locked. Eve copies only scramble.', body: "Only the shared key opens it. **Tap** Bob's key to unlock it.", act: (ctx) => actTap(ctx, [[KEY_B, 'Unlock', 220]]) })
-    .beat(0.7, (s) => { Object.assign(s.kA, { x: MSG_A[0] + 30, y: MSG_A[1] + 100, s: 0.7, rot: -90 }); s.alice.glow = 0; })
-    .beat(0.4, (s) => { s.kA.rot = 0; })
-    .beat(0.3, (s) => { s.msg.content = scramble(msg, 5); s.msg.ink = C.violet; })
-    .beat(0.3, (s) => { s.msg.content = scramble(msg, 11); })
-    .beat(0.5, (s) => { s.msg.content = LOCK; s.msg.edge = C.green; s.pad.o = 1; Object.assign(s.kA, { x: KEY_A[0], y: KEY_A[1], s: 1 }); })
-    .beat(0.9, (s) => { Object.assign(s.msg, { x: 800, y: 120 }); Object.assign(s.pad, { x: 800, y: 176 }); })
+    // the key slides into the keyhole, turns, and the shackle snaps shut
+    .beat(0.8, (s) => { Object.assign(s.kA, { x: MSG_A[0] - KEY_TIP - 60, y: MSG_A[1] + PAD_DY + 3, s: KEY_S }); s.alice.glow = 0; s.pad.glow = 1; })
+    .beat(0.5, (s) => { s.kA.x = MSG_A[0] - KEY_TIP; })
+    .beat(0.6, (s) => { s.kA.turn = 180; s.pad.turn = 90; })
+    .beat(0.3, (s) => { s.pad.open = 0; s.pad.tint = C.green; s.msg.content = scramble(msg, 5); s.msg.ink = C.violet; })
+    .beat(0.3, (s) => { s.msg.content = scramble(msg, 11); s.kA.x = MSG_A[0] - KEY_TIP - 60; s.pad.glow = 0; })
+    .beat(0.6, (s) => { s.msg.content = LOCK; s.msg.edge = C.green; Object.assign(s.kA, { x: KEY_A[0], y: KEY_A[1], s: 1, turn: 0 }); })
+    .beat(0.9, (s) => { Object.assign(s.msg, { x: 800, y: 120 }); Object.assign(s.pad, { x: 800, y: 120 + PAD_DY }); })
     .beat(0.4, (s) => { spyOn(s); s.eL.o = 1; s.eL.y = 120; })
-    .beat(1.0, (s) => { Object.assign(s.msg, { x: MSG_B[0], y: MSG_B[1] }); Object.assign(s.pad, { x: MSG_B[0], y: MSG_B[1] + 56 }); Object.assign(s.eL, { x: E_LOCK[0], y: E_LOCK[1], s: 0.75 }); })
+    .beat(1.0, (s) => { Object.assign(s.msg, { x: MSG_B[0], y: MSG_B[1] }); Object.assign(s.pad, { x: MSG_B[0], y: MSG_B[1] + PAD_DY }); Object.assign(s.eL, { x: E_LOCK[0], y: E_LOCK[1], s: 0.75 }); })
     .beat(0.5, (s) => { spyOff(s); s.eve.look = 0.5; s.bob.glow = 1; });
 
   // 15. Bob unlocks it with his key
   S.step({ head: 'Bob unlocks it.', body: "Bob's key matches, so the message opens for him alone. The **padlock** and **https://** in your browser mean your traffic is locked like this.",
     act: actPeek, optional: true })
-    .beat(0.7, (s) => { Object.assign(s.kB, { x: MSG_B[0] - 40, y: MSG_B[1] + 100, s: 0.7, rot: -90 }); s.bob.glow = 0; })
-    .beat(0.4, (s) => { s.kB.rot = 0; s.pad.o = 0; })
-    .beat(0.6, (s) => { s.msg.content = disp(msg); s.msg.ink = C.ink; s.bob.glow = 1; Object.assign(s.kB, { x: KEY_B[0], y: KEY_B[1], s: 1 }); })
+    // Bob's key comes in from his side, turns the other way, and the shackle pops open
+    .beat(0.8, (s) => { Object.assign(s.kB, { x: MSG_B[0] + KEY_TIP + 60, y: MSG_B[1] + PAD_DY + 3, s: KEY_S, rot: 180 }); s.bob.glow = 0; s.pad.glow = 1; })
+    .beat(0.5, (s) => { s.kB.x = MSG_B[0] + KEY_TIP; })
+    .beat(0.6, (s) => { s.kB.turn = 180; s.pad.turn = 0; })
+    .beat(0.4, (s) => { s.pad.open = 1; s.pad.tint = C.soft; s.msg.content = disp(msg); s.msg.ink = C.ink; s.msg.edge = C.cyan; })
+    .beat(0.6, (s) => { s.kB.x = MSG_B[0] + KEY_TIP + 60; s.pad.glow = 0; s.bob.glow = 1; })
+    .beat(0.6, (s) => { s.pad.o = 0; Object.assign(s.kB, { x: KEY_B[0], y: KEY_B[1], s: 1, rot: 0, turn: 0 }); })
     .beat(0.8, (s) => { ['bar', 'barLock', 'barTxt'].forEach((id) => { s[id].o = 1; }); s.eve.look = 0; }, stagger(['bar', 'barLock', 'barTxt'], 0.15));
   return S;
 }
@@ -306,11 +317,16 @@ function actPaintB(ctx) {
   ctx.drag(bSpot[0], bSpot[1], 120, 120, "Bob's shared paint", { x: KEY_B[0], y: KEY_B[1], r: 110, label: "Bob's key" }, () => ctx.done({}), { cls: 'can', html: canSVG(shared(ctx.state)) });
 }
 function actMsg(ctx) {
+  // the picked message hovers over Alice until it is confirmed
   let pick = null;
+  const bub = document.createElement('div'); bub.className = 'lz-bubble'; bub.setAttribute('aria-live', 'polite');
+  bub.style.left = (MSG_A[0] / 16) + '%'; bub.style.top = (MSG_A[1] / 9) + '%'; bub.textContent = '?';
+  const fit = () => { bub.style.fontSize = (30 * ctx.ov.clientWidth / 1600) + 'px'; };
+  fit(); window.addEventListener('resize', fit); ctx.ov.appendChild(bub);
   const btns = MSGS.map((m) => {
     const b = document.createElement('button'); b.className = 'lz-btn lz-pick'; b.dataset.msg = m; b.setAttribute('aria-pressed', 'false');
     b.innerHTML = `<span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.06em">${m}</span>`;
-    b.addEventListener('click', () => { pick = m; btns.forEach((x) => x.setAttribute('aria-pressed', x === b)); go.disabled = false; });
+    b.addEventListener('click', () => { pick = m; bub.textContent = disp(m); bub.classList.add('on'); btns.forEach((x) => x.setAttribute('aria-pressed', x === b)); go.disabled = false; });
     ctx.slot.appendChild(b); return b;
   });
   const go = document.createElement('button'); go.className = 'lz-btn go'; go.dataset.send = ''; go.disabled = true;
