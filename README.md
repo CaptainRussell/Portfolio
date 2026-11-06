@@ -7,8 +7,10 @@ One site for my larger cybersecurity projects, written for technical reviewers.
 | Project | Section | Page |
 |---|---|---|
 | Analysis of a Card-Shuffle Stream Cipher (M.S. Creative Component) | Cybersecurity projects | `projects/daniels-cipher/` |
-| Artifact Disagreement Scorer (Digital Forensics, CYBSC 5360) | Cybersecurity projects | `projects/ads/` |
+| Artifact Disagreement Scorer (Digital Forensics, CYBSC 5360) | Cybersecurity projects | `projects/time-sensitive-iot/` | CPR E 5480 (Cyber-Physical Systems Networking, Fall 2025) team project with John Beuter and Nisha Raj: page, `card.webp` (the Cooja mesh, cropped from the project video), the final report and literature study PDFs, `slides/` (the two class briefings, converted from PowerPoint to PDF) and `figures/` (two throughput graphs from the report). `demo/` plays the narrated project video (re-encoded to about 11 MB from the 296 MB original so it fits in the repo; chapter times are in `CHAPTERS` in `demo/index.html`). All four PDFs open in `view/?d=tsiot-*`. |
+| `projects/ads/` |
 | Internet Secrets (CYBSC 5300 visualization project) | Cybersecurity projects | `projects/internet-secrets/` |
+| Time-Sensitive IoT Networks (CPR E 5480 team project, Team One) | Cybersecurity projects | `projects/time-sensitive-iot/` |
 | Ashnar's Lair (released on Steam) | Professional projects | links to the Steam store page |
 | Storm HQ (AFROTC Det 250 tools) | Professional projects | links to the live site and repo |
 
