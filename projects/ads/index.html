@@ -47,30 +47,23 @@ pre{margin:10px 0;padding:12px 14px;background:var(--surface);border:1px solid v
 <main class="wrap">
   <div class="prose">
     <h2>The problem</h2>
-    <p>Someone hiding evidence can change a file's dates, rename a photo so it looks like a program, or hide one file inside another. Each takes seconds. But Windows writes down the same facts about a file in several different places, and a cover-up rarely changes all of them. Standard forensic tools show those records, but leave it to the examiner to spot when they don't match.</p>
+    <p>Someone hiding evidence can change a file's dates, disguise it as another type, or hide it inside another file. But Windows records the same facts about a file in several places, and a cover-up rarely changes all of them. Standard forensic tools show those records, but leave it to the examiner to notice when they disagree.</p>
 
     <h2>What the tool does</h2>
     <ol class="steps">
-      <li><b>Reads the drive.</b> It opens a copy of a USB stick or Windows drive and reads every file, without changing anything.</li>
-      <li><b>Asks simple questions about every file.</b> Is it disguised as another type? Is something hidden at its end? Is it password locked? Is a password written down nearby? Do its dates disagree with each other?</li>
-      <li><b>Ranks the files.</b> A file moves up the list when several separate questions flag it, so one odd date on its own does not bury the real evidence.</li>
-      <li><b>Explains each one.</b> Every flagged file comes with a one-sentence reason, so the findings make sense to investigators, lawyers and commanders, not just forensic specialists.</li>
+      <li><b>Reads the drive.</b> It opens a copy of a drive and reads every file, without changing anything.</li>
+      <li><b>Flags and ranks.</b> It asks simple questions of every file (disguised? something hidden at the end? dates that disagree?) and moves a file up the list when several separate questions flag it.</li>
+      <li><b>Explains each one.</b> Every flagged file comes with a one-sentence reason anyone can follow.</li>
     </ol>
 
-    <figure style="max-width:460px">
-      <img src="paper/figures/shot_funnel.png" alt="The ADS report narrows 5,607 entries on a drive to 164 files with a clue and 7 to look at first." width="921" height="883" loading="lazy">
-      <figcaption>On a test drive with 5,607 entries, the tool narrowed the search to 164 files with a clue, and 7 to look at first.</figcaption>
-    </figure>
-
     <h2>How well it works</h2>
-    <p>I tested it on the two practice drives from my Digital Forensics course and compared it with what I found by hand using the industry tools EnCase and FTK.</p>
     <ul>
-      <li><b>First drive:</b> it found all seven evidence files I had found by hand, six of them in its top ten. It also spotted a photo hidden inside another photo right away, which took me a hint and a manual search to find.</li>
-      <li><b>Second drive:</b> I locked the tool's settings before examining this drive, so it was a fair test. It found 7 of the 16 evidence files, five of them in its top ten.</li>
+      <li>On the first practice drive from my Digital Forensics course, it found all seven evidence files I had found by hand in EnCase and FTK, six of them in its top ten.</li>
+      <li>On the second drive, with its settings locked before I looked, it found 7 of the 16 evidence files, five of them in its top ten.</li>
     </ul>
-    <div class="callout"><p><b>Limits:</b> the date checks catch changes made while Windows was running. Someone who edits the raw drive directly can get around them. The paper is the November 2026 draft.</p></div>
+    <div class="callout"><p><b>Limits:</b> the date checks catch changes made while Windows was running, not edits made to the raw drive. The paper is the November 2026 draft.</p></div>
 
-    <p>The exact checks, how the scoring works and the full results are in <a href="../../view/?d=ads-paper">the paper</a>.</p>
+    <p>The exact checks, the scoring and the full results are in <a href="../../view/?d=ads-paper">the paper</a>.</p>
   </div>
 </main>
 

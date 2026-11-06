@@ -49,57 +49,26 @@ td:first-child{font-weight:700;white-space:nowrap}
 <main class="wrap">
   <div class="prose">
     <h2>The question</h2>
-    <p>Factories, robots and military sensor networks depend on small battery-powered sensors that report on a schedule. A late or jittery message can stall a production line or blind a commander. We asked one question: <em>which network layout and MAC protocol give the most reliable, lowest-delay communication for time-critical sensors with little power to spare?</em></p>
-    <p>The MAC protocol decides when each sensor may transmit. We compared two:</p>
-    <ul>
-      <li><b>CSMA/CA</b> (the default): a sensor listens, and if the channel is busy it waits a random time and tries again. Flexible, but the random waits add delay that changes from message to message.</li>
-      <li><b>TSCH</b> (Time Slotted Channel Hopping, IEEE 802.15.4e): every sensor shares one clock and transmits only in its assigned time slot, hopping channels to dodge interference. Built for predictable timing.</li>
-    </ul>
+    <p>Factories, robots and military sensor networks rely on small battery-powered sensors that report on a schedule, and a late message can stall a production line or blind a commander. We asked <b>which network layout and which MAC protocol (the rule for when each sensor may transmit) give the most reliable, lowest-delay communication?</b></p>
+    <p>We compared CSMA/CA, where a sensor waits a random time whenever the channel is busy, with TSCH, where every sensor shares one clock and transmits only in its own time slot.</p>
 
-    <h2>How we tested it</h2>
+    <h2>What we did</h2>
     <ol class="steps">
-      <li><b>Built the networks.</b> In the Cooja simulator we created star, mesh and tree layouts of Contiki-NG sensor nodes, each with one server and several clients, running the standard IPv6, 6LoWPAN and RPL routing stack.</li>
-      <li><b>Ran each one twice.</b> Every layout ran once with CSMA/CA and once with TSCH (a one-line Makefile change, then a rebuild), for six networks in all. Each client sent a 16-byte UDP message every 200 ms.</li>
-      <li><b>Captured the traffic.</b> Cooja's radio log saved every packet to a PCAP file.</li>
-      <li><b>Measured it.</b> We graphed throughput, jitter (UDP and 802.15.4) and the delay between arriving packets in Wireshark for all six runs.</li>
+      <li><b>Built the networks.</b> Star, mesh and tree layouts of Contiki-NG sensors in the Cooja simulator.</li>
+      <li><b>Ran each one twice.</b> Once with CSMA/CA and once with TSCH, six networks in all.</li>
+      <li><b>Measured it.</b> We captured every packet and graphed throughput, jitter and packet gaps in Wireshark.</li>
     </ol>
 
     <h2>What we found</h2>
     <ul>
-      <li><b>TSCH beat CSMA/CA in every layout.</b> Jitter was lower and steadier with TSCH, because packets wait for a fixed time slot instead of a random back-off after a collision.</li>
-      <li><b>The tree layout won.</b> It had the highest throughput, the lowest jitter and the shortest gaps between packets under both protocols. We expected the star layout to win, and the data said otherwise. Mesh paid for its extra paths with routing overhead.</li>
-      <li><b>Tree plus TSCH was best overall,</b> carrying roughly twice as many packets per minute as the same tree using CSMA/CA.</li>
+      <li>TSCH beat CSMA/CA in every layout, with lower and steadier jitter.</li>
+      <li>The tree layout won, not the star layout we expected.</li>
+      <li>Tree plus TSCH carried about twice as many packets per minute as the same tree with CSMA/CA.</li>
     </ul>
+    <div class="callout"><p><b>Limits:</b> the runs were short and simulated, over radio links that never dropped a packet. Real hardware is the next test.</p></div>
 
-    <div class="figpair">
-      <figure>
-        <img src="figures/throughput-tree-tsch.png" alt="Wireshark throughput graph for the tree network using TSCH: about 600 to 700 packets per minute for the whole run." width="1179" height="417" loading="lazy">
-        <figcaption>Tree layout with TSCH: about 600 to 700 packets per minute.</figcaption>
-      </figure>
-      <figure>
-        <img src="figures/throughput-tree-csma.png" alt="Wireshark throughput graph for the tree network using CSMA/CA: about 350 packets per minute for the whole run." width="1181" height="415" loading="lazy">
-        <figcaption>The same tree with CSMA/CA: about 350 packets per minute. (The drop at the right edge is the end of the capture.)</figcaption>
-      </figure>
-    </div>
-
-    <div class="callout"><p><b>Limits:</b> each run was about 12 seconds of simulation (roughly 13 minutes of scaled network time). Without end-to-end timestamps we measured the delay between arriving packets instead of true one-way latency, and the clean simulated radio links dropped no packets. Real hardware or another simulator would be the next test.</p></div>
-
-    <h2>The literature study</h2>
-    <p>Before the experiment, the team surveyed how Time-Sensitive Networking (TSN) delivers guaranteed timing in industrial automation, robotics and cars, and why it is still hard to do over wireless. It covers the core standards (time sync in IEEE 802.1AS, scheduled traffic in 802.1Qbv, stream reservation in 802.1Qcc), the open problems, and security concerns such as time itself becoming an attack vector, where an attacker who delays or skews clock sync can break a schedule without touching the data. A second briefing summarized a 2024 review of 5G, Wi-Fi 7 and TSN in smart manufacturing (<a href="https://doi.org/10.3390/fi16090345" target="_blank" rel="noopener">John et al., <em>Future Internet</em></a>).</p>
-    <div class="dl">
-      <a href="../../view/?d=tsiot-lit-slides"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/></svg><span><span class="t">Literature study slides</span><span class="d">The class briefing of the literature study. PDF, 19 slides.</span></span></a>
-      <a href="../../view/?d=tsiot-industry-slides"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="12" rx="2"/><path d="M12 16v4M8 20h8"/></svg><span><span class="t">Industry 4.0 paper briefing</span><span class="d">Our summary of 5G, Wi-Fi 7 and TSN in smart factories. PDF, 22 slides.</span></span></a>
-    </div>
-
-    <h2>Who did what</h2>
-    <div class="tablewrap"><table>
-      <thead><tr><th>Member</th><th>Contribution</th></tr></thead>
-      <tbody>
-        <tr><td>Scott Russell</td><td>Team lead: coordination and milestones, report lead, the project platform section and the conclusions, tying the results to Industry 4.0 and TSN.</td></tr>
-        <tr><td>John Beuter</td><td>Installed and configured Contiki-NG and Cooja, linked TSN concepts to Contiki's MAC protocols, generated the packet captures and led the topology experiments.</td></tr>
-        <tr><td>Nisha Raj</td><td>Built and tested the topologies, led the TSCH runs and baseline metrics, and worked out how to measure loss, delay, jitter and throughput in Wireshark.</td></tr>
-      </tbody>
-    </table></div>
+    <p>Team of three: I led the team and the report, John Beuter set up the simulator and ran the layout experiments, and Nisha Raj led the TSCH runs and the measurements. The graphs and details are in <a href="../../view/?d=tsiot-report">the report</a>.</p>
+    <p>Class briefings: <a href="../../view/?d=tsiot-lit-slides">the literature study slides</a> and <a href="../../view/?d=tsiot-industry-slides">the Industry 4.0 paper briefing</a>.</p>
   </div>
 </main>
 
