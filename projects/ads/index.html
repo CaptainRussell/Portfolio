@@ -14,9 +14,6 @@ th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);verti
 th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--soft)}
 td:first-child{font-family:var(--mono);font-weight:700;white-space:nowrap}
 .tablewrap{overflow-x:auto;max-width:760px}
-.steps{counter-reset:s;list-style:none;padding:0}
-.steps li{counter-increment:s;position:relative;padding-left:36px;margin:10px 0}
-.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--tone);color:#fff;font:700 12px/1 var(--mono)}
 pre{margin:10px 0;padding:12px 14px;background:var(--surface);border:1px solid var(--line);border-radius:10px;overflow-x:auto;font:13px/1.5 var(--mono)}
 </style>
 </head>
@@ -32,7 +29,7 @@ pre{margin:10px 0;padding:12px 14px;background:var(--surface);border:1px solid v
   <h1>Artifact Disagreement Scorer</h1>
   <p class="sub">A tool that finds hidden or tampered files on a computer drive and explains, in plain English, why each one looks suspicious.</p></div></div>
   <ul class="facts">
-    <li><b>Course:</b> Digital Forensics, Iowa State University</li>
+    <li><b>Course:</b> CYBSC 5360, Iowa State University</li>
     <li><b>Year:</b> Fall 2026</li>
     <li><b>Role:</b> Sole designer, developer and author</li>
     <li><b>Built with:</b> Python and JavaScript</li>
@@ -46,17 +43,17 @@ pre{margin:10px 0;padding:12px 14px;background:var(--surface);border:1px solid v
 
 <main class="wrap">
   <div class="prose">
-    <h2>The problem</h2>
+    <h2>The idea</h2>
     <p>Someone hiding evidence can change a file's dates, disguise it as another type, or hide it inside another file. But Windows records the same facts about a file in several places, and a cover-up rarely changes all of them. Standard forensic tools show those records, but leave it to the examiner to notice when they disagree.</p>
 
-    <h2>What the tool does</h2>
+    <h2>What I built</h2>
     <ol class="steps">
       <li><b>Reads the drive.</b> It opens a copy of a drive and reads every file, without changing anything.</li>
       <li><b>Flags and ranks.</b> It asks simple questions of every file (disguised? something hidden at the end? dates that disagree?) and moves a file up the list when several separate questions flag it.</li>
       <li><b>Explains each one.</b> Every flagged file comes with a one-sentence reason anyone can follow.</li>
     </ol>
 
-    <h2>How well it works</h2>
+    <h2>What I found</h2>
     <ul>
       <li>On the first practice drive from my Digital Forensics course, it found all seven evidence files I had found by hand in EnCase and FTK, six of them in its top ten.</li>
       <li>On the second drive, with its settings locked before I looked, it found 7 of the 16 evidence files, five of them in its top ten.</li>

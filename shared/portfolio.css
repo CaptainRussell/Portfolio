@@ -173,3 +173,7 @@ figcaption{margin-top:8px;font-size:13px;color:var(--soft)}
 .pcards.feature>.pcard:not(:first-child) .name{font-size:15px}
 @media (max-width:640px){.pcards.feature{grid-template-columns:1fr}.pcards.feature>.pcard{grid-row:auto!important;grid-column:auto!important}}
 @media (max-width:640px){.pcard{padding:16px 14px 14px;gap:14px}.pcard .icon{width:48px;height:48px;border-radius:12px}}
+/* numbered steps in a project page (What I did) */
+.steps{counter-reset:s;list-style:none;padding:0}
+.steps li{counter-increment:s;position:relative;padding-left:36px;margin:10px 0}
+.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:24px;height:24px;border-radius:50%;display:grid;place-items:center;background:var(--tone);color:#fff;font:700 12px/1 var(--mono)}
