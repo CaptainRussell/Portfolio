@@ -29,7 +29,7 @@
 </style>
 <style>
   :root {
-    --cardinal: #C8102E; --gold: #F1BE48; --ink: #1A1A1A; --grey: #6B6B6B; --line: #D9D9D9;
+    --cardinal: #A8434F; --gold: #F1BE48; --ink: #1A1A1A; --grey: #6B6B6B; --line: #D9D9D9;
     --body: Calibri, "Deck Sans", "Segoe UI", Arial, sans-serif; --head: Cambria, "Deck Serif", Georgia, "Times New Roman", serif;
   }
   html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
@@ -37,10 +37,10 @@
   #frame, .ghost { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; overflow: hidden; background: #fff;
     transform-origin: center center; -webkit-font-smoothing: antialiased; }
   .ghost { pointer-events: none; }   /* the slide being left, fading out over the new one (present.js, show) */
-  /* the section transition (present.js, sectionSweep): a cardinal band with gold edges and the four suits sweeps across */
+  /* the section transition (present.js, sectionSweep): a slate band with gold edges and the four suits sweeps across */
   .sweep { position: absolute; top: -12%; bottom: -12%; left: -20%; width: 140%; z-index: 20; display: flex; pointer-events: none; will-change: transform; }
   .sweep i { flex: 0 0 34px; background: #F1BE48; }
-  .sweep b { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #C8102E; }
+  .sweep b { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #2F3540; }
   .sweep b span { transform: skewX(14deg); font: 20vh/1 "Segoe UI Symbol", Arial, sans-serif; letter-spacing: .3em; color: rgba(255, 255, 255, .18); white-space: nowrap; }
   #frame sup, #frame sub, .ghost sup, .ghost sub { position: relative; vertical-align: baseline; }
   #frame sup, .ghost sup { top: -0.55em; } #frame sub, .ghost sub { top: 0.25em; }
@@ -118,17 +118,15 @@
   .strip b { display: block; width: 0; height: 100%; }
   .strip.part { top: 1072px; }
   .strip.part b { background: #404040; }
-  .strip.part.dark i { background: rgba(255, 255, 255, .3); }   /* on the red slides */
-  .strip.part.dark b { background: #FFFFFF; }
   /* An animation slide's segment is dotted gold while still to come and solid gold once reached.
      One gold on white and red slides alike, so a segment never changes colour from one slide to
      the next; deeper than ISU gold so it holds up on white. Dots, not a paler tint, because
      displays and projectors flatten pale tints into the grey of an ordinary segment, and not
      solid, because a solid segment ahead reads as already done. */
-  .strip.part i.anim, .strip.part.dark i.anim { background: repeating-linear-gradient(90deg, #E0A526 0 10px, transparent 10px 16px); }
-  .strip.part i.anim b, .strip.part.dark i.anim b { background: #E0A526; }
+  .strip.part i.anim { background: repeating-linear-gradient(90deg, #E0A526 0 10px, transparent 10px 16px); }
+  .strip.part i.anim b { background: #E0A526; }
   .strip.steps { top: 1063px; }
-  .strip.steps b { background: #C8102E; }
+  .strip.steps b { background: #A8434F; }
 
   /* The section bar. Its height is BAR_H in present.js. */
   .dcbar { display: flex; align-items: stretch; gap: 4px; height: 52px; padding: 0 10px; box-sizing: border-box;
@@ -143,7 +141,7 @@
   .dcbar .tb b { display: inline-block; min-width: 1.4em; margin-right: 7px; border-radius: 4px; background: rgba(255, 255, 255, .15); text-align: center; }
   .dcbar .tb .sh { display: none; }
   .dcbar .tb i { position: absolute; left: 0; bottom: 0; width: 0; height: 3px; background: #F1BE48; }   /* how far into this part */
-  .dcbar .tab.cur .tb { background: #C8102E; }
+  .dcbar .tab.cur .tb { background: #A8434F; }
   .dcbar .tab.cur .tb b { background: rgba(0, 0, 0, .28); }
   .dcbar .menu { display: none; position: absolute; top: 100%; left: 0; z-index: 2; width: max-content; min-width: 340px; max-width: min(600px, 92vw);
     padding: 6px; background: #232323; border-radius: 0 0 10px 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .5); }
@@ -154,7 +152,7 @@
   .dcbar .menu button { display: flex; gap: 12px; width: 100%; margin: 0; padding: 8px 10px; text-align: left; white-space: normal; }
   .dcbar .menu button span { min-width: 1.6em; color: #9d9d9d; text-align: right; font-variant-numeric: tabular-nums; }
   .dcbar .menu button em { margin-left: auto; padding-left: 14px; color: #9d9d9d; font-size: 13px; font-style: normal; white-space: nowrap; }
-  .dcbar .menu button.cur { background: #C8102E; }
+  .dcbar .menu button.cur { background: #A8434F; }
   .dcbar .menu button.cur span, .dcbar .menu button.cur em { color: #fff; }
   /* An animation's entry (marked >) opens a flyout of its steps to the right, one per click, so any step can be
      played straight from the bar. The flyout opens level with its own entry (the entry is its containing block), so
@@ -165,7 +163,7 @@
   .dcbar .menu .more { margin-left: 10px; color: #c9c9c9; font-style: normal; }
   .dcbar .it { position: relative; }
   .dcbar .it:hover > button { background: rgba(255, 255, 255, .13); }
-  .dcbar .it:hover > button.cur { background: #C8102E; }
+  .dcbar .it:hover > button.cur { background: #A8434F; }
   .dcbar .sub { display: none; position: absolute; left: calc(100% - 6px); top: 0; z-index: 3; width: max-content; min-width: 320px; max-width: min(660px, 62vw);
     max-height: calc(100vh - 84px); overflow-y: auto; overscroll-behavior: contain; padding: 6px; background: #2c2c2c; border-radius: 0 10px 10px 10px; box-shadow: 0 12px 30px rgba(0, 0, 0, .55); }
   .dcbar .it:hover > .sub { display: block; }
@@ -411,7 +409,7 @@
       richSegments(line).forEach((s) => {
         const t = el('tspan', {}, lineSpan);
         if (s.bold) t.setAttribute('font-weight', 700);
-        if (s.red) t.setAttribute('fill', cfg.red || '#C8102E');
+        if (s.red) t.setAttribute('fill', cfg.red || '#A8434F');
         t.textContent = s.t;
       });
     });
@@ -426,7 +424,7 @@
     defaults: { glow: 0, badge: 0, dim: 0, ring: 0 },
     create(g, cfg) {
       const W = cfg.w || 120, H = cfg.h || 168, red = cfg.suit === 'H';
-      const col = red ? '#C8102E' : '#1A1A1A';
+      const col = red ? '#A8434F' : '#1A1A1A';
       const root = el('g', {}, g);
       const inner = el('g', {}, root);
       el('rect', { x: 3, y: 5, width: W, height: H, rx: 12, fill: '#000', opacity: 0.12 }, inner);
@@ -581,9 +579,9 @@
           const x = pad + lab + i * (cw + gap), red = id[0] === 'H';
           el('rect', { x, y, width: cw, height: ch, rx: 6, fill: '#FFFFFF', stroke: '#9A9A9A', 'stroke-width': 1.2 }, root);
           el('text', { x: x + cw / 2, y: y + 30, 'text-anchor': 'middle', 'font-family': SERIF, 'font-size': 25, 'font-weight': 700,
-            fill: red ? '#C8102E' : '#1A1A1A' }, root).textContent = RANKS[+id.slice(1)];
+            fill: red ? '#A8434F' : '#1A1A1A' }, root).textContent = RANKS[+id.slice(1)];
           el('text', { x: x + cw / 2, y: y + 54, 'text-anchor': 'middle', 'font-family': 'Segoe UI Symbol, Arial', 'font-size': 20,
-            fill: red ? '#C8102E' : '#1A1A1A' }, root).textContent = SUIT[id[0]];
+            fill: red ? '#A8434F' : '#1A1A1A' }, root).textContent = SUIT[id[0]];
         });
       });
       if (cfg.label) {
@@ -729,7 +727,7 @@
   const { Scene } = root.Anim;
   const C = root.Cipher;
 
-  const RED = '#C8102E', GOLD = '#F1BE48', GOLD_D = '#C99400', INK = '#1A1A1A', GREY = '#6B6B6B',
+  const RED = '#A8434F', GOLD = '#F1BE48', GOLD_D = '#C99400', INK = '#1A1A1A', GREY = '#6B6B6B',
     MID = '#9A9A9A', LIGHT = '#D9D9D9', CHAR = '#4A4A4A';
   const LOOP_COL = [RED, CHAR, GOLD_D, GOLD_D];
   const RANK = ['A', '2', '3', '4', '5', '6', '7', '8'];
@@ -2982,27 +2980,27 @@ function qrCard(s, x, y, size) {
   if (IMG.qr_site) s.addImage(Object.assign({ x: x + pad, y: y + pad, w: size, h: size, altText: `QR code: ${SITE.host}${SITE.path}`, hyperlink: { url: SITE.url }, objectName: 'site QR code' }, IMG.qr_site));
   return size + 2 * pad;
 }
-// The address and the paper link, in white on the cardinal slides; both are links.
+// The address and the paper link, on the light title and closing slides; both are links.
 function siteText(s, x, y, w, align, size) {
   s.addText([
-    { text: 'Slides and paper online', options: { fontSize: size - 4, color: C.accent2, bold: true, breakLine: true } },
+    { text: 'Slides and paper online', options: { fontSize: size - 4, color: '9C7400', bold: true, breakLine: true } },
     { text: SITE.host, options: { fontSize: size + 1, bold: true, hyperlink: { url: SITE.url }, breakLine: true } },
     { text: SITE.path, options: { fontSize: size + 1, bold: true, hyperlink: { url: SITE.url }, breakLine: true } },
     { text: 'Read the full paper (PDF)', options: { fontSize: size - 2, hyperlink: { url: SITE.paper } } },
-  ], { x, y, w, h: 1.45, margin: 0, align, valign: 'middle', fontFace: 'Calibri', color: C.background1, isTextBox: true, paraSpaceAfter: 3 });
+  ], { x, y, w, h: 1.45, margin: 0, align, valign: 'middle', fontFace: 'Calibri', color: C.text1, isTextBox: true, paraSpaceAfter: 3 });
 }
 
 // Small pictures for the summary slides (Scott, 2026-10-05): miniatures of the animations, in their colours, drawn as
 // SVG (180 x 120) and shown like any other image.
 const svgPic = (body) => ({ data: 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 120" width="180" height="120">${body}</svg>`) });
 // the 4-card example's four cycles, sized by their states (the Part 3 summary and the Recap)
-const PIC_RINGS = '<circle cx="50" cy="60" r="38" fill="none" stroke="#C8102E" stroke-width="7"/><circle cx="116" cy="60" r="20" fill="none" stroke="#4A4A4A" stroke-width="5"/>'
+const PIC_RINGS = '<circle cx="50" cy="60" r="38" fill="none" stroke="#A8434F" stroke-width="7"/><circle cx="116" cy="60" r="20" fill="none" stroke="#4A4A4A" stroke-width="5"/>'
   + '<circle cx="158" cy="42" r="7" fill="none" stroke="#C99400" stroke-width="3"/><circle cx="158" cy="80" r="7" fill="none" stroke="#C99400" stroke-width="3"/>';
 // The deck's small pictures (Scott, 2026-10-05), one shared set: one per part (the Overview and Summary of Research,
 // the Recap), Part 3's five animations (its overview and summary), the key findings (the Key Analysis summary and What
 // this work establishes), and the items of The Benefits of a Deck of Cards and of the Daniels' Cipher summary.
 const PICS = (() => {
-  const INK = '1A1A1A', RED = 'C8102E', CHAR = '4A4A4A', GREY = '6B6B6B', GOLD = 'C99400', GOLDL = 'F1BE48', SEG = [RED, CHAR, GOLD, GOLD];
+  const INK = '1A1A1A', RED = 'A8434F', CHAR = '4A4A4A', GREY = '6B6B6B', GOLD = 'C99400', GOLDL = 'F1BE48', SEG = [RED, CHAR, GOLD, GOLD];
   const SERIF = "Cambria, 'Deck Serif', Georgia, serif", SANS = "Calibri, 'Deck Sans', Arial, sans-serif", SYM = 'Segoe UI Symbol, Arial', f = (v) => v.toFixed(1);
   const P = (alt, body) => ({ alt, pic: svgPic(body) });
   // an arrowhead with its point at (x, y), pointing along (dx, dy)
@@ -3177,7 +3175,7 @@ function titlePage(s) {
     { text: 'M.S. Cybersecurity', options: { fontSize: 17, breakLine: true } },
     { text: 'Iowa State University', options: { fontSize: 17, breakLine: true } },
     { text: 'Major professor: Dr. Thomas E. Daniels', options: { fontSize: 17 } },
-  ], { x: 0.6, y: 5.12, w: 7.6, h: 1.48, margin: 0, valign: 'top', fontFace: 'Calibri', fontSize: 17, color: C.background1, isTextBox: true });
+  ], { x: 0.6, y: 5.12, w: 7.6, h: 1.48, margin: 0, valign: 'top', fontFace: 'Calibri', fontSize: 17, color: C.text1, isTextBox: true });
   // the fan of cards sits a little higher and smaller (2026-10-05), so the QR card clears Previous/Next in the corner
   bigCard(s, { cx: 9.35, cy: 3.35, w: 2.2, h: 3.1, rot: -12, rank: 'A', suit: 'S' });
   bigCard(s, { cx: 10.55, cy: 3.1, w: 2.2, h: 3.1, rot: 0, rank: '4', suit: 'H' });
@@ -3247,7 +3245,7 @@ newSection('Why (Ch 1-2)');
 function divider(n, suit, title, tag, about, notes) {
   const s = slide('SECTION', title, 15, notes);
   s.addText(tag, { placeholder: 'tag' });
-  s.addText(about, { x: 4.2, y: 4.38, w: 8.4, h: 1.75, margin: 0, valign: 'top', fontFace: 'Calibri', fontSize: 21, color: C.background1, isTextBox: true, balance: true });
+  s.addText(about, { x: 4.2, y: 4.38, w: 8.4, h: 1.75, margin: 0, valign: 'top', fontFace: 'Calibri', fontSize: 21, color: C.accent3, isTextBox: true, balance: true });
   bigCard(s, { cx: 2.35, cy: 3.6, w: 2.35, h: 3.3, rot: -6, rank: n, suit });
   return s;
 }
@@ -3836,7 +3834,7 @@ The result: under 400 megabytes, about seventy times less memory, and all 1.6 bi
 
 If asked about earlier methods: I first followed each key until its stream repeated, which only sees the cycles some key lands on. At four and six cards, storing the full map was fine.`);
   s.addChart(pres.charts.BAR, [{ name: 'Memory', labels: ['A full map of every next state', "The laptop's usable memory", 'One bit per state (this work)'], values: [28, 1.8, 0.39] }], {
-    x: 0.5, y: 1.4, w: 6.0, h: 4.5, barDir: 'bar', catAxisOrientation: 'maxMin', chartColors: ['9A9A9A', '4A4A4A', 'C8102E'],
+    x: 0.5, y: 1.4, w: 6.0, h: 4.5, barDir: 'bar', catAxisOrientation: 'maxMin', chartColors: ['9A9A9A', '4A4A4A', 'A8434F'],
     barGapWidthPct: 70, showValue: true, dataLabelPosition: 'outEnd', dataLabelFormatCode: '0.0" GB"', dataLabelFontFace: '+mn-lt', dataLabelFontSize: 16, dataLabelFontBold: true, dataLabelColor: '1A1A1A',
     catAxisLabelFontFace: '+mn-lt', catAxisLabelFontSize: 15, catAxisLabelColor: '1A1A1A', catAxisLineShow: false, valAxisHidden: true, valAxisMaxVal: 34, valAxisMinVal: 0,
     valGridLine: { style: 'none' }, catGridLine: { style: 'none' }, showLegend: false, showTitle: true, title: 'Memory needed for 8 cards per deck', titleFontFace: '+mn-lt', titleFontSize: 18, titleColor: '1A1A1A',
@@ -4025,7 +4023,7 @@ const REACH8 = {
   5: [[1274528834, 13153747], [243527947, 2513405], [32789090, 337624], [23776907, 245118], [37662100, 389060], [11948247, 123169], [1251128, 12886], [68653, 665], [129227, 1307], [4161, 53], [13301, 155], [718, 4], [298, 4], [1407, 15], [289, 4], [8, 0], [8, 0], [8, 0], [8, 0], [8, 0], [8, 0], [4, 0], [4, 0], [4, 0], [4, 0], [4, 0], [4, 0], [21, 0]],
 };
 function reachMap(W, H) {
-  const RED = 'C8102E', INK = '1A1A1A', GREY = '6B6B6B', MID = '9A9A9A', GOLD = 'C99400', SANS = "Calibri, 'Deck Sans', Arial, sans-serif";
+  const RED = 'A8434F', INK = '1A1A1A', GREY = '6B6B6B', MID = '9A9A9A', GOLD = 'C99400', SANS = "Calibri, 'Deck Sans', Arial, sans-serif";
   const X0 = 262, X1 = W - 30, X = (L) => X0 + (Math.log10(L) / 9.4) * (X1 - X0), WEAK = 40320;
   const ROWS = [100, 222, 344, 466], LANES = [0, -17, 17, -34, 34, -51, 51], R = 7.5, f = (v) => v.toFixed(1);
   const t = (x, y, size, str, more) => `<text x="${x}" y="${y}" font-family="${SANS}" font-size="${size}"${more || ''}>${str}</text>`;
@@ -4101,8 +4099,8 @@ else root.DeckContent = { buildSlides };
   'use strict';
   const PX = 144, PT = 2;
   const COLORS = {
-    tx1: '#1A1A1A', tx2: '#C8102E', bg1: '#FFFFFF', bg2: '#F3F3F3',
-    accent1: '#C8102E', accent2: '#F1BE48', accent3: '#4A4A4A', accent4: '#7A0A1C', accent5: '#E5596B', accent6: '#6B6B6B',
+    tx1: '#1A1A1A', tx2: '#2F3540', bg1: '#FFFFFF', bg2: '#F3F3F3',
+    accent1: '#A8434F', accent2: '#F1BE48', accent3: '#4A4A4A', accent4: '#6E2B35', accent5: '#CF7F89', accent6: '#6B6B6B',
   };
   const C = { text1: 'tx1', text2: 'tx2', background1: 'bg1', background2: 'bg2',
     accent1: 'accent1', accent2: 'accent2', accent3: 'accent3', accent4: 'accent4', accent5: 'accent5', accent6: 'accent6' };
@@ -4390,15 +4388,18 @@ else root.DeckContent = { buildSlides };
   }
 
   // ---------------------------------------------------------------- layouts
+  // Toned down (Scott, 2026-11-06: feedback that the deck was "aggressively red"): the title, divider and closing
+  // slides sit on light paper with slate titles instead of full cardinal, and the accent is a muted rosewood.
+  const PAPER = '#F4F1EC', SLATE = '#2F3540', DARK_GOLD = '#9C7400';
   const LAYOUT = {
-    TITLE: { bg: COLORS.accent1, title: { x: 0.6, y: 1.55, w: 7.4, h: 1.9, size: 44, color: '#FFFFFF', valign: 'bottom' },
-      subtitle: { x: 0.6, y: 3.6, w: 7.4, h: 0.9, size: 24, color: '#FFFFFF', valign: 'top', body: true } },
+    TITLE: { bg: PAPER, title: { x: 0.6, y: 1.55, w: 7.4, h: 1.9, size: 44, color: SLATE, valign: 'bottom' },
+      subtitle: { x: 0.6, y: 3.6, w: 7.4, h: 0.9, size: 24, color: COLORS.accent1, valign: 'top', body: true } },
     // the title and tag sit 0.4 in higher since each divider gained a line on what its part is about (2026-10-05)
-    SECTION: { bg: COLORS.accent1, title: { x: 4.2, y: 2.35, w: 8.4, h: 1.3, size: 42, color: '#FFFFFF', valign: 'middle' },
-      tag: { x: 4.2, y: 3.7, w: 8.4, h: 0.6, size: 22, color: COLORS.accent2, valign: 'top', body: true, bold: true } },
+    SECTION: { bg: PAPER, title: { x: 4.2, y: 2.35, w: 8.4, h: 1.3, size: 42, color: SLATE, valign: 'middle' },
+      tag: { x: 4.2, y: 3.7, w: 8.4, h: 0.6, size: 22, color: DARK_GOLD, valign: 'top', body: true, bold: true } },
     CONTENT: { bg: '#FFFFFF', title: { x: 0.5, y: 0.3, w: 12.333, h: 0.7, size: 34, color: COLORS.tx2, valign: 'middle' }, number: true },
     ANIMATION: { bg: '#FFFFFF', title: { x: 0.5, y: 0.3, w: 12.333, h: 0.7, size: 34, color: COLORS.tx2, valign: 'middle' } },
-    CLOSING: { bg: COLORS.accent1, title: { x: 0.8, y: 1.2, w: 9.2, h: 2.2, size: 60, color: '#FFFFFF', valign: 'bottom' } },   // a short title, set large
+    CLOSING: { bg: PAPER, title: { x: 0.8, y: 1.2, w: 9.2, h: 2.2, size: 60, color: SLATE, valign: 'bottom' } },   // a short title, set large
   };
 
   // Draw one recorded slide into host (a 1920 x 1080 box). Returns the animation
@@ -4469,7 +4470,7 @@ else root.DeckContent = { buildSlides };
   }
   const pres = R.makePres();
   DeckContent.buildSlides({
-    pres, C: R.C, RAMP: ['7A0A1C', 'C8102E', 'E5596B', 'EE97A1'], images: window.DeckAssets || {},
+    pres, C: R.C, RAMP: ['6E2B35', 'A8434F', 'CF7F89', 'E9B9BE'], images: window.DeckAssets || {},
     animation(name, budget, h) {
       const { def, sc } = scene(name);
       const lines = sc.steps.map((st, i) => `${i + 1}. ${st.meta.say || ''}`).join('\n\n');
@@ -4553,17 +4554,16 @@ else root.DeckContent = { buildSlides };
   function paintStrip(el, s, frac) {
     if (el) el.querySelectorAll('b').forEach((b, k) => { b.style.width = k < s ? '100%' : k === s ? `${frac * 100}%` : '0'; });
   }
-  const RED = new Set(['TITLE', 'SECTION', 'CLOSING']);   // the layouts with a cardinal background
   function partStrip(host, i) {
     const p = parts[partOf(i)];
-    const el = makeStrip(host, p.slides.length, RED.has(slides[i].master) ? 'part dark' : 'part');
+    const el = makeStrip(host, p.slides.length, 'part');
     el.querySelectorAll('i').forEach((seg, k) => seg.classList.toggle('anim', !!slides[p.slides[k]].anim));   // animation slides stand out
     paintStrip(el, p.slides.indexOf(i), 1);
   }
 
   // Moving between slides of the same part cross-fades: the old slide is copied as it stands and faded out over the
   // new one, whose animation has already begun. Next or Previous into another part gets the section transition instead,
-  // a cue to the room that a new part begins (Scott, 2026-10-05): a cardinal band with gold edges and the four suits
+  // a cue to the room that a new part begins (Scott, 2026-10-05): a slate band with gold edges and the four suits
   // sweeps across, and the slide changes behind it. A jump into another part (bar, slide number) cuts straight there.
   const FADE_MS = 400, SWEEP_MS = 1900, calm = matchMedia('(prefers-reduced-motion: reduce)');
   function sectionSweep(ghost, dir) {
