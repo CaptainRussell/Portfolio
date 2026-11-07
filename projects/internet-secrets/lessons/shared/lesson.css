@@ -166,3 +166,11 @@ a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 .lz-btn.nudge{animation:lz-nudge 1.6s ease-in-out infinite}
 @keyframes lz-nudge{50%{box-shadow:0 0 0 5px rgba(34,211,238,.25),0 0 22px rgba(34,211,238,.5)}}
 @media (prefers-reduced-motion:reduce){.lz-btn.nudge{animation:none;box-shadow:0 0 0 4px rgba(34,211,238,.3)}}
+/* The big box that moves the learner to the next part: lesson to quiz, quiz to the next lesson */
+.lz-btn.big{padding:16px 26px;min-height:60px;min-width:min(300px,100%);justify-content:center;border-radius:16px;font-size:18px;font-weight:800}
+.lz-btn.big svg{width:20px;height:20px}
+.lz-bar.end .lz-btn.big{margin-left:auto}
+@media (max-width:640px){.lz-btn.big{flex:1 1 100%;min-width:0}}
+/* an action button that sits on the stage itself */
+.lz-stagebtn{position:absolute;transform:translate(-50%,-50%);z-index:3;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.45)}
+@media (max-width:640px){.lz-stagebtn{padding:7px 11px;font-size:13px}}

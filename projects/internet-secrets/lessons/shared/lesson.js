@@ -83,6 +83,7 @@
       const nb = $('[data-act="next"]'), wait = pending();
       nb.disabled = wait; nb.classList.toggle('wait', wait); nb.classList.remove('nudge');
       nb.querySelector('span').textContent = wait ? 'Your turn' : step === N - 1 ? 'Check yourself' : 'Next';
+      nb.classList.toggle('big', step === N - 1 && !wait);   // the way into the quiz is a big box, bottom right
     }
 
     // ---- learner actions. A step's meta.act(ctx) builds its controls once the step has finished playing.
@@ -143,6 +144,15 @@
           });
           b.addEventListener('click', () => { if (b.dataset.dragged) { delete b.dataset.dragged; return; } fire(); });
           return b;
+        },
+        // a labeled button placed on the stage, centered on (x, y), for actions with no picture to tap
+        button(x, y, label, onTap, cls) {
+          const b = document.createElement('button');
+          b.className = 'lz-btn lz-stagebtn ' + (cls || 'go');
+          Object.assign(b.style, ctx.pos(x, y));
+          b.innerHTML = `<span>${esc(label)}</span>`;
+          b.addEventListener('click', () => onTap(b));
+          ov.appendChild(b); return b;
         },
         hide(ids) { ids.forEach((id) => { const n = player.h[id] && player.h[id]._node; if (n) { n.style.visibility = 'hidden'; hidden.add(id); } }); },
         toast(msg) {
@@ -260,7 +270,7 @@
         <div class="lz-bar end">
           <button class="lz-btn" data-q="watch">${I.replay}<span>Watch again</span></button>
           <button class="lz-btn ${L.next ? 'ghost' : 'go'}" data-q="retake"><span>Retake quiz</span></button>
-          ${L.next ? `<a class="lz-btn go" href="${esc(L.next.href)}"><span>${esc(L.next.label)}</span>${I.next}</a>` : ''}
+          ${L.next ? `<a class="lz-btn go big" href="${esc(L.next.href)}"><span>${esc(L.next.label)}</span>${I.next}</a>` : ''}
         </div>`;
       quiz.querySelector('h2').focus({ preventScroll: true });
       quiz.querySelector('[data-q="watch"]').addEventListener('click', () => { swap('watch'); rest(0); });

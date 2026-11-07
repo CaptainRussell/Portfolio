@@ -262,8 +262,6 @@ function actCut(ctx) {
 }
 function actSend(ctx) {
   ctx.hit(P.wifi[0], P.wifi[1], 130, 130, 'Send', () => ctx.done({}));
-  const b = document.createElement('button'); b.className = 'lz-btn go'; b.innerHTML = '<span>Send</span>';
-  b.addEventListener('click', () => ctx.done({})); ctx.slot.appendChild(b);
 }
 function actRoad(ctx) {
   const g = mid('D', 'G'), f = mid('D', 'F');
