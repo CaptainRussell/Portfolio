@@ -114,15 +114,21 @@ const miniBC = (hex) => Anim.printSVG(hex, 30);
 // ---- how long a guess takes: (possible characters) ^ length at 10 billion guesses a second
 const COMMON = ['123456', 'password', '123456789', '12345678', 'qwerty', '111111', '12345', 'iloveyou', '1234567', 'dragon',
   'abc123', 'sunshine', 'princess', 'football', 'monkey', 'letmein', 'admin', 'welcome', 'shadow', 'baseball'];
+// Spaces are not counted: a passphrase of lowercase animals is scored as lowercase letters only
+// (26 possible characters, one per letter), so its time is not inflated by the gaps between words.
 function charset(pw) {
   let n = 0;
   if (/[a-z]/.test(pw)) n += 26;
   if (/[A-Z]/.test(pw)) n += 26;
   if (/[0-9]/.test(pw)) n += 10;
-  if (/[^a-zA-Z0-9 ]/.test(pw)) n += 33; else if (/ /.test(pw)) n += 1;   // 33 symbols include the space
+  if (/[^a-zA-Z0-9 ]/.test(pw)) n += 32;
   return n;
 }
-const log10Secs = (pw) => (COMMON.includes(pw.toLowerCase()) ? -Infinity : pw.length * Math.log10(charset(pw)) - 10);
+const log10Secs = (pw) => {
+  if (COMMON.includes(pw.toLowerCase())) return -Infinity;
+  const chars = pw.replace(/ /g, '');
+  return chars.length * Math.log10(charset(chars)) - 10;
+};
 const SUP = '⁰¹²³⁴⁵⁶⁷⁸⁹';
 const sup = (n) => String(n).split('').map((d) => SUP[+d]).join('');
 function crackTime(pw) {
@@ -253,7 +259,7 @@ function scene(st) {
     return ['pwE' + k, 'pwW' + k];
   }).flat();
   Anim.addSection(S);
-  S.add('how', 'text', { size: 22, weight: 500 }, { x: X0, y: 860, content: 'How we counted: (possible characters) to the power of (length), at 10 billion guesses a second.', fill: C.faint, o: 0 });
+  S.add('how', 'text', { size: 22, weight: 500 }, { x: X0, y: 860, content: 'How we counted: (possible characters) to the power of (length), spaces not counted, at 10 billion guesses a second.', fill: C.faint, o: 0 });
 
   const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * (span || 0.12), Math.min(1, k * (span || 0.12) + 0.6)] }; };
   const rs = cabRows.map((_, i) => 'r' + i);
