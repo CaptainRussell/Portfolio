@@ -6,7 +6,7 @@
     { id: 'm1', href: 'm1-postcards/', n: 1, name: 'Postcards on the internet', blurb: 'Send Bob a message, piece by piece, across a map of routers, and see who can read it.' },
     { id: 'm2', href: 'm2-colors/', n: 2, name: 'Mixing secret colors', blurb: 'Make a secret with Bob using paint while Eve watches, then paint a key and lock a message.' },
     { id: 'm3', href: 'm3-passwords/', n: 3, name: 'Crack the password', blurb: 'See the fingerprint a website keeps instead of your password, then play the thief.' },
-    { id: 'm4', href: 'm4-firewall/', n: 4, name: 'The fire wall', blurb: 'Open the right gates in a burning wall, then stop a flood.' },
+    { id: 'm4', href: 'm4-firewall/', n: 4, name: 'The fire wall', blurb: 'Help Bob keep Eve out with a burning wall, then open only the gates he needs.' },
   ];
   const STORE = 'ihks-lessons-v1';
   function scores() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } }

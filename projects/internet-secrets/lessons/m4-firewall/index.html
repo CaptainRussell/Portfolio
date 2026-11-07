@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Lesson 4: The Fire Wall · Internet Secrets · Scott D. Russell</title>
-<meta name="description" content="Lesson 4 of Internet Secrets: how a firewall decides which traffic gets in, and how a flood of traffic (DDoS) can shut a site even when nothing is stolen.">
+<meta name="description" content="Lesson 4 of Internet Secrets: Eve takes over Bob's computer, so Bob builds a fire wall and opens numbered gates (ports) only for what he needs.">
 <link rel="icon" href="../../../../shared/favicon.png" type="image/png">
 <link rel="stylesheet" href="../../../../shared/portfolio.css">
 <link rel="stylesheet" href="../shared/lesson.css">
@@ -30,18 +30,11 @@
 .m4-flat.shut{border-color:#f97316;background:rgba(249,115,22,.2);color:#fdba74}
 .m4-flat.got{border-color:var(--c-green);color:var(--c-green)}
 .m4-flat:disabled{cursor:default}
-.lz-hit.m4-slot{border-radius:12px}
-.lz-hit.m4-slot em{font:700 13px/1 system-ui,sans-serif;font-style:normal;color:var(--c-amber)}
-.lz-hit.m4-slot.pick{border-style:solid;border-color:var(--c-red);background:rgba(251,90,114,.22)}
-.lz-hit.m4-slot.pick em{color:var(--c-ink)}
 .m4-peek{position:absolute;transform:translate(-50%,-50%);max-width:46%;padding:10px 14px;border-radius:12px;background:rgba(7,11,20,.94);border:2px solid var(--c-cyan);
   color:var(--c-ink);font:600 13px/1.45 system-ui,sans-serif;pointer-events:none;animation:lz-pop .25s ease-out;z-index:2}
 .m4-peek b{color:var(--c-amber)}
 .m4-peek.bad{border-color:var(--c-red)}
 .m4-peek svg{display:block;margin:2px auto 6px}
-.m4-room{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:12px;
-  background:rgba(13,20,36,.96);border:2px solid var(--c-green);color:var(--c-ink);font:700 14px/1.2 system-ui,sans-serif;pointer-events:none;animation:lz-pop .25s ease-out;white-space:nowrap}
-.m4-room small{display:block;font-weight:600;color:var(--c-soft);font-size:12px}
 .lz-btn.fire{background:#f97316;border-color:#f97316;color:#1a0a02}
 </style>
 </head>
@@ -54,7 +47,7 @@
 <h1 class="vh">The Fire Wall</h1>
 <main class="wrap">
   <div id="lesson"></div>
-  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Tap a gate in the wall to open or shut it. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
 </main>
 
 <footer class="pf-foot">
@@ -71,37 +64,34 @@
 <script>
 /* =====================================================================
    Lesson 4: The Fire Wall (Objective 4)
-   Bob's shop sits behind a brick wall that is on fire. Anything that hits
-   the wall burns; packets only get through the numbered gates (ports)
-   Bob opens. A rule list read top to bottom (first match wins) can burn
-   one bad address even at an open gate. Some attacks hide inside normal
-   packets. A flood from many hijacked devices (DDoS) comes through the
-   open web gate and jams the shop even though nothing is stolen;
-   filtering upstream and spreading the load bring it back.
-   Sources: NIST SP 800-41 Rev. 1, Guidelines on Firewalls [6]; Mirkovic
-   and Reiher, "A Taxonomy of DDoS Attack and DDoS Defense Mechanisms" [7].
+   A simple story first, numbers later. Alice emails Bob and it just
+   works. Eve sends a packet that takes over Bob's computer, and his shop
+   is in trouble. Bob builds a wall and sets it on fire: anything that
+   hits it burns, Eve's packets and Alice's email alike. Only then do
+   numbered gates (ports) appear, one at a time: gate 25 for email, then
+   gate 22 for remote control. The learner sets both gates, and a last
+   step shows that an attack hidden inside an email still walks through
+   an open gate.
+   Sources: NIST SP 800-41 Rev. 1, Guidelines on Firewalls [6].
    Code organized with help from Claude (Anthropic).
    ===================================================================== */
 const { Scene, C, el } = Anim;
 
 // ---------------------------------------------------------------- layout
-const PORTS = [443, 25, 22], NAMES = ['Web pages', 'Email', 'Remote login'];
-const SUBS = ['The shop website', "Bob's inbox", 'Control his computer'];
-const GICON = ['globe', 'mail', 'terminal'];
-const WALL = { x: 760, y: 110, w: 110, h: 750 }, GY = [260, 470, 680], GH = 120;
+// Two gates only: 0 = email (port 25), 1 = remote control (port 22).
+const PORTS = [25, 22], NAMES = ['Email', 'Remote control'];
+const ROOMS = ['Inbox', 'Computer'], SUBS = ["Bob's email", 'Runs the shop'];
+const GICON = ['mail', 'terminal'];
+const WALL = { x: 760, y: 110, w: 110, h: 750 }, GY = [320, 620], GH = 120;
 const GATE_X = WALL.x + WALL.w / 2, FRONT = WALL.x - 88;       // a packet waiting at a gate sits at FRONT
 const ROOM_X = 1468, SHOP = { x: 1090, y: 130, w: 460, h: 720 };
+const SEND_X = 360;                        // where a packet waits next to its sender
 const FIRE = '#f97316', FIRE2 = '#fde047';
-const RY = [640, 695, 750, 805];          // rows of the rule list
 const slotX = (j) => FRONT - 190 * j;
-const DEV = Array.from({ length: 12 }, (_, i) => [160 + 100 * (i % 2), 160 + 124 * Math.floor(i / 2)]);
-const DEV_IC = ['laptop', 'phone', 'tv', 'router', 'laptop', 'tv', 'phone', 'router', 'tv', 'laptop', 'router', 'phone'];
 
 Object.assign(Anim.ICONS, {
-  globe: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>',
   terminal: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M12 15h5"/>',
   bug: '<rect x="8" y="7" width="8" height="12" rx="4"/><path d="M12 7V4M9.5 4l1.2 2.2M14.5 4l-1.2 2.2M8 11H4M8 15H4M16 11h4M16 15h4M5 7.5l3 2M19 7.5l-3 2M5 19l3-2M19 19l-3-2"/>',
-  tv: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M8 21h8M9 2.5l3 3.5 3-3.5"/>',
 });
 
 // ---------------------------------------------------------------- art
@@ -127,31 +117,38 @@ function flame(parent, x, y, w, h) {
 const sizeFlame = (g, k) => sa(g, 'transform', `translate(${g._x} ${g._y}) scale(${Math.max(0.001, k).toFixed(3)})`);
 const BRICKS = ['#8f3322', '#9c3c27', '#7e2b1c', '#a5462d', '#87301f'];
 
-// A brick wall seen from the side, with numbered gates cut through it.
+// A brick wall seen from the side. Gates can be cut into it later, one at a time.
 //   cfg: w, h, gates (center y of each gate, from the wall's top), labels (gate numbers)
-//   props: build (0 to 1, bricks stack up from the bottom), heat (0 to 1, the fire), g0..g2 (0 shut to 1 open)
+//   props: build (0 to 1, bricks stack up from the bottom), heat (0 to 1, the fire),
+//          cut0, cut1 (0 solid bricks to 1 a gate is there), g0, g1 (0 shut to 1 open)
 Anim.KINDS.brickwall = {
-  defaults: { build: 1, heat: 0, g0: 0, g1: 0, g2: 0 },
+  defaults: { build: 1, heat: 0, g0: 0, g1: 0, cut0: 0, cut1: 0 },
   create(g, cfg) {
     const W = cfg.w, H = cfg.h, gates = cfg.gates || [], BH = 30, rows = Math.round(H / BH), root = el('g', {}, g);
-    const inGate = (y) => gates.some((gy) => y >= gy - GH / 2 && y < gy + GH / 2);
-    const rowsG = [];
+    const gateOf = (y) => gates.findIndex((gy) => y >= gy - GH / 2 && y < gy + GH / 2);
+    const rowsG = [], plugs = gates.map(() => []);
     let n = 0;
     for (let r = 0; r < rows; r++) {
-      const y0 = r * BH, rg = el('g', {}, root);
+      const y0 = r * BH, rg = el('g', {}, root), gi = gateOf(y0);
       rowsG.push(rg);
-      if (inGate(y0)) continue;
+      // bricks where a gate will be cut go in their own group, so they can vanish when the gate appears
+      const into = gi < 0 ? rg : el('g', {}, rg);
+      if (gi >= 0) plugs[gi].push(into);
       const off = r % 2 ? -W / 4 : 0;
       for (let x = off; x < W; x += W / 2) {
         const x0 = Math.max(0, x), x1 = Math.min(W, x + W / 2);
-        el('rect', { x: x0 + 1.5, y: y0 + 1.5, width: x1 - x0 - 3, height: BH - 3, rx: 2, fill: BRICKS[(n++ * 7 + r) % BRICKS.length] }, rg);
+        el('rect', { x: x0 + 1.5, y: y0 + 1.5, width: x1 - x0 - 3, height: BH - 3, rx: 2, fill: BRICKS[(n++ * 7 + r) % BRICKS.length] }, into);
       }
     }
     const top = el('rect', { x: -8, y: -12, width: W + 16, height: 14, rx: 3, fill: '#6b7280' }, root);
-    // the fire on the wall: a crest on top and tongues up the outside face, skipping the gate holes (drawn first, so gate signs sit in front)
-    const fg = el('g', {}, root), face = [];
+    // the fire on the wall: a crest on top and tongues up the outside face (drawn first, so gate signs sit in front)
+    const fg = el('g', {}, root), face = [], plugFlames = gates.map(() => []);
     for (let x = 6; x < W; x += 24) face.push(flame(fg, x, -8, 30, 74 + ((x * 7) % 26)));
-    for (let y = 40; y < H; y += 44) if (!inGate(y - 30) && !inGate(y)) face.push(flame(fg, -4, y, 30, 56 + ((y * 3) % 18)));
+    for (let y = 40; y < H; y += 44) {
+      const gi = Math.max(gateOf(y - 30), gateOf(y));
+      const f = flame(fg, -4, y, 30, 56 + ((y * 3) % 18));
+      if (gi >= 0) plugFlames[gi].push(f); else face.push(f);
+    }
     const gs = gates.map((gy, i) => {
       const hole = el('g', {}, root);
       el('rect', { x: 0, y: gy - GH / 2, width: W, height: GH, fill: '#04070d' }, hole);
@@ -170,12 +167,11 @@ Anim.KINDS.brickwall = {
       t.textContent = cfg.labels ? cfg.labels[i] : '';
       const df = el('g', {}, hole);
       const flames = [0.2, 0.5, 0.8].map((f, k) => flame(df, W * f, gy + GH / 2, 34, k === 1 ? 92 : 70));
-      return { door, glow, flames, gy };
+      return { hole, door, glow, flames, gy };
     });
-    // the fire on the wall: a crest on top and tongues up the outside face, skipping the gate holes
     const label = cfg.label ? el('text', { x: W / 2, y: H + 34, 'text-anchor': 'middle', 'font-family': Anim.FONT, 'font-size': 24, 'font-weight': 700, fill: C.soft }, root) : null;
     if (label) label.textContent = cfg.label;
-    return { root, rowsG, top, gs, face, fg, rows, label };
+    return { root, rowsG, plugs, plugFlames, top, gs, face, rows, label };
   },
   update(h, p) {
     sa(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`);
@@ -188,22 +184,24 @@ Anim.KINDS.brickwall = {
     const done = clamp01(p.build * 1.2 - 0.2);
     sa(h.top, 'opacity', done.toFixed(3));
     h.gs.forEach((q, i) => {
-      const open = p['g' + i];
+      const open = p['g' + i], cut = p['cut' + i];
+      h.plugs[i].forEach((b) => sa(b, 'opacity', (1 - cut).toFixed(3)));
+      h.plugFlames[i].forEach((f) => sizeFlame(f, p.heat * (1 - cut)));
       sa(q.door, 'transform', `translate(0 ${(-GH * open).toFixed(1)})`);
       sa(q.glow, 'opacity', (open * 0.14).toFixed(3));
-      q.flames.forEach((f) => sizeFlame(f, p.heat * (1 - open)));
-      sa(q.door.parentNode.parentNode, 'opacity', done.toFixed(3));
+      q.flames.forEach((f) => sizeFlame(f, p.heat * (1 - open) * cut));
+      sa(q.hole, 'opacity', (done * cut).toFixed(3));
     });
     h.face.forEach((f) => sizeFlame(f, p.heat));
     if (h.label) sa(h.label, 'opacity', done.toFixed(3));
   },
 };
 
-// A packet drawn as an envelope: what it wants (icon), the gate number it asks for, and who sent it.
-//   cfg: icon, port, from, w, h
-//   props: edge, burn (0 to 1: catches fire, chars and falls to ash), ok (green check), glow
+// A packet drawn as an envelope: what it wants (icon), a word or its gate number, and who sent it.
+//   cfg: icon, port, tag (a word shown until the gate number is), from, w, h
+//   props: edge, num (0 shows the tag, 1 shows the gate number), burn (0 to 1: catches fire, chars and falls to ash), ok (green check), glow
 Anim.KINDS.parcel = {
-  defaults: { edge: C.cyan, burn: 0, ok: 0, glow: 0 },
+  defaults: { edge: C.cyan, num: 1, burn: 0, ok: 0, glow: 0 },
   create(g, cfg) {
     const W = cfg.w || 170, H = cfg.h || 92, root = el('g', {}, g);
     const halo = el('rect', { x: -W / 2 - 9, y: -H / 2 - 9, width: W + 18, height: H + 18, rx: 18, fill: 'none', 'stroke-width': 6 }, root);
@@ -214,10 +212,12 @@ Anim.KINDS.parcel = {
     const icx = -W / 2 + H * 0.42, R = H * 0.3;
     const ring = el('circle', { cx: icx, cy: 2, r: R, fill: C.bg, 'stroke-width': 2.5 }, ins);
     const ic = el('g', { fill: 'none', 'stroke-width': 1.8, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', transform: `translate(${icx - R * 0.68} ${2 - R * 0.68}) scale(${(R * 1.36) / 24})` }, ins);
-    ic.innerHTML = Anim.ICONS[cfg.icon] || Anim.ICONS.globe;
+    ic.innerHTML = Anim.ICONS[cfg.icon] || Anim.ICONS.mail;
     const tx = icx + R + (W / 2 - (icx + R)) / 2;
     const port = el('text', { x: tx, y: H * 0.1, 'text-anchor': 'middle', 'font-family': Anim.MONO, 'font-size': H * 0.38, 'font-weight': 800, fill: C.amber }, ins);
     port.textContent = cfg.port == null ? '' : cfg.port;
+    const tag = el('text', { x: tx, y: H * 0.06, 'text-anchor': 'middle', 'font-family': Anim.FONT, 'font-size': H * 0.24, 'font-weight': 750, fill: C.ink }, ins);
+    tag.textContent = cfg.tag || '';
     let from = null;
     if (cfg.from) {
       from = el('text', { x: tx, y: H * 0.37, 'text-anchor': 'middle', 'font-family': Anim.FONT, 'font-size': H * 0.18, 'font-weight': 650, fill: C.soft }, ins);
@@ -233,7 +233,7 @@ Anim.KINDS.parcel = {
     const smoke = [0, 1, 2].map((k) => el('circle', { cx: (k - 1) * W * 0.18, cy: 0, r: H * 0.22, fill: '#94a3b8' }, root));
     const fl = el('g', {}, root);
     const flames = [[-0.3, 0.9], [0, 1.25], [0.3, 0.95], [-0.12, 0.7], [0.15, 0.75]].map(([f, k]) => flame(fl, W * f, H / 2, W * 0.3, H * k));
-    return { root, halo, body, box, ins, ring, ic, okG, ash, embers, smoke, flames, W, H };
+    return { root, halo, body, box, ins, ring, ic, port, tag, okG, ash, embers, smoke, flames, W, H };
   },
   update(h, p) {
     sa(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
@@ -241,6 +241,7 @@ Anim.KINDS.parcel = {
     const b = p.burn, char = clamp01(b * 1.7), shrink = clamp01((b - 0.3) / 0.6);
     sa(h.box, 'fill', mix('#121c31', '#1c0e08', char)); sa(h.box, 'stroke', b > 0.01 ? mix(p.edge.startsWith('#') ? p.edge : '#22d3ee', '#3b2414', char) : p.edge);
     sa(h.ring, 'stroke', p.edge); sa(h.ic, 'stroke', p.edge);
+    sa(h.port, 'opacity', clamp01(p.num).toFixed(3)); sa(h.tag, 'opacity', clamp01(1 - p.num).toFixed(3));
     sa(h.ins, 'opacity', (1 - clamp01(b * 2.2)).toFixed(3));
     sa(h.body, 'transform', `translate(0 ${h.H / 2}) scale(${(1 - 0.6 * shrink).toFixed(3)} ${(1 - 0.95 * shrink).toFixed(3)}) translate(0 ${-h.H / 2})`);
     sa(h.body, 'opacity', (1 - clamp01((b - 0.75) / 0.25)).toFixed(3));
@@ -260,42 +261,25 @@ Anim.KINDS.parcel = {
 };
 
 // ---------------------------------------------------------------- traffic
-// k: a = Alice (a real visitor), e = Eve, x = Eve from her address 66.6.6.6, s = a stranger with a hidden attack
-const FROM = { a: 'from Alice', e: 'from Eve', x: 'from 66.6.6.6', s: 'from 23.9.4.1' };
-const EDGE = { a: C.cyan, e: C.red, x: C.red, s: C.cyan };
-const W1 = [[0, 'a'], [2, 'e'], [1, 'a'], [0, 'a'], [2, 'e'], [1, 'a'], [0, 'a'], [2, 'e']].map(([g, k]) => ({ g, k }));
-const W2 = [[0, 'a'], [1, 'a'], [0, 'x'], [1, 'x'], [0, 's'], [1, 'a'], [0, 'x'], [0, 'a']].map(([g, k]) => ({ g, k }));
-const GOOD = [1, 1, 0];
-const isAtk = (it) => it.k !== 'a';
-const fate1 = (r1) => (it) => (r1[it.g] ? 'in' : 'shut');
-const fate2 = (bf) => (it) => (!GOOD[it.g] ? 'shut' : it.k === 'x' && bf ? 'rule' : 'in');
-function tally(items, fate) {
-  const t = { aIn: 0, aBurn: 0, eIn: 0, eBurn: 0, a: 0, e: 0 };
-  items.forEach((it) => {
-    const inn = fate(it) === 'in';
-    if (it.k === 'a') { t.a++; inn ? t.aIn++ : t.aBurn++; } else if (it.k !== 's') { t.e++; inn ? t.eIn++ : t.eBurn++; }
-  });
-  return t;
-}
-const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
-function verdict1(r1) {
-  const t = tally(W1, fate1(r1));
-  const shutGood = [0, 1].filter((g) => !r1[g]).map((g) => PORTS[g]);
-  if (!t.aBurn && !t.eIn) return { head: 'Perfect gates.', body: "Alice's packets came through gates 443 and 25. Eve's packets hit gate 22 and **burned**. Open only what you need; the wall burns the rest." , t };
-  const tips = [];
-  if (shutGood.length) tips.push(`Gate ${shutGood.join(' and ')} was shut, so Alice's packets burned too. **Too strict** turns real visitors away.`);
-  if (t.eIn) tips.push('Gate 22 was open, so Eve walked right in. **Too loose** lets attacks through.');
-  return { head: `Alice got ${t.aIn} of ${t.a} packets in. ${plural(t.eBurn, 'attack')} burned.`, body: tips.join(' ') + ' Press **Back** to try again.', t };
+// The learner's round: Alice emails (gate 25) and Eve's control packets (gate 22), mixed.
+const WAVE = [[0, 'a'], [1, 'e'], [0, 'a'], [1, 'e'], [0, 'a'], [1, 'e']].map(([g, k]) => ({ g, k }));
+const fate = (r) => (it) => (r[it.g] ? 'in' : 'burn');
+function verdict(r) {
+  const aIn = r[0] ? 3 : 0, eBurn = r[1] ? 0 : 3;
+  if (r[0] && !r[1]) return { head: 'Perfect gates.', body: "Alice's emails came through gate **25**. Eve's packets hit gate **22** and **burned**. Bob's shop is open for email and safe from Eve.", aIn, eBurn, ok: true };
+  if (!r[0] && !r[1]) return { head: "Eve is out, but so is Alice's email.", body: 'With both gates shut, the wall burns everything. That is **too strict**: real email gets turned away too. Press **Back** and open the gate Bob needs.', aIn, eBurn };
+  if (r[0] && r[1]) return { head: 'Alice got in, and so did Eve.', body: 'Gate 22 was open, so Eve took over Bob\'s computer again. That is **too loose**. Press **Back** and shut the gate Bob does not need.', aIn, eBurn };
+  return { head: 'Backwards: Eve got in, and Alice burned.', body: "Gate 25 was shut, so Alice's email burned. Gate 22 was open, so Eve walked in. Press **Back** and switch both gates.", aIn, eBurn };
 }
 
 function scene(st) {
   const S = new Scene('m4');
-  const r1 = st.r1 || [0, 0, 0], bf = !!st.blockFirst;
+  const r = st.r || [0, 0], v = verdict(r);
 
   // ---- the internet side
   S.add('netLbl', 'text', { size: 24, weight: 700, mono: true, ls: 3 }, { x: 60, y: 72, content: 'THE INTERNET', fill: C.faint, o: 0 });
-  S.add('alice', 'person', { label: 'Alice', labelSize: 34 }, { x: 150, y: 290, s: 0.8, o: 0 });
-  S.add('eve', 'eye', { size: 140 }, { x: 150, y: 640, o: 0 });
+  S.add('alice', 'person', { label: 'Alice', labelSize: 34 }, { x: 140, y: GY[0] - 20, s: 0.8, o: 0 });
+  S.add('eve', 'eye', { size: 140 }, { x: 140, y: GY[1], o: 0 });
   S.add('tally', 'text', { size: 26, weight: 700 }, { x: 60, y: 72, content: '', fill: C.ink, o: 0 });
 
   // ---- Bob's shop
@@ -305,166 +289,153 @@ function scene(st) {
   GY.forEach((gy, i) => {
     S.add('path' + i, 'rect', {}, { x: WALL.x + WALL.w, y: gy - 30, w: SHOP.x - WALL.x - WALL.w + 30, h: 60, rx: 0, fill: C.grid, fo: 1, sw: 0, o: 0, z: -7 });
     S.add('room' + i, 'rect', {}, { x: SHOP.x + 28, y: gy - 74, w: SHOP.w - 56, h: 148, rx: 14, fill: C.panel, fo: 1, stroke: C.line, sw: 3, o: 0, z: -5 });
-    S.add('roomIc' + i, 'glyph', { icon: GICON[i], size: 60 }, { x: SHOP.x + 76, y: gy, tint: C.faint, o: 0 });
-    S.add('roomT' + i, 'text', { size: 32, weight: 750 }, { x: SHOP.x + 122, y: gy - 2, content: '?', fill: C.faint, o: 0 });
+    S.add('roomIc' + i, 'glyph', { icon: GICON[i], size: 60 }, { x: SHOP.x + 76, y: gy, tint: C.cyan, o: 0 });
+    S.add('roomT' + i, 'text', { size: 32, weight: 750 }, { x: SHOP.x + 122, y: gy - 2, content: ROOMS[i], fill: C.ink, o: 0 });
     S.add('roomS' + i, 'text', { size: 21, weight: 600 }, { x: SHOP.x + 122, y: gy + 34, content: SUBS[i], fill: C.soft, o: 0 });
-    S.add('bug' + i, 'glyph', { icon: 'bug', size: 64, sw: 2 }, { x: SHOP.x + SHOP.w - 70, y: gy - 30, tint: C.red, o: 0, s: 0.4 });
   });
-  S.add('bob', 'person', { who: 'bob', labelSize: 40 }, { x: SHOP.x + 70, y: 800, s: 0.42, o: 0 });
-  S.add('vault', 'padlock', {}, { x: SHOP.x + SHOP.w - 60, y: 800, s: 0.5, tint: C.green, o: 0 });
-  S.add('stolen', 'text', { size: 24, weight: 700, anchor: 'end' }, { x: SHOP.x + SHOP.w - 100, y: 810, content: 'Nothing stolen', fill: C.green, o: 0 });
-  for (let i = 0; i < 3; i++) S.add('srv' + i, 'glyph', { icon: 'server', size: 52 }, { x: SHOP.x + 76 + 62 * i, y: GY[0] - 14, tint: C.green, o: 0, s: 0.4 });
-  S.add('srvT', 'text', { size: 21, weight: 700 }, { x: SHOP.x + 46, y: GY[0] + 48, content: '3 web servers share the work', fill: C.green, o: 0 });
+  S.add('bob', 'person', { who: 'bob', labelSize: 40 }, { x: SHOP.x + 80, y: 790, s: 0.48, o: 0, tint: C.red });
+  // what Eve does once she controls the computer
+  S.add('evil', 'eye', { size: 64, label: '' }, { x: ROOM_X, y: GY[1], o: 0, s: 0.4 });
+  S.add('ctlLine', 'path', { d: `M ${140 + 80} ${GY[1]} L ${ROOM_X - 50} ${GY[1]}`, dash: '14 12' }, { stroke: C.red, sw: 5, o: 0, z: -6 });
+  const CRISIS = [['PRICES: $0', SHOP.x + 120, 460], ['FILES DELETED', SHOP.x + 340, 460], ['REGISTER LOCKED', SHOP.x + 300, 790]];
+  CRISIS.forEach(([t, x, y], i) => S.add('cr' + i, 'packet', { text: t, size: 20, w: 210, h: 50 }, { x, y, edge: C.red, ink: C.red, o: 0, s: 0.6, z: 4 }));
 
-  // ---- the firewall
+  // ---- the firewall (no gates until Part 2)
   S.add('wall', 'brickwall', { w: WALL.w, h: WALL.h, gates: GY.map((y) => y - WALL.y), labels: PORTS, uid: 'a', label: 'Firewall' }, { x: WALL.x, y: WALL.y, build: 0, o: 1, z: 2 });
-  S.add('wall2', 'brickwall', { w: 50, h: WALL.h, uid: 'b' }, { x: 380, y: WALL.y, build: 0, o: 1, z: 2 });
-  S.add('wall2T', 'text', { size: 22, weight: 700, anchor: 'middle' }, { x: 405, y: 892, content: "Internet provider's firewall", fill: C.soft, o: 0 });
-
-  // ---- rule list (round 2)
-  S.add('board', 'rect', {}, { x: 50, y: 560, w: 620, h: 282, rx: 16, fill: C.panel2, fo: 0.92, stroke: C.amber, sw: 2.5, o: 0, z: -4 });
-  S.add('boardT', 'text', { size: 21, weight: 700, mono: true }, { x: 72, y: 597, content: 'RULES · TOP TO BOTTOM · FIRST MATCH WINS', fill: C.amber, o: 0 });
-  S.add('ruleIn', 'packet', { text: 'LET IN · gates 443 and 25', size: 22, w: 560, h: 46 }, { x: 360, y: RY[1], edge: C.green, ink: C.ink, o: 0 });
-  S.add('ruleRest', 'packet', { text: 'BURN · everything else', size: 22, w: 560, h: 46 }, { x: 360, y: RY[2], edge: FIRE, ink: C.ink, o: 0 });
-  S.add('ruleX', 'packet', { text: 'BURN · anything from 66.6.6.6', size: 22, w: 560, h: 46 }, { x: 360, y: bf ? RY[0] : RY[3], edge: C.red, ink: C.red, o: 0 });
 
   // ---- packets
-  [0, 1, 2].forEach((g) => S.add('s' + g, 'parcel', { icon: GICON[g], port: PORTS[g], from: g === 2 ? FROM.e : FROM.a }, { x: 470, y: GY[g], edge: g === 2 ? C.red : C.cyan, o: 0, s: 0.8, z: 3 }));
-  const mkWave = (pre, list) => list.forEach((it, i) => S.add(pre + i, 'parcel', { icon: it.k === 'e' || it.k === 'x' ? 'bug' : GICON[it.g], port: PORTS[it.g], from: FROM[it.k] }, { x: -200, y: GY[it.g], edge: EDGE[it.k], o: 0, z: 3 }));
-  mkWave('p', W1); mkWave('q', W2);
-  const NF = 30, NF2 = 12;
-  const jam = (i) => [478 + 44 * (i % 5) + (Math.floor(i / 5) % 2) * 18 + ((i * 7) % 5) - 2, 168 + 40 * Math.floor(i / 5) + ((i * 5) % 7) - 3];
-  for (let i = 0; i < NF; i++) S.add('f' + i, 'parcel', { icon: 'globe', port: 443, w: 120, h: 64 }, { x: DEV[i % 12][0], y: DEV[i % 12][1], edge: C.red, o: 0, s: 0.5, z: 3 });
-  for (let i = 0; i < 6; i++) S.add('fin' + i, 'parcel', { icon: 'globe', port: 443, w: 120, h: 64 }, { x: SHOP.x + 80 + 58 * i, y: GY[0] - 46 + (i % 2) * 8, edge: C.red, o: 0, s: 0.42, z: 3 });
-  for (let i = 0; i < NF2; i++) S.add('h' + i, 'parcel', { icon: 'globe', port: 443, w: 120, h: 64 }, { x: DEV[i][0], y: DEV[i][1], edge: C.red, o: 0, s: 0.5, z: 3 });
-  S.add('af', 'parcel', { icon: 'globe', port: 443, from: FROM.a }, { x: 560, y: 432, edge: C.cyan, o: 0, s: 0.85, z: 4 });
-  DEV.forEach(([x, y], i) => S.add('d' + i, 'node', { icon: DEV_IC[i], size: 64 }, { x, y, tint: C.soft, o: 0, s: 0.5 }));
-  S.add('down', 'text', { size: 46, weight: 900, mono: true, anchor: 'middle', ls: 3 }, { x: SHOP.x + SHOP.w / 2, y: GY[0] + 30, content: 'SITE DOWN', fill: C.red, o: 0, z: 6 });
-  S.add('back', 'text', { size: 42, weight: 900, mono: true, anchor: 'middle', ls: 3 }, { x: ROOM_X - 60, y: 112, content: 'BACK ONLINE', fill: C.green, o: 0, z: 6 });
+  S.add('mail', 'parcel', { icon: 'mail', port: 25, tag: 'Email', from: 'from Alice' }, { x: SEND_X, y: GY[0], num: 0, o: 0, s: 0.8, z: 3 });
+  S.add('ctl', 'parcel', { icon: 'terminal', port: 22, tag: 'Control', from: 'from Eve' }, { x: SEND_X, y: GY[1], edge: C.red, num: 0, o: 0, s: 0.8, z: 3 });
+  WAVE.forEach((it, i) => S.add('p' + i, 'parcel', { icon: GICON[it.g], port: PORTS[it.g], from: it.k === 'a' ? 'from Alice' : 'from Eve' }, { x: 140, y: GY[it.g], edge: it.k === 'a' ? C.cyan : C.red, o: 0, s: 0.4, z: 3 }));
+  S.add('sneak', 'parcel', { icon: 'mail', port: 25, from: 'from Eve' }, { x: SEND_X, y: GY[0], o: 0, s: 0.8, z: 4 });
 
   Anim.addSection(S);
   const ids = (pre, n) => Array.from({ length: n }, (_, i) => pre + i);
-  const fids = ids('f', NF), hids = ids('h', NF2), finIds = ids('fin', 6), dids = ids('d', 12);
   const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * span, Math.min(1, k * span + 0.5)] }; };
-  const spread = (list, len) => (id) => { const k = list.indexOf(id); if (k < 0) return null; const a = (k / list.length) * (1 - len); return { w: [a, a + len] }; };
-  const gates = (s, open) => open.forEach((v, i) => { s.wall['g' + i] = v ? 1 : 0; });
-  const roomsOn = (s) => GY.forEach((_, i) => { s['roomT' + i].content = NAMES[i]; s['roomT' + i].fill = C.ink; s['roomIc' + i].tint = C.cyan; s['roomS' + i].o = 1; });
-
-  // A wave: packets line up in front of their gates, then one at a time per gate they pass or burn.
-  function wave(pre, items, fate, card) {
-    const Q = [[], [], []];
-    items.forEach((it, i) => Q[it.g].push(i));
-    const all = items.map((_, i) => pre + i);
-    S.beat(0.1, (s) => Q.forEach((q, g) => q.forEach((i, j) => Object.assign(s[pre + i], { x: slotX(j) - 900, y: GY[g], o: 1, burn: 0, ok: 0, s: 1, glow: 0 }))));
-    S.beat(1.4, (s) => Q.forEach((q) => q.forEach((i, j) => { s[pre + i].x = slotX(j); })), stagger(all, 0.05));
-    const T = Math.max(...Q.map((q) => q.length));
-    for (let t = 0; t <= T; t++) {
-      S.beat(t === T ? 0.6 : 1.25, (s) => {
-        if (card) { s.ruleIn.glow = 0; s.ruleX.glow = 0; }
-        Q.forEach((q, g) => q.forEach((i, j) => {
-          const o = s[pre + i], it = items[i], pos = j - t;
-          if (pos < -1) return;
-          if (pos === -1) { if (it.k !== 's') o.o = 0; return; }
-          if (pos > 0) { o.x = slotX(pos - 1); return; }
-          const f = fate(it);
-          if (f === 'in') {
-            Object.assign(o, { x: ROOM_X, s: 0.46, ok: it.k === 'a' ? 1 : 0 });
-            if (it.k === 'e' || it.k === 'x') { s['room' + g].stroke = C.red; s['bug' + g].o = 1; s['bug' + g].s = 1; }
-            if (card && it.k === 'x') s.ruleIn.glow = 1;
-          } else if (f === 'shut') Object.assign(o, { x: FRONT + 6, burn: 1 });
-          else { Object.assign(o, { x: GATE_X, s: 0.8, burn: 1 }); if (card) s.ruleX.glow = 1; }
-        }));
-      });
-    }
-  }
+  const gates = (s, open) => open.forEach((on, i) => { s.wall['g' + i] = on ? 1 : 0; });
+  const fresh = (o, y, more) => Object.assign(o, { x: SEND_X, y, o: 1, s: 0.8, burn: 0, ok: 0, glow: 0 }, more || {});
+  const calm = (s) => { s.room0.stroke = C.line; s.room1.stroke = C.line; s.roomIc1.tint = C.cyan; s.roomS1.content = SUBS[1]; s.roomS1.fill = C.soft; };
 
   // ================================================================ PART 1
-  // 1. Packets
-  S.step({ head: 'Everything online travels in packets.', body: 'Bob runs a shop on the internet. Alice and Eve both send it packets, like sealed letters. **Tap each packet** to read its label.', act: actRead });
-  Anim.section(S, 'PART 1', 'The fire wall');
-  S.beat(0.9, (s) => { ['netLbl', 'roof', 'shopName', 'shop', 'bob'].forEach((id) => { s[id].o = 1; }); GY.forEach((_, i) => { s['room' + i].o = 1; s['roomIc' + i].o = 1; s['roomT' + i].o = 1; }); })
-    .beat(0.8, (s) => { s.alice.o = 1; s.eve.o = 1; }, stagger(['alice', 'eve'], 0.3))
-    .beat(1.0, (s) => [0, 1, 2].forEach((g) => Object.assign(s['s' + g], { o: 1, s: 1 })), stagger(['s0', 's1', 's2'], 0.2));
+  // 1. Alice emails Bob
+  S.step({ head: 'Alice wants to email Bob.', body: 'Bob runs a shop on the internet. Alice wants to send him an email. **Tap Send email**.', act: (ctx) => actSend(ctx, 'mail', 'Send email') });
+  Anim.section(S, 'PART 1', "Bob's shop");
+  S.beat(0.9, (s) => { ['netLbl', 'roof', 'shopName', 'shop', 'bob'].forEach((id) => { s[id].o = 1; }); GY.forEach((_, i) => { ['room', 'roomIc', 'roomT', 'roomS'].forEach((k) => { s[k + i].o = 1; }); }); })
+    .beat(0.7, (s) => { s.alice.o = 1; })
+    .beat(0.7, (s) => fresh(s.mail, GY[0]));
 
-  // 2. Build the wall
-  S.step({ head: 'Bob builds a firewall.', body: 'A firewall stands between Bob\'s shop and the whole internet. Right now it is just bricks. **Tap the wall** to light it.', act: actLight })
+  // 2. It just works
+  S.step({ head: 'Easy! Bob got it.', body: "Her email travels across the internet as a packet and lands in Bob's **inbox**." })
+    .beat(1.6, (s) => Object.assign(s.mail, { x: ROOM_X, s: 0.46 }), (id) => (id === 'mail' ? { arc: 30 } : null))
+    .beat(0.6, (s) => { s.mail.ok = 1; s.room0.stroke = C.green; });
+
+  // 3. Eve shows up
+  S.step({ head: 'Eve wants to control Bob\'s computer.', body: 'Eve sends Bob a packet too. **Tap her packet** to read it.', act: actRead })
+    .beat(0.5, (s) => { s.mail.o = 0; s.room0.stroke = C.line; })
+    .beat(0.8, (s) => { s.eve.o = 1; })
+    .beat(0.7, (s) => fresh(s.ctl, GY[1]));
+
+  // 4. Crisis
+  S.step({ head: 'Oh no! Eve takes over Bob\'s shop.', body: 'Nothing stopped her packet. Now Eve runs Bob\'s computer from far away. She changes his prices, deletes his files and locks his register.' })
+    .beat(1.6, (s) => Object.assign(s.ctl, { x: ROOM_X, s: 0.46 }), (id) => (id === 'ctl' ? { arc: 30 } : null))
+    .beat(0.8, (s) => { s.ctl.o = 0; s.ctlLine.o = 1; Object.assign(s.evil, { o: 1, s: 1 }); s.eve.glow = 1; s.room1.stroke = C.red; s.roomIc1.tint = C.red; s.roomS1.content = 'Eve is in control!'; s.roomS1.fill = C.red; })
+    .beat(1.4, (s) => { ids('cr', 3).forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); }, stagger(ids('cr', 3), 0.25))
+    .beat(0.8, (s) => { s.shopName.content = 'SHOP HACKED'; s.shopName.fill = C.red; s.shop.stroke = C.red; s.bob.glow = 1; s.bob.pulse = 1; });
+
+  // 5. Bob fights back
+  S.step({ head: 'Bob builds a firewall.', body: 'A **firewall** is a wall between Bob\'s shop and the internet. Every packet has to get past it. **Tap Build the wall**.', act: (ctx) => actButton(ctx, 'Build the wall', 'go') })
+    .beat(0.1, (s) => { s.bob.pulse = 0; });
+
+  // 6. Wall up, Eve cut off
+  S.step({ head: 'The wall is up. Eve is cut off.', body: 'Bob kicks Eve out, and the wall blocks her way back in. Now make it a **fire** wall. **Tap Light the wall**.', act: actLight })
     .beat(2.2, (s) => { s.wall.build = 1; })
-    .beat(0.5, (s) => GY.forEach((_, i) => { s['path' + i].o = 1; }));
+    .beat(0.9, (s) => {
+      s.ctlLine.o = 0; s.evil.o = 0; s.evil.s = 0.4; s.eve.glow = 0; s.bob.glow = 0; s.shop.stroke = C.line;
+      ids('cr', 3).forEach((id) => { s[id].o = 0; s[id].s = 0.6; });
+      s.shopName.content = "BOB'S SHOP"; s.shopName.fill = C.green; calm(s);
+    });
 
-  // 3. Fire
-  S.step({ head: 'Anything that hits the wall burns.', body: 'Eve\'s packet burned. But every gate is shut, so Alice\'s packets would burn too. Each gate has a number, called a **port**. **Tap each gate** to see where it leads.', act: actGates })
+  // 7. Fire
+  S.step({ head: 'Anything that hits the wall burns.', body: 'Eve tries again. Her packet hits the fire and **burns to ash**. Bob\'s computer is safe.' })
     .beat(1.0, (s) => { s.wall.heat = 1; })
-    .beat(0.9, (s) => { s.s2.x = FRONT + 6; s.s0.x = FRONT - 24; s.s1.x = FRONT - 24; })
-    .beat(1.6, (s) => { s.s2.burn = 1; })
-    .beat(0.4, (s) => { s.s2.o = 0; });
+    .beat(0.5, (s) => fresh(s.ctl, GY[1]))
+    .beat(1.0, (s) => { s.ctl.x = FRONT + 6; })
+    .beat(1.6, (s) => { s.ctl.burn = 1; })
+    .beat(0.4, (s) => { s.ctl.o = 0; });
+
+  // 8. Alice again
+  S.step({ head: 'Alice sends another email.', body: 'Will it get through the burning wall? **Tap Send email**.', act: (ctx) => actSend(ctx, 'mail', 'Send email') })
+    .beat(0.7, (s) => fresh(s.mail, GY[0]));
+
+  // 9. Too strict
+  S.step({ head: 'Oh no, Alice\'s email burned too.', body: 'The wall burns **everything**, even the email Bob wants. Bob needs a way to let email in, and only email.' })
+    .beat(1.0, (s) => { s.mail.x = FRONT + 6; })
+    .beat(1.6, (s) => { s.mail.burn = 1; })
+    .beat(0.4, (s) => { s.mail.o = 0; });
 
   // ================================================================ PART 2
-  // 4. Round 1
-  S.step({ head: 'Round 1: open the right gates.', body: 'Bob needs his **website** and his **email**. Nobody outside should run his computer. Tap a gate to open or shut it, then press **Send traffic**.', act: (ctx) => actOpen(ctx, r1) });
-  Anim.section(S, 'PART 2', 'Gates and rules', (s) => { ['s0', 's1', 'alice', 'eve', 'netLbl'].forEach((id) => { s[id].o = 0; }); roomsOn(s); });
-  S.beat(0.6, (s) => gates(s, r1));
+  // 10. The first gate: 25
+  S.step({ head: 'Bob cuts a gate for email.', body: 'A gate in the wall has a number, called a **port**. Email uses gate **25**. **Tap the gate** to open it.', act: actOpen25 });
+  Anim.section(S, 'PART 2', 'Numbered gates');
+  S.beat(1.0, (s) => { s.wall.cut0 = 1; s.path0.o = 1; });
 
-  // 5. Round 1 results
-  const v1 = verdict1(r1);
-  S.step({ head: v1.head, body: v1.body });
-  wave('p', W1, fate1(r1));
-  S.beat(0.6, (s) => { s.tally.content = `**${v1.t.aIn}** of ${v1.t.a} visitors in  ·  **${v1.t.eBurn}** of ${v1.t.e} attacks burned`; s.tally.o = 1; });
+  // 11. Through gate 25
+  S.step({ head: 'Alice\'s email asks for gate 25.', body: "Her packet carries the gate number on its label. Gate **25** is open, so her email goes straight to Bob's inbox." })
+    .beat(0.8, (s) => { s.wall.g0 = 1; })
+    .beat(0.6, (s) => fresh(s.mail, GY[0]))
+    .beat(1.0, (s) => { s.mail.num = 1; s.mail.glow = 1; })
+    .beat(0.9, (s) => { s.mail.x = FRONT; s.mail.glow = 0; })
+    .beat(1.2, (s) => { Object.assign(s.mail, { x: ROOM_X, s: 0.46, ok: 1 }); s.room0.stroke = C.green; });
 
-  // 6. Round 2
-  S.step({ head: 'Round 2: Eve hides in the web line.', body: 'Eve now sends attacks to the **web gate**, which must stay open, from one address: **66.6.6.6**. Add a rule to burn that address. Rules are read top to bottom and the **first match wins**. Put the card first or last.', act: actRule })
-    .beat(0.6, (s) => { s.tally.o = 0; GY.forEach((_, i) => { s['room' + i].stroke = C.line; s['bug' + i].o = 0; s['bug' + i].s = 0.4; }); gates(s, GOOD); })
-    .beat(0.9, (s) => { ['board', 'boardT'].forEach((id) => { s[id].o = 1; }); s.ruleIn.o = 1; s.ruleRest.o = 1; }, stagger(['board', 'boardT', 'ruleIn', 'ruleRest'], 0.12))
-    .beat(0.7, (s) => { Object.assign(s.ruleX, { o: 1, y: 515, x: 360 }); });
+  // 12. The second gate: 22
+  S.step({ head: 'Remote control uses gate 22.', body: 'Eve\'s packet asks for gate **22**, the gate for running a computer from far away. Bob keeps it **shut**, so her packet burns.' })
+    .beat(0.5, (s) => { s.mail.o = 0; s.room0.stroke = C.line; })
+    .beat(1.0, (s) => { s.wall.cut1 = 1; s.path1.o = 1; })
+    .beat(0.6, (s) => fresh(s.ctl, GY[1]))
+    .beat(1.0, (s) => { s.ctl.num = 1; s.ctl.glow = 1; })
+    .beat(0.9, (s) => { s.ctl.x = FRONT + 6; s.ctl.glow = 0; })
+    .beat(1.6, (s) => { s.ctl.burn = 1; })
+    .beat(0.4, (s) => { s.ctl.o = 0; });
 
-  // 7. Round 2 results
-  const t2 = tally(W2, fate2(bf));
-  S.step(bf
-    ? { head: 'The block rule ran first.', body: `Every packet from 66.6.6.6 burned right at the open gate, and Alice still got ${t2.aIn} of ${t2.a} in. **First match wins**, so order matters.` }
-    : { head: 'The let-in rule matched first.', body: 'Eve\'s packets asked for gate 443, so "let in" matched and they walked in. The block rule at the bottom **never ran**. Press **Back** and put it first.' })
-    .beat(0.8, (s) => { s.ruleX.y = bf ? RY[0] : RY[3]; });
-  wave('q', W2, fate2(bf), true);
-  S.beat(0.5, (s) => { s.ruleIn.glow = 0; s.ruleX.glow = 0; });
+  // 13. Your turn
+  S.step({ head: 'Your turn: set Bob\'s gates.', body: 'Bob wants **email**. He does not want anyone running his computer. Tap each gate to open or shut it, then press **Send traffic**.', act: (ctx) => actGates(ctx, r) })
+    .beat(0.6, (s) => gates(s, r));
 
-  // 8. The hidden attack
-  const SN = 'q4';
-  S.step({ head: 'Firewalls read the label, not the letter.', body: 'One packet from a stranger asked for the web gate like everyone else, so it got in. **Tap it** to look inside.', act: actPeek })
-    .beat(0.5, (s) => GY.forEach((_, i) => { s['room' + i].stroke = C.line; s['bug' + i].o = 0; }))
-    .beat(1.0, (s) => Object.assign(s[SN], { x: 980, y: 470, s: 1, o: 1, glow: 1 }));
+  // 14. Results
+  S.step({ head: v.head, body: v.body });
+  const Q = [[], []];
+  WAVE.forEach((it, i) => Q[it.g].push(i));
+  const all = WAVE.map((_, i) => 'p' + i);
+  S.beat(1.4, (s) => Q.forEach((q, g) => q.forEach((i, j) => Object.assign(s['p' + i], { x: slotX(j), y: GY[g], o: 1, s: 1, burn: 0, ok: 0 }))), stagger(all, 0.08));
+  for (let t = 0; t <= 3; t++) {
+    S.beat(t === 3 ? 0.6 : 1.3, (s) => Q.forEach((q, g) => q.forEach((i, j) => {
+      const o = s['p' + i], it = WAVE[i], pos = j - t;
+      if (pos < -1) return;
+      if (pos === -1) { o.o = 0; return; }
+      if (pos > 0) { o.x = slotX(pos - 1); return; }
+      if (fate(r)(it) === 'in') {
+        Object.assign(o, { x: ROOM_X, s: 0.46, ok: it.k === 'a' ? 1 : 0 });
+        if (it.k === 'e') { s.room1.stroke = C.red; s.roomIc1.tint = C.red; s.roomS1.content = 'Eve is in control!'; s.roomS1.fill = C.red; }
+        else s.room0.stroke = C.green;
+      } else Object.assign(o, { x: FRONT + 6, burn: 1 });
+    })));
+  }
+  S.beat(0.6, (s) => { s.tally.content = `**${v.aIn}** of 3 emails in  ·  **${v.eBurn}** of 3 attacks burned`; s.tally.o = 1; s.netLbl.o = 0; });
 
-  // ================================================================ PART 3
-  // 9. The botnet
-  S.step({ head: 'Eve builds a botnet.', body: 'She sneaks onto thousands of laptops, phones and smart TVs. Their owners never notice. Together they are a **botnet**. Press **Launch** to see what it does.', act: actLaunch });
-  Anim.section(S, 'PART 3', 'The flood', (s) => { ['board', 'boardT', 'ruleIn', 'ruleRest', 'ruleX', SN].forEach((id) => { s[id].o = 0; }); s[SN].glow = 0; });
-  S.beat(0.8, (s) => { Object.assign(s.eve, { o: 1, x: 66, y: 470, s: 0.6 }); dids.forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); }, stagger(['eve'].concat(dids), 0.035))
-    .beat(1.4, (s) => { s.eve.pulse = 1; dids.forEach((id) => { s[id].tint = C.red; s[id].glow = 1; }); }, stagger(dids, 0.04));
+  // 15. Hidden inside
+  S.step({ head: 'Eve hides inside an email.', body: 'This time Eve sends an **email**. It asks for gate 25, which is open, so the wall lets it in. **Tap it** to look inside.', act: actPeek })
+    .beat(0.6, (s) => { s.tally.o = 0; s.netLbl.o = 1; calm(s); gates(s, [1, 0]); })
+    .beat(0.6, (s) => fresh(s.sneak, GY[0]))
+    .beat(0.9, (s) => { s.sneak.x = FRONT; })
+    .beat(1.0, (s) => Object.assign(s.sneak, { x: 985, s: 1, glow: 1 }));
 
-  // 10. The jam
-  S.step({ head: 'A flood jams the gate.', body: 'Every packet asks for gate **443**, the web gate, so the wall lets them through. The shop drowns, and Alice cannot get in, even though **nothing was stolen**. Try the gate.', act: actJam })
-    .beat(2.4, (s) => { s.eve.pulse = 0; fids.forEach((id, i) => Object.assign(s[id], { o: 1, s: 0.8, x: jam(i)[0], y: jam(i)[1] })); }, spread(fids, 0.35))
-    .beat(0.8, (s) => { finIds.forEach((id) => { s[id].o = 1; }); s.room0.stroke = C.red; s.roomIc0.tint = C.red; s.af.o = 1; }, stagger(finIds, 0.08))
-    .beat(0.8, (s) => { s.down.o = 1; s.vault.o = 1; s.stolen.o = 1; s.roomT0.o = 0; s.roomS0.o = 0; s.roomIc0.o = 0; });
-
-  // 11. Call for help
-  S.step({ head: 'Bob cannot fix a flood at his own wall.', body: 'The flood comes through a gate he needs. His **internet provider** can help: it sees the traffic long before it reaches the shop. **Tap Filter upstream**.', act: actFilter });
-
-  // 12. Upstream filter
-  S.step({ head: 'The flood burns far from the shop.', body: 'The provider\'s giant firewall spots the flood and burns it on the way. A crowd is still stuck at Bob\'s gate. **Tap Spread the load** to add more web servers.', act: actSpread })
-    .beat(1.6, (s) => { s.wall2.build = 1; s.wall2T.o = 1; })
-    .beat(0.6, (s) => { s.wall2.heat = 1; })
-    .beat(0.1, (s) => hids.forEach((id) => Object.assign(s[id], { o: 1, s: 0.6, burn: 0 })))
-    .beat(1.2, (s) => hids.forEach((id, i) => Object.assign(s[id], { x: 336, y: 170 + 52 * i })), spread(hids, 0.4))
-    .beat(1.4, (s) => hids.forEach((id) => { s[id].burn = 1; }), spread(hids, 0.5))
-    .beat(1.2, (s) => { hids.forEach((id) => { s[id].o = 0; }); dids.forEach((id) => { s[id].glow = 0; s[id].tint = C.faint; }); fids.slice(0, 18).forEach((id) => Object.assign(s[id], { x: SHOP.x + 140, y: GY[0], s: 0.3, o: 0 })); }, spread(fids.slice(0, 18), 0.4))
-    .beat(0.6, (s) => { s.af.x = FRONT - 110; s.af.y = 360; });
-
-  // 13. Back online
-  S.step({ head: 'The shop is back online.', body: 'The wall decides **which gates** open. The provider\'s filter and the extra servers keep a **flood** from jamming them. Next, check yourself.' })
-    .beat(0.6, (s) => { s.down.o = 0; })
-    .beat(1.0, (s) => { [0, 1, 2].forEach((i) => Object.assign(s['srv' + i], { o: 1, s: 1 })); s.srvT.o = 1; }, stagger(['srv0', 'srv1', 'srv2', 'srvT'], 0.2))
-    .beat(1.2, (s) => fids.slice(18).concat(finIds).forEach((id) => Object.assign(s[id], { x: SHOP.x + 140, y: GY[0] - 14, s: 0.2, o: 0 })), spread(fids.slice(18).concat(finIds), 0.4))
-    .beat(1.2, (s) => { Object.assign(s.af, { x: FRONT, y: GY[0] }); })
-    .beat(1.0, (s) => { Object.assign(s.af, { x: ROOM_X - 30, s: 0.6, ok: 1 }); s.room0.stroke = C.green; })
-    .beat(0.8, (s) => { s.back.o = 1; s.shopName.o = 0; });
+  // 16. Wrap up
+  S.step({ head: 'Open only the gates you need.', body: 'The wall burns anything that does not come through an open gate. Gate **25** stays open for email, gate **22** stays shut. Next, check yourself.' })
+    .beat(0.5, (s) => { s.sneak.o = 0; s.sneak.glow = 0; })
+    .beat(0.6, (s) => { fresh(s.mail, GY[0], { num: 1 }); fresh(s.ctl, GY[1], { num: 1 }); })
+    .beat(1.0, (s) => { s.mail.x = FRONT; s.ctl.x = FRONT + 6; })
+    .beat(1.6, (s) => { Object.assign(s.mail, { x: ROOM_X, s: 0.46, ok: 1 }); s.room0.stroke = C.green; s.ctl.burn = 1; })
+    .beat(0.4, (s) => { s.ctl.o = 0; });
   return S;
 }
 
@@ -480,147 +451,81 @@ const peek = (ctx, x, y, html, cls) => {
   const t = document.createElement('div'); t.className = 'm4-peek' + (cls ? ' ' + cls : ''); t.innerHTML = html;
   Object.assign(t.style, ctx.pos(x, y)); ctx.ov.appendChild(t); return t;
 };
-// A tap target per gate: on the wall itself, or a row of buttons on a phone where the gates are small.
-function gateTargets(ctx, label, onTap) {
-  const narrow = isNarrow(ctx), row = narrow ? document.createElement('div') : null;
-  if (row) { row.className = 'm4-row'; ctx.slot.appendChild(row); }
-  return PORTS.map((p, i) => {
-    let b;
-    if (narrow) { b = document.createElement('button'); b.className = 'm4-flat'; b.textContent = label(i); b.addEventListener('click', () => onTap(i, b)); row.appendChild(b); }
-    else b = ctx.hit(GATE_X, GY[i], 150, 150, label(i), (h) => onTap(i, h), 'm4-gate');
-    return b;
-  });
+const button = (ctx, label, cls, onTap) => {
+  const b = document.createElement('button'); b.className = 'lz-btn ' + (cls || ''); b.innerHTML = `<span>${label}</span>`;
+  b.addEventListener('click', () => onTap(b)); ctx.slot.appendChild(b); return b;
+};
+function actButton(ctx, label, cls) { button(ctx, label, cls, () => ctx.done({})); }
+function actSend(ctx, id, label) {
+  if (!isNarrow(ctx)) ctx.hit(SEND_X, GY[0], 190, 110, label, () => ctx.done({}), 'top');
+  button(ctx, label, 'go', () => ctx.done({}));
 }
 function actRead(ctx) {
-  const seen = new Set(), WANTS = ['the shop\'s web page', 'to deliver an email', 'to log in and run Bob\'s computer'];
-  const tap = (g, b) => {
-    b.classList.add('used');
-    peek(ctx, 470, GY[g] + (g === 2 ? -150 : 120), `From: <b>${g === 2 ? 'Eve' : 'Alice'}</b><br>Gate: <b>${PORTS[g]}</b><br>Wants: ${WANTS[g]}`, g === 2 ? 'bad' : '');
-    seen.add(g); if (seen.size === 3) ctx.ready({});
+  const show = (b) => {
+    b.disabled = true; b.classList.add('used');
+    peek(ctx, SEND_X + 40, GY[1] - 170, 'From: <b>Eve</b><br>Wants: to <b style="color:var(--c-red)">take control</b> of Bob\'s computer', 'bad');
+    ctx.ready({});
   };
-  if (isNarrow(ctx)) {
-    const row = document.createElement('div'); row.className = 'm4-row'; ctx.slot.appendChild(row);
-    ['Alice 443', 'Alice 25', 'Eve 22'].forEach((t, g) => { const b = document.createElement('button'); b.className = 'm4-flat'; b.textContent = 'Read: ' + t; b.addEventListener('click', () => tap(g, b)); row.appendChild(b); });
-  } else [0, 1, 2].forEach((g) => ctx.hit(470, GY[g], 190, 110, 'Read label', (b) => tap(g, b)));
+  if (isNarrow(ctx)) button(ctx, 'Read her packet', '', show);
+  else ctx.hit(SEND_X, GY[1], 190, 110, 'Read it', show);
 }
 function actLight(ctx) {
-  if (!isNarrow(ctx)) ctx.hit(WALL.x + WALL.w / 2, WALL.y + WALL.h / 2, 150, WALL.h, 'Light it', () => ctx.done({}), 'top');
-  const b = document.createElement('button'); b.className = 'lz-btn fire'; b.innerHTML = '<span>Light the wall</span>';
-  b.addEventListener('click', () => ctx.done({})); ctx.slot.appendChild(b);
+  if (!isNarrow(ctx)) ctx.hit(GATE_X, WALL.y + WALL.h / 2, 150, WALL.h, 'Light it', () => ctx.done({}), 'top');
+  button(ctx, 'Light the wall', 'fire', () => ctx.done({}));
 }
-function actGates(ctx) {
-  const seen = new Set();
-  gateTargets(ctx, (i) => isNarrow(ctx) ? 'Gate ' + PORTS[i] : 'Gate ' + PORTS[i], (i, b) => {
-    if (seen.has(i)) return;
-    seen.add(i); b.classList.add('used');
-    if (b.classList.contains('m4-flat')) { b.classList.add('got'); b.disabled = true; b.textContent = `${PORTS[i]}: ${NAMES[i]}`; }
-    if (isNarrow(ctx)) { if (seen.size === 3) ctx.ready({}); return; }
-    const t = document.createElement('div'); t.className = 'm4-room';
-    t.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="var(--c-cyan)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${Anim.ICONS[GICON[i]]}</svg><span>Gate ${PORTS[i]}: ${NAMES[i]}<small>${SUBS[i]}</small></span>`;
-    Object.assign(t.style, ctx.pos(SHOP.x + SHOP.w / 2, GY[i]), { width: ((SHOP.w - 56) / 1600 * 100) + '%', minHeight: (148 / 900 * 100) + '%', boxSizing: 'border-box' }); ctx.ov.appendChild(t);
-    if (seen.size === 3) ctx.ready({});
-  });
+// A tap target per gate: on the wall itself, or a button under the caption on a phone where the gates are small.
+function gateTarget(ctx, i, label, onTap) {
+  if (isNarrow(ctx)) {
+    let row = ctx.slot.querySelector('.m4-row');
+    if (!row) { row = document.createElement('div'); row.className = 'm4-row'; ctx.slot.appendChild(row); }
+    const b = document.createElement('button'); b.className = 'm4-flat'; b.textContent = label;
+    b.addEventListener('click', () => onTap(b)); row.appendChild(b); return b;
+  }
+  return ctx.hit(GATE_X, GY[i], 150, 150, label, onTap, 'm4-gate');
 }
-function actOpen(ctx, start) {
+function actOpen25(ctx) { gateTarget(ctx, 0, 'Open gate 25', () => ctx.done({})); }
+function actGates(ctx, start) {
   const d = start.slice();
-  const btns = gateTargets(ctx, (i) => String(PORTS[i]), (i, b) => { d[i] = d[i] ? 0 : 1; paint(i, b); });
-  function paint(i, b) {
+  const paint = (i, b) => {
     const on = !!d[i];
-    if (b.classList.contains('m4-flat')) { b.className = 'm4-flat ' + (on ? 'open' : 'shut'); b.textContent = `${PORTS[i]} ${on ? 'Open' : 'Shut'}`; }
+    if (b.classList.contains('m4-flat')) { b.className = 'm4-flat ' + (on ? 'open' : 'shut'); b.textContent = `${PORTS[i]} ${NAMES[i]}: ${on ? 'Open' : 'Shut'}`; }
     else { b.className = 'lz-hit m4-gate ' + (on ? 'open' : 'shut'); b.querySelector('span').textContent = `${PORTS[i]} ${on ? 'open' : 'shut'}`; }
     b.setAttribute('aria-label', `Gate ${PORTS[i]}, ${NAMES[i]}: ${on ? 'open' : 'shut'}. Tap to switch.`);
-  }
-  btns.forEach((b, i) => paint(i, b));
-  const go = document.createElement('button'); go.className = 'lz-btn go'; go.innerHTML = '<span>Send traffic</span>';
-  go.addEventListener('click', () => ctx.done({ r1: d.slice() })); ctx.slot.appendChild(go);
-}
-function actRule(ctx) {
-  let where = null;
-  const msg = document.createElement('p'); msg.className = 'm4-msg'; msg.textContent = 'Tap where the block card goes.';
-  const pick = (f) => {
-    where = f; go.disabled = false;
-    opts.forEach((o) => { const me = o._f === f; o.classList.toggle('pick', me); o.querySelector('em').textContent = me ? 'BURN · anything from 66.6.6.6' : o._label; });
-    msg.textContent = f ? 'Block card first: it is checked before anything else.' : 'Block card last: it is checked after the other two.';
-    msg.className = 'm4-msg ok';
   };
-  let opts;
-  if (isNarrow(ctx)) {
-    const row = document.createElement('div'); row.className = 'm4-row'; ctx.slot.appendChild(row);
-    opts = [[true, 'Put it first'], [false, 'Put it last']].map(([f, label]) => {
-      const b = document.createElement('button'); b.className = 'm4-flat'; b.innerHTML = `<em style="font-style:normal">${label}</em>`; b._f = f; b._label = label;
-      b.addEventListener('click', () => { pick(f); opts.forEach((o) => { o.className = 'm4-flat' + (o._f === f ? ' shut' : ''); }); }); row.appendChild(b); return b;
-    });
-  } else {
-    opts = [[true, RY[0], 'Put it first'], [false, RY[3], 'Put it last']].map(([f, y, label]) => {
-      const h = ctx.hit(360, y, 560, 46, label, () => pick(f), 'quiet m4-slot');
-      h.insertAdjacentHTML('beforeend', `<em>${label}</em>`); h._f = f; h._label = label; return h;
-    });
-  }
-  const go = document.createElement('button'); go.className = 'lz-btn go'; go.innerHTML = '<span>Send traffic</span>'; go.disabled = true;
-  go.addEventListener('click', () => { if (where !== null) ctx.done({ blockFirst: where }); });
-  ctx.slot.appendChild(go); ctx.slot.appendChild(msg);
+  PORTS.forEach((_, i) => { const b = gateTarget(ctx, i, '', (btn) => { d[i] = d[i] ? 0 : 1; paint(i, btn); }); paint(i, b); });
+  button(ctx, 'Send traffic', 'go', () => ctx.done({ r: d.slice() }));
 }
 function actPeek(ctx) {
   const show = (b) => {
     b.disabled = true; b.classList.add('used');
-    peek(ctx, 470, 330, `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--c-red)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${Anim.ICONS.bug}</svg>Outside: <b>gate 443</b>, a normal web request.<br>Inside: <b style="color:var(--c-red)">an attack</b> hidden in the letter.`, 'bad');
+    peek(ctx, 470, 470, `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--c-red)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${Anim.ICONS.bug}</svg>Outside: <b>gate 25</b>, a normal email.<br>Inside: <b style="color:var(--c-red)">an attack</b> hidden in the letter.`, 'bad');
     const m = document.createElement('p'); m.className = 'm4-msg bad';
-    m.textContent = 'The gate number was fine, so the wall let it through. A firewall is one guard, not the whole defense.';
+    m.textContent = 'The wall only checks the gate number, not what is inside. A firewall is one guard, not the whole defense.';
     ctx.slot.appendChild(m); ctx.ready({});
   };
-  if (isNarrow(ctx)) { const b = document.createElement('button'); b.className = 'lz-btn'; b.innerHTML = '<span>Look inside</span>'; b.addEventListener('click', () => show(b)); ctx.slot.appendChild(b); }
-  else ctx.hit(980, 470, 200, 110, 'Look inside', show, 'top');
-}
-function actLaunch(ctx) {
-  const b = document.createElement('button'); b.className = 'lz-btn go'; b.innerHTML = '<span>Launch</span>';
-  b.style.background = 'var(--c-red)'; b.style.borderColor = 'var(--c-red)';
-  b.addEventListener('click', () => ctx.done({})); ctx.slot.appendChild(b);
-}
-function actJam(ctx) {
-  const tried = new Set();
-  const msg = document.createElement('p'); msg.className = 'm4-msg';
-  const say = {
-    shut: 'Shut gate 443: the flood burns, but so does every packet from Alice. The shop is still offline to everyone.',
-    open: 'Leave it open: the flood keeps pouring in. The wall cannot tell a flood packet from Alice\'s.',
-  };
-  [['shut', 'Shut gate 443'], ['open', 'Leave it open']].forEach(([k, label]) => {
-    const b = document.createElement('button'); b.className = 'm4-flat ' + (k === 'shut' ? 'shut' : 'open'); b.textContent = label;
-    b.addEventListener('click', () => {
-      tried.add(k); msg.textContent = say[k]; msg.className = 'm4-msg bad'; ctx.toast(k === 'shut' ? 'Alice burns too' : 'Still jammed');
-      if (tried.size === 2) ctx.ready({});
-    });
-    ctx.slot.appendChild(b);
-  });
-  ctx.slot.appendChild(msg);
-}
-function actFilter(ctx) {
-  const b = document.createElement('button'); b.className = 'lz-btn fire'; b.innerHTML = '<span>Filter upstream</span>';
-  b.addEventListener('click', () => ctx.done({})); ctx.slot.appendChild(b);
-}
-function actSpread(ctx) {
-  const b = document.createElement('button'); b.className = 'lz-btn go'; b.innerHTML = '<span>Spread the load</span>';
-  b.addEventListener('click', () => ctx.done({})); ctx.slot.appendChild(b);
+  if (isNarrow(ctx)) button(ctx, 'Look inside', '', show);
+  else ctx.hit(985, GY[0], 200, 110, 'Look inside', show, 'top');
 }
 
 const quiz = [
-  { q: 'A firewall decides what gets in by:',
-    choices: ['Reading every letter', 'Checking a list of rules', 'Asking the user first', 'Slowing all traffic'], answer: 1,
-    why: 'It checks each packet against its rules, top to bottom, and the first rule that matches wins.' },
+  { q: 'A firewall\'s main job is to:',
+    choices: ['Keep out unwanted traffic', 'Make the internet faster', 'Store all your passwords', 'Fix computers that break'], answer: 0,
+    why: 'It stands between Bob\'s shop and the internet and burns what he has not let in.' },
   { q: 'A port is:',
     choices: ['A type of cable', "A website's name", 'A numbered gate', 'A strong password'], answer: 2,
-    why: 'Each service waits behind its own numbered gate, like 443 for web pages.' },
+    why: 'Each service waits behind its own numbered gate, like 25 for email.' },
   { q: 'If the firewall rules are too strict:',
     choices: ['More attacks get in', 'The internet speeds up', 'Real visitors get blocked', 'Nothing at all changes'], answer: 2,
-    why: 'Shutting a gate the sender (Alice) needs burns her packets too.' },
-  { q: 'A DDoS takes a website offline because:',
-    choices: ['Its passwords are stolen', 'The firewall breaks', 'Its power is cut', 'Too many requests arrive'], answer: 3,
-    why: 'A flood jams the gate so real visitors cannot get in, even though nothing is stolen.' },
+    why: "With gate 25 shut, Alice's email burned along with Eve's packets." },
+  { q: 'Bob should open a gate only if:',
+    choices: ['He needs that service', 'Its number is small', 'Alice asks him to', 'The fire is turned off'], answer: 0,
+    why: 'Open only the gates you need. The wall burns the rest.' },
   { q: 'A firewall cannot stop every attack because:',
     choices: ['Some gates must stay open', 'It only works at night', 'It cannot read ports', 'It turns off when busy'], answer: 0,
-    why: 'An attack can hide inside a packet sent to an open gate, like the web gate.' },
+    why: 'An attack can hide inside an email sent to an open gate, like 25.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 4 · The Fire Wall', id: 'm4', state: { r1: [0, 0, 0], blockFirst: false }, scene, quiz, next: Lessons.next('m4') });
+Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 4 · The Fire Wall', id: 'm4', state: { r: [0, 0] }, scene, quiz, next: Lessons.next('m4') });
 </script>
 </body>
 </html>
