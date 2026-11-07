@@ -47,22 +47,22 @@
    the best check score from each lesson (out of 20) plus this review (out of 8). Code organized with help from Claude (Anthropic). */
 (function () {
   const Q = [
-    { l: 1, q: 'Why does each packet carry a number?', choices: ['So the receiver can sort them', 'So routers can read them all', 'So Eve can find them faster', 'So they travel to Bob faster'], answer: 0,
-      why: 'Packets can arrive out of order. The numbers let the receiver (Bob) rebuild the message.' },
-    { l: 1, q: 'A router that passes your plain packet along can:', choices: ['Change your password', 'Read what it says', 'Stop the internet', 'Lock it with a key'], answer: 1,
-      why: 'A plain packet is like a postcard: anyone holding it can read it.' },
-    { l: 2, q: 'The sender (Alice) and receiver (Bob) end up with the same secret color because:', choices: ['Eve sends it to them', 'They mail it to each other', 'Each adds a secret to a mix', 'The public color is secret'], answer: 2,
-      why: 'Public + Alice + Bob lands in both cans, in either order, and the secrets are never sent.' },
-    { l: 2, q: 'After the sender (Alice) locks a message with the shared key, Eve copies it. She sees:', choices: ['The whole message', "Alice's password", 'The secret color', 'Only scrambled letters'], answer: 3,
-      why: 'Without the key, the locked message is just scramble.' },
-    { l: 3, q: 'Two sites add different salt. The same password gets:', choices: ['Different fingerprints', 'The same fingerprint', 'No fingerprint at all', 'A shorter fingerprint'], answer: 0,
-      why: 'Salt changes what goes into the blender, so the fingerprints differ.' },
-    { l: 3, q: 'Which password would take the longest to guess?', choices: ['A short word with symbols', "Your pet's name and birthday", 'A long four-word passphrase', 'The same one on every site'], answer: 2,
-      why: 'Length wins. Four random words beat a short, tricky password.' },
-    { l: 4, q: 'Gate 22 (remote control) gets only attacks. You should:', choices: ['Leave it open', 'Shut that gate', 'Open every gate', 'Shut every gate'], answer: 1,
-      why: 'Shut the gates nobody real uses. Shutting every gate burns real visitors too.' },
-    { l: 4, q: 'Bob opens gate 25 and shuts gate 22. What burns?', choices: ['Email from Alice', 'Control packets', 'Every email', 'Nothing at all'], answer: 1,
-      why: 'Only packets for an open gate get through. Gate 22 is shut, so control packets burn.' },
+    { l: 1, q: 'A big message crosses the internet as:', choices: ['Small numbered pieces', 'One big unbroken file', 'A single phone call', 'A sealed paper letter'], answer: 0,
+      why: 'It is cut into packets, each with a number, so Bob can put them back in order.' },
+    { l: 1, q: 'Without a lock, a packet is like a:', choices: ['Safe only Bob can open', 'Letter that cannot move', 'Postcard anyone can read', 'Note that erases itself'], answer: 2,
+      why: 'Anyone who handles a plain packet can read it, just like a postcard.' },
+    { l: 2, q: 'Alice and Bob make a shared secret without ever:', choices: ['Picking any paint color', 'Sending their own secret', 'Mixing any of the paint', 'Talking to each other'], answer: 1,
+      why: 'Each keeps a secret color at home and only sends mixes, so Eve never sees the secrets.' },
+    { l: 2, q: 'Eve copies a locked message. What does she see?', choices: ['The whole message', "Alice's password", 'The secret key', 'Scrambled letters'], answer: 3,
+      why: 'Without the key, a locked message is just scramble.' },
+    { l: 3, q: 'A website should keep your password as a:', choices: ['Plain copy of it', 'Note on a sticky pad', 'Fingerprint of it', 'Printed list of them'], answer: 2,
+      why: 'The site keeps only the blended fingerprint, so a thief who steals it does not get your password.' },
+    { l: 3, q: 'The hardest password to guess is:', choices: ['A long four-word phrase', 'Your pet and birthday', 'A short word plus a 1', 'The word "password"'], answer: 0,
+      why: 'Length wins. Four random words take far longer to guess.' },
+    { l: 4, q: 'A firewall is like:', choices: ['A faster internet', 'A stronger password', 'A spare computer', 'A wall with gates'], answer: 3,
+      why: "It stands between Bob's shop and the internet, and only open gates let packets in." },
+    { l: 4, q: 'Bob only needs email. Which gate should he open?', choices: ['Every gate he has', 'Only the email gate', 'None of the gates', 'The control gate'], answer: 1,
+      why: 'Open only the gates you need. The wall burns the rest.' },
   ];
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const ic = (d) => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
