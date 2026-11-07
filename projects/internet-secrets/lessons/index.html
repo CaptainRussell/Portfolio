@@ -17,6 +17,12 @@
 .overall{margin:18px 0 0;color:var(--soft);font-size:14.5px}
 .reset{margin-top:12px;cursor:pointer}
 .reset[hidden]{display:none}
+/* the four lessons in a 2 x 2 grid, the final review as one thin card across the bottom */
+#list{grid-template-columns:repeat(2,minmax(0,1fr));max-width:760px}
+#list .pcard.wide{grid-column:1 / -1;padding-top:12px;padding-bottom:12px;align-items:center}
+#list .pcard.wide .lnum{width:36px;height:36px;border-radius:10px}
+#list .pcard.wide .lnum svg{width:20px;height:20px}
+@media (max-width:640px){#list{grid-template-columns:minmax(0,1fr)}}
 </style>
 </head>
 <body style="--tone:#0d9488">
@@ -55,13 +61,13 @@
     final: '<path d="M7 4h10v4.5a5 5 0 0 1-10 0z"/><path d="M7 6H4.5a2.5 2.5 0 0 0 2.6 3.3M17 6h2.5a2.5 2.5 0 0 1-2.6 3.3M12 13.5V17M8.5 20h7M9.5 17h5v3"/>'
   };
   const svg = (k) => `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">${ICON[k]}</svg>`;
-  const card = (href, key, name, blurb, badge, i) => `<a class="pcard" href="${href}" style="--i:${i}"><span class="icon lnum" aria-hidden="true">${svg(key)}</span>
+  const card = (href, key, name, blurb, badge, i, cls) => `<a class="pcard${cls ? ' ' + cls : ''}" href="${href}" style="--i:${i}"><span class="icon lnum" aria-hidden="true">${svg(key)}</span>
     <span class="body"><span class="name">${name}${badge}</span><span class="blurb">${blurb}</span></span></a>`;
   list.innerHTML = Lessons.LIST.map((l, i) => {
     const b = sc[l.id] != null ? `<span class="badge done">Check ${sc[l.id]}/5</span>` : l === nextUp ? '<span class="badge next">Start here</span>' : '';
     return card(l.href, l.id, `Lesson ${l.n}: ${l.name}`, l.blurb, b, i);
   }).join('') + card('complete/', 'final', 'Final review', 'Eight questions across all four lessons, then your overall score.',
-    sc.final != null ? `<span class="badge done">Review ${sc.final}/8</span>` : !nextUp ? '<span class="badge next">Ready</span>' : '', 4);
+    sc.final != null ? `<span class="badge done">Review ${sc.final}/8</span>` : !nextUp ? '<span class="badge next">Ready</span>' : '', 4, 'wide');
   const done = Lessons.LIST.filter((l) => sc[l.id] != null).length;
   const reset = document.getElementById('reset');
   reset.hidden = !Object.keys(sc).length;
