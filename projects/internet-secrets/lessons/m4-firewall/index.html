@@ -11,10 +11,6 @@
 <script src="../../../../shared/portfolio.js"></script>
 <style>
 .proj-head{padding-bottom:6px}
-.m4-msg{flex-basis:100%;margin:0;color:var(--c-soft);font-size:14px}
-.m4-msg.ok{color:var(--c-green)}
-.m4-msg.bad{color:var(--c-red)}
-.m4-info b{color:var(--c-amber)}
 /* flames flicker on their own; the timeline only sets how big they are */
 .m4-fl{transform-box:fill-box;transform-origin:50% 100%;animation:m4-flick .42s ease-in-out infinite alternate}
 @keyframes m4-flick{0%{transform:scale(1,.84) skewX(-5deg)}100%{transform:scale(.92,1.12) skewX(5deg)}}
@@ -24,11 +20,10 @@
 .lz-hit.m4-gate.shut{border-style:solid;background:rgba(249,115,22,.26);border-color:#f97316}
 .lz-hit.m4-gate.open span{color:var(--c-green)}
 .lz-hit.m4-gate.shut span{color:#fdba74}
-.m4-peek{position:absolute;transform:translate(-50%,-50%);max-width:46%;padding:10px 14px;border-radius:12px;background:rgba(7,11,20,.94);border:2px solid var(--c-cyan);
-  color:var(--c-ink);font:600 13px/1.45 system-ui,sans-serif;pointer-events:none;animation:lz-pop .25s ease-out;z-index:2}
-.m4-peek b{color:var(--c-amber)}
-.m4-peek.bad{border-color:var(--c-red)}
-.m4-peek svg{display:block;margin:2px auto 6px}
+.m4-tip{position:absolute;transform:translate(-50%,-50%);padding:6px 12px;border-radius:10px;background:rgba(7,11,20,.92);border:2px solid #f97316;
+  color:#fdba74;font:700 14px/1.3 system-ui,sans-serif;white-space:nowrap;pointer-events:none}
+.m4-tip.ok{border-color:var(--c-green);color:var(--c-green)}
+@media (max-width:640px){.m4-tip{font-size:11px;padding:4px 8px}}
 </style>
 </head>
 <body style="--tone:#0d9488">
@@ -62,9 +57,8 @@
    is in trouble. Bob builds a wall and sets it on fire: anything that
    hits it burns, Eve's packets and Alice's email alike. Only then do
    numbered gates (ports) appear, one at a time: gate 25 for email, then
-   gate 22 for remote control. The learner sets both gates, and a last
-   step shows that an attack hidden inside an email still walks through
-   an open gate.
+   gate 22 for remote control. The learner sets both gates (Send traffic
+   waits until they are right) and watches the result.
    Sources: NIST SP 800-41 Rev. 1, Guidelines on Firewalls [6].
    Code organized with help from Claude (Anthropic).
    ===================================================================== */
@@ -84,7 +78,6 @@ const slotX = (j) => FRONT - 190 * j;
 
 Object.assign(Anim.ICONS, {
   terminal: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3M12 15h5"/>',
-  bug: '<rect x="8" y="7" width="8" height="12" rx="4"/><path d="M12 7V4M9.5 4l1.2 2.2M14.5 4l-1.2 2.2M8 11H4M8 15H4M16 11h4M16 15h4M5 7.5l3 2M19 7.5l-3 2M5 19l3-2M19 19l-3-2"/>',
 });
 
 // ---------------------------------------------------------------- art
@@ -261,17 +254,9 @@ Anim.KINDS.parcel = {
 // The learner's round: Alice emails (gate 25) and Eve's control packets (gate 22), mixed.
 const WAVE = [[0, 'a'], [1, 'e'], [0, 'a'], [1, 'e'], [0, 'a'], [1, 'e']].map(([g, k]) => ({ g, k }));
 const fate = (r) => (it) => (r[it.g] ? 'in' : 'burn');
-function verdict(r) {
-  const aIn = r[0] ? 3 : 0, eBurn = r[1] ? 0 : 3;
-  if (r[0] && !r[1]) return { head: 'Perfect gates.', body: "Alice's emails came through gate **25**. Eve's packets hit gate **22** and **burned**. Bob's shop is open for email and safe from Eve.", aIn, eBurn, ok: true };
-  if (!r[0] && !r[1]) return { head: "Eve is out, but so is Alice's email.", body: 'With both gates shut, the wall burns everything. That is **too strict**: real email gets turned away too. Press **Back** and open the gate Bob needs.', aIn, eBurn };
-  if (r[0] && r[1]) return { head: 'Alice got in, and so did Eve.', body: 'Gate 22 was open, so Eve took over Bob\'s computer again. That is **too loose**. Press **Back** and shut the gate Bob does not need.', aIn, eBurn };
-  return { head: 'Backwards: Eve got in, and Alice burned.', body: "Gate 25 was shut, so Alice's email burned. Gate 22 was open, so Eve walked in. Press **Back** and switch both gates.", aIn, eBurn };
-}
-
 function scene(st) {
   const S = new Scene('m4');
-  const r = st.r || [0, 0], v = verdict(r);
+  const r = st.r || [0, 0];
 
   // ---- the internet side
   S.add('netLbl', 'text', { size: 24, weight: 700, mono: true, ls: 3 }, { x: 60, y: 72, content: 'THE INTERNET', fill: C.faint, o: 0 });
@@ -304,7 +289,6 @@ function scene(st) {
   S.add('mail', 'parcel', { icon: 'mail', port: 25, tag: 'Email', from: 'from Alice' }, { x: SEND_X, y: GY[0], num: 0, o: 0, s: 0.8, z: 3 });
   S.add('ctl', 'parcel', { icon: 'terminal', port: 22, tag: 'Control', from: 'from Eve' }, { x: SEND_X, y: GY[1], edge: C.red, num: 0, o: 0, s: 0.8, z: 3 });
   WAVE.forEach((it, i) => S.add('p' + i, 'parcel', { icon: GICON[it.g], port: PORTS[it.g], from: it.k === 'a' ? 'from Alice' : 'from Eve' }, { x: 140, y: GY[it.g], edge: it.k === 'a' ? C.cyan : C.red, o: 0, s: 0.4, z: 3 }));
-  S.add('sneak', 'parcel', { icon: 'mail', port: 25, from: 'from Eve' }, { x: SEND_X, y: GY[0], o: 0, s: 0.8, z: 4 });
 
   Anim.addSection(S);
   const ids = (pre, n) => Array.from({ length: n }, (_, i) => pre + i);
@@ -327,13 +311,13 @@ function scene(st) {
     .beat(0.6, (s) => { s.mail.ok = 1; s.room0.stroke = C.green; });
 
   // 3. Eve shows up
-  S.step({ head: 'Eve wants to control Bob\'s computer.', body: 'Eve sends Bob a packet too. **Tap her packet** to read it.', act: actRead })
+  S.step({ head: 'Eve wants to control Bob\'s computer.', body: 'Her packet asks to **control** Bob\'s computer from far away. **Tap her packet** to send it.', act: actSendCtl })
     .beat(0.5, (s) => { s.mail.o = 0; s.room0.stroke = C.line; })
     .beat(0.8, (s) => { s.eve.o = 1; })
     .beat(0.7, (s) => fresh(s.ctl, GY[1]));
 
   // 4. Crisis
-  S.step({ head: 'Oh no! Eve takes over Bob\'s shop.', body: 'Nothing stopped her packet. Now Eve runs Bob\'s computer from far away. She changes his prices, deletes his files and locks his register.' })
+  S.step({ head: 'Oh no! Eve takes over Bob\'s shop.', body: 'Nothing stops her packet. Now Eve runs Bob\'s computer from far away. She changes his prices, deletes his files and locks his register.' })
     .beat(1.6, (s) => Object.assign(s.ctl, { x: ROOM_X, s: 0.46 }), (id) => (id === 'ctl' ? { arc: 30 } : null))
     .beat(0.8, (s) => { s.ctl.o = 0; s.ctlLine.o = 1; Object.assign(s.evil, { o: 1, s: 1 }); s.eve.glow = 1; s.room1.stroke = C.red; s.roomIc1.tint = C.red; s.roomS1.content = 'Eve is in control!'; s.roomS1.fill = C.red; })
     .beat(1.4, (s) => { ids('cr', 3).forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); }, stagger(ids('cr', 3), 0.25))
@@ -395,11 +379,11 @@ function scene(st) {
     .beat(0.4, (s) => { s.ctl.o = 0; });
 
   // 13. Your turn
-  S.step({ head: 'Your turn: set Bob\'s gates.', body: 'Bob wants **email**. He does not want anyone running his computer. Tap each gate to open or shut it, then tap **Send traffic**.', act: (ctx) => actGates(ctx, r) })
+  S.step({ head: 'Your turn: set Bob\'s gates.', body: 'Bob wants **email**. He does not want anyone running his computer. Tap each gate to open or shut it. **Send traffic** turns on when the gates are right.', act: (ctx) => actGates(ctx, r) })
     .beat(0.6, (s) => gates(s, r));
 
   // 14. Results
-  S.step({ head: v.head, body: v.body });
+  S.step({ head: 'Perfect gates.', body: "Alice's emails came through gate **25**. Eve's packets hit gate **22** and **burned**. Bob's shop is open for email and safe from Eve." });
   const Q = [[], []];
   WAVE.forEach((it, i) => Q[it.g].push(i));
   const all = WAVE.map((_, i) => 'p' + i);
@@ -417,18 +401,11 @@ function scene(st) {
       } else Object.assign(o, { x: FRONT + 6, burn: 1 });
     })));
   }
-  S.beat(0.6, (s) => { s.tally.content = `**${v.aIn}** of 3 emails in  ·  **${v.eBurn}** of 3 attacks burned`; s.tally.o = 1; s.netLbl.o = 0; });
+  S.beat(0.6, (s) => { s.tally.content = `**${r[0] ? 3 : 0}** of 3 emails in  ·  **${r[1] ? 0 : 3}** of 3 attacks burned`; s.tally.o = 1; s.netLbl.o = 0; });
 
-  // 15. Hidden inside
-  S.step({ head: 'Eve hides inside an email.', body: 'This time Eve sends an **email**. It asks for gate 25, which is open, so the wall lets it in. **Tap it** to look inside.', act: actPeek })
-    .beat(0.6, (s) => { s.tally.o = 0; s.netLbl.o = 1; calm(s); gates(s, [1, 0]); })
-    .beat(0.6, (s) => fresh(s.sneak, GY[0]))
-    .beat(0.9, (s) => { s.sneak.x = FRONT; })
-    .beat(1.0, (s) => Object.assign(s.sneak, { x: 985, s: 1, glow: 1 }));
-
-  // 16. Wrap up
+  // 15. Wrap up
   S.step({ head: 'Open only the gates you need.', body: 'The wall burns anything that does not come through an open gate. Gate **25** stays open for email, gate **22** stays shut. Next, check yourself.' })
-    .beat(0.5, (s) => { s.sneak.o = 0; s.sneak.glow = 0; })
+    .beat(0.6, (s) => { s.tally.o = 0; s.netLbl.o = 1; calm(s); })
     .beat(0.6, (s) => { fresh(s.mail, GY[0], { num: 1 }); fresh(s.ctl, GY[1], { num: 1 }); })
     .beat(1.0, (s) => { s.mail.x = FRONT; s.ctl.x = FRONT + 6; })
     .beat(1.6, (s) => { Object.assign(s.mail, { x: ROOM_X, s: 0.46, ok: 1 }); s.room0.stroke = C.green; s.ctl.burn = 1; })
@@ -437,27 +414,9 @@ function scene(st) {
 }
 
 // ---------------------------------------------------------------- learner actions
-const isNarrow = (ctx) => ctx.ov.clientWidth < 600;
-const peek = (ctx, x, y, html, cls) => {
-  ctx.ov.querySelectorAll('.m4-peek').forEach((n) => n.remove());
-  if (isNarrow(ctx)) {   // too small to read on the stage: show it under the caption instead
-    let m = ctx.slot.querySelector('.m4-info');
-    if (!m) { m = document.createElement('p'); ctx.slot.appendChild(m); }
-    m.className = 'm4-msg m4-info' + (cls ? ' bad' : ''); m.innerHTML = html.replace(/<svg[\s\S]*?<\/svg>/, '').replace(/<br>/g, ' · '); return m;
-  }
-  const t = document.createElement('div'); t.className = 'm4-peek' + (cls ? ' ' + cls : ''); t.innerHTML = html;
-  Object.assign(t.style, ctx.pos(x, y)); ctx.ov.appendChild(t); return t;
-};
 function actBuild(ctx) { ctx.button(GATE_X, WALL.y + WALL.h / 2, 'Build the wall', () => ctx.done({})); }
 function actSend(ctx, id, label) { ctx.hit(SEND_X, GY[0], 190, 110, label, () => ctx.done({}), 'top'); }
-function actRead(ctx) {
-  const show = (b) => {
-    b.disabled = true; b.classList.add('used');
-    peek(ctx, SEND_X + 40, GY[1] - 170, 'From: <b>Eve</b><br>Wants: to <b style="color:var(--c-red)">take control</b> of Bob\'s computer', 'bad');
-    ctx.ready({});
-  };
-  ctx.hit(SEND_X, GY[1], 190, 110, 'Read it', show);
-}
+function actSendCtl(ctx) { ctx.hit(SEND_X, GY[1], 190, 110, 'Send it', () => ctx.done({}), 'top'); }
 function actLight(ctx) {
   ctx.hit(GATE_X, WALL.y + WALL.h / 2, 150, WALL.h, 'Light it', () => ctx.done({}), 'top');
 }
@@ -492,20 +451,18 @@ function actGates(ctx, start) {
     b.className = 'lz-hit m4-gate ' + (on ? 'open' : 'shut'); b.querySelector('span').textContent = `${PORTS[i]} ${on ? 'open' : 'shut'}`;
     b.setAttribute('aria-label', `Gate ${PORTS[i]}, ${NAMES[i]}: ${on ? 'open' : 'shut'}. Tap to switch.`);
   };
-  PORTS.forEach((_, i) => { const b = gateTarget(ctx, i, '', (btn) => { d[i] = d[i] ? 0 : 1; paint(i, btn); swingGate(ctx, i, d[i]); }); paint(i, b); });
-  ctx.button(SEND_X, 820, 'Send traffic', () => ctx.done({ r: d.slice() }));
-}
-function actPeek(ctx) {
-  const show = (b) => {
-    b.disabled = true; b.classList.add('used');
-    peek(ctx, 470, 470, `<svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="var(--c-red)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${Anim.ICONS.bug}</svg>Outside: <b>gate 25</b>, a normal email.<br>Inside: <b style="color:var(--c-red)">an attack</b> hidden in the letter.`, 'bad');
-    const m = document.createElement('p'); m.className = 'm4-msg bad';
-    m.textContent = 'The wall only checks the gate number, not what is inside. A firewall is one guard, not the whole defense.';
-    ctx.slot.appendChild(m); ctx.ready({});
+  // Send traffic stays off until the gates are right: 25 (email) open, 22 (remote control) shut
+  const tip = document.createElement('div'); tip.className = 'm4-tip'; tip.setAttribute('aria-live', 'polite');
+  Object.assign(tip.style, ctx.pos(SEND_X + 20, 470)); ctx.ov.appendChild(tip);
+  const check = () => {
+    const ok = d[0] === 1 && d[1] === 0;
+    go.disabled = !ok; tip.classList.toggle('ok', ok);
+    tip.textContent = ok ? 'Ready to send' : !d[0] ? 'Bob needs his email' : 'Keep Eve out of his computer';
   };
-  ctx.hit(985, GY[0], 200, 110, 'Look inside', show, 'top');
+  PORTS.forEach((_, i) => { const b = gateTarget(ctx, i, '', (btn) => { d[i] = d[i] ? 0 : 1; paint(i, btn); swingGate(ctx, i, d[i]); check(); }); paint(i, b); });
+  const go = ctx.button(SEND_X + 20, 820, 'Send traffic', () => ctx.done({ r: d.slice() }));
+  check();
 }
-
 const quiz = [
   { q: 'A firewall\'s main job is to:',
     choices: ['Keep out unwanted traffic', 'Make the internet faster', 'Store all your passwords', 'Fix computers that break'], answer: 0,
@@ -519,9 +476,9 @@ const quiz = [
   { q: 'Bob should open a gate only if:',
     choices: ['He needs that service', 'Its number is small', 'Alice asks him to', 'The fire is turned off'], answer: 0,
     why: 'Open only the gates you need. The wall burns the rest.' },
-  { q: 'A firewall cannot stop every attack because:',
-    choices: ['Some gates must stay open', 'It only works at night', 'It cannot read ports', 'It turns off when busy'], answer: 0,
-    why: 'An attack can hide inside an email sent to an open gate, like 25.' },
+  { q: 'Gate 22 lets someone:',
+    choices: ['Run a computer from afar', 'Send Bob an email', 'Build a new wall', 'Turn off the fire'], answer: 0,
+    why: 'Gate 22 is for remote control, so Bob keeps it shut.' },
 ];
 
 Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 4 · The Fire Wall', id: 'm4', state: { r: [0, 0] }, scene, quiz, next: Lessons.next('m4') });
