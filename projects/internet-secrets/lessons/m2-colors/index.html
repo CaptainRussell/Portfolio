@@ -161,7 +161,7 @@ function scene(st) {
     .beat(0.5, (s) => { s.ping.o = 0; s.pingE.o = 0; spyOff(s); s.bob.glow = 0; });
 
   // 2. Alice picks a public color, under her
-  S.step({ head: 'Alice picks a public color.', body: 'It is the color they both start with. **Pick** one, then press **Send to Bob**. Eve will copy it, and that is fine.', act: actPublic });
+  S.step({ head: 'Alice picks a public color.', body: 'It is the color they both start with. **Tap** a can to send it to Bob. Eve will copy it, and that is fine.', act: actPublic });
   Anim.section(S, 'PART 1', 'Mix a secret color');
   S.beat(0.7, (s) => { chs.forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); s.alice.glow = 1; }, stagger(chs, 0.12));
 
@@ -303,15 +303,9 @@ function scene(st) {
 }
 
 // ---------------------------------------------------------------- learner actions
-// Pick one can (it lights up), then confirm with a button.
+// Tap one can on the stage to pick it (Back lets the learner pick again).
 function pickThenSend(ctx, spots, names, label, patch) {
-  let k = null;
-  const go = document.createElement('button'); go.className = 'lz-btn go'; go.dataset.send = ''; go.disabled = true;
-  go.innerHTML = `<span>${label}</span>`; ctx.slot.appendChild(go);
-  const hits = spots.map((p, i) => p && ctx.hit(p[0], p[1] + 8, 130, 160, names[i], (h) => {
-    k = i; hits.forEach((x) => x && x.classList.toggle('picked', x === h)); go.disabled = false;
-  }, 'quiet'));
-  go.addEventListener('click', () => { if (k !== null) ctx.done(patch(k)); });
+  spots.forEach((p, i) => p && ctx.hit(p[0], p[1] + 8, 130, 160, names[i], () => ctx.done(patch(i)), 'quiet'));
 }
 function actPublic(ctx) {
   pickThenSend(ctx, PUB.map((_, i) => pickA(i)), PUB.map((p) => p.n), 'Send to Bob', (k) => ({ pub: k }));

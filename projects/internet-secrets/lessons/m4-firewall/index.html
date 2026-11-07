@@ -11,7 +11,6 @@
 <script src="../../../../shared/portfolio.js"></script>
 <style>
 .proj-head{padding-bottom:6px}
-.m4-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;flex-basis:100%}
 .m4-msg{flex-basis:100%;margin:0;color:var(--c-soft);font-size:14px}
 .m4-msg.ok{color:var(--c-green)}
 .m4-msg.bad{color:var(--c-red)}
@@ -25,17 +24,11 @@
 .lz-hit.m4-gate.shut{border-style:solid;background:rgba(249,115,22,.26);border-color:#f97316}
 .lz-hit.m4-gate.open span{color:var(--c-green)}
 .lz-hit.m4-gate.shut span{color:#fdba74}
-.m4-flat{padding:9px 12px;border-radius:10px;border:2px solid var(--c-line);background:var(--c-panel);color:var(--c-ink);font:700 14px/1.1 system-ui,sans-serif;cursor:pointer}
-.m4-flat.open{border-color:var(--c-green);background:rgba(52,245,164,.18);color:var(--c-green)}
-.m4-flat.shut{border-color:#f97316;background:rgba(249,115,22,.2);color:#fdba74}
-.m4-flat.got{border-color:var(--c-green);color:var(--c-green)}
-.m4-flat:disabled{cursor:default}
 .m4-peek{position:absolute;transform:translate(-50%,-50%);max-width:46%;padding:10px 14px;border-radius:12px;background:rgba(7,11,20,.94);border:2px solid var(--c-cyan);
   color:var(--c-ink);font:600 13px/1.45 system-ui,sans-serif;pointer-events:none;animation:lz-pop .25s ease-out;z-index:2}
 .m4-peek b{color:var(--c-amber)}
 .m4-peek.bad{border-color:var(--c-red)}
 .m4-peek svg{display:block;margin:2px auto 6px}
-.lz-btn.fire{background:#f97316;border-color:#f97316;color:#1a0a02}
 </style>
 </head>
 <body style="--tone:#0d9488">
@@ -347,11 +340,11 @@ function scene(st) {
     .beat(0.8, (s) => { s.shopName.content = 'SHOP HACKED'; s.shopName.fill = C.red; s.shop.stroke = C.red; s.bob.glow = 1; s.bob.pulse = 1; });
 
   // 5. Bob fights back
-  S.step({ head: 'Bob builds a firewall.', body: 'A **firewall** is a wall between Bob\'s shop and the internet. Every packet has to get past it. **Tap Build the wall**.', act: (ctx) => actButton(ctx, 'Build the wall', 'go') })
+  S.step({ head: 'Bob builds a firewall.', body: 'A **firewall** is a wall between Bob\'s shop and the internet. Every packet has to get past it. **Tap Build the wall**.', act: actBuild })
     .beat(0.1, (s) => { s.bob.pulse = 0; });
 
   // 6. Wall up, Eve cut off
-  S.step({ head: 'The wall is up. Eve is cut off.', body: 'Bob kicks Eve out, and the wall blocks her way back in. Now make it a **fire** wall. **Tap Light the wall**.', act: actLight })
+  S.step({ head: 'The wall is up. Eve is cut off.', body: 'Bob kicks Eve out, and the wall blocks her way back in. Now make it a **fire** wall. **Tap the wall** to light it.', act: actLight })
     .beat(2.2, (s) => { s.wall.build = 1; })
     .beat(0.9, (s) => {
       s.ctlLine.o = 0; s.evil.o = 0; s.evil.s = 0.4; s.eve.glow = 0; s.bob.glow = 0; s.shop.stroke = C.line;
@@ -402,7 +395,7 @@ function scene(st) {
     .beat(0.4, (s) => { s.ctl.o = 0; });
 
   // 13. Your turn
-  S.step({ head: 'Your turn: set Bob\'s gates.', body: 'Bob wants **email**. He does not want anyone running his computer. Tap each gate to open or shut it, then press **Send traffic**.', act: (ctx) => actGates(ctx, r) })
+  S.step({ head: 'Your turn: set Bob\'s gates.', body: 'Bob wants **email**. He does not want anyone running his computer. Tap each gate to open or shut it, then tap **Send traffic**.', act: (ctx) => actGates(ctx, r) })
     .beat(0.6, (s) => gates(s, r));
 
   // 14. Results
@@ -455,38 +448,21 @@ const peek = (ctx, x, y, html, cls) => {
   const t = document.createElement('div'); t.className = 'm4-peek' + (cls ? ' ' + cls : ''); t.innerHTML = html;
   Object.assign(t.style, ctx.pos(x, y)); ctx.ov.appendChild(t); return t;
 };
-const button = (ctx, label, cls, onTap) => {
-  const b = document.createElement('button'); b.className = 'lz-btn ' + (cls || ''); b.innerHTML = `<span>${label}</span>`;
-  b.addEventListener('click', () => onTap(b)); ctx.slot.appendChild(b); return b;
-};
-function actButton(ctx, label, cls) { button(ctx, label, cls, () => ctx.done({})); }
-function actSend(ctx, id, label) {
-  if (!isNarrow(ctx)) ctx.hit(SEND_X, GY[0], 190, 110, label, () => ctx.done({}), 'top');
-  button(ctx, label, 'go', () => ctx.done({}));
-}
+function actBuild(ctx) { ctx.button(GATE_X, WALL.y + WALL.h / 2, 'Build the wall', () => ctx.done({})); }
+function actSend(ctx, id, label) { ctx.hit(SEND_X, GY[0], 190, 110, label, () => ctx.done({}), 'top'); }
 function actRead(ctx) {
   const show = (b) => {
     b.disabled = true; b.classList.add('used');
     peek(ctx, SEND_X + 40, GY[1] - 170, 'From: <b>Eve</b><br>Wants: to <b style="color:var(--c-red)">take control</b> of Bob\'s computer', 'bad');
     ctx.ready({});
   };
-  if (isNarrow(ctx)) button(ctx, 'Read her packet', '', show);
-  else ctx.hit(SEND_X, GY[1], 190, 110, 'Read it', show);
+  ctx.hit(SEND_X, GY[1], 190, 110, 'Read it', show);
 }
 function actLight(ctx) {
-  if (!isNarrow(ctx)) ctx.hit(GATE_X, WALL.y + WALL.h / 2, 150, WALL.h, 'Light it', () => ctx.done({}), 'top');
-  button(ctx, 'Light the wall', 'fire', () => ctx.done({}));
+  ctx.hit(GATE_X, WALL.y + WALL.h / 2, 150, WALL.h, 'Light it', () => ctx.done({}), 'top');
 }
-// A tap target per gate: on the wall itself, or a button under the caption on a phone where the gates are small.
-function gateTarget(ctx, i, label, onTap) {
-  if (isNarrow(ctx)) {
-    let row = ctx.slot.querySelector('.m4-row');
-    if (!row) { row = document.createElement('div'); row.className = 'm4-row'; ctx.slot.appendChild(row); }
-    const b = document.createElement('button'); b.className = 'm4-flat'; b.textContent = label;
-    b.addEventListener('click', () => onTap(b)); row.appendChild(b); return b;
-  }
-  return ctx.hit(GATE_X, GY[i], 150, 150, label, onTap, 'm4-gate');
-}
+// A tap target per gate, on the wall itself.
+const gateTarget = (ctx, i, label, onTap) => ctx.hit(GATE_X, GY[i], 150, 150, label, onTap, 'm4-gate');
 function actOpen25(ctx) { gateTarget(ctx, 0, 'Open gate 25', () => ctx.done({})); }
 // Slide a gate's door open or shut on the stage, the same motion the timeline plays between steps.
 function swingGate(ctx, i, on) {
@@ -513,12 +489,11 @@ function actGates(ctx, start) {
   const d = start.slice();
   const paint = (i, b) => {
     const on = !!d[i];
-    if (b.classList.contains('m4-flat')) { b.className = 'm4-flat ' + (on ? 'open' : 'shut'); b.textContent = `${PORTS[i]} ${NAMES[i]}: ${on ? 'Open' : 'Shut'}`; }
-    else { b.className = 'lz-hit m4-gate ' + (on ? 'open' : 'shut'); b.querySelector('span').textContent = `${PORTS[i]} ${on ? 'open' : 'shut'}`; }
+    b.className = 'lz-hit m4-gate ' + (on ? 'open' : 'shut'); b.querySelector('span').textContent = `${PORTS[i]} ${on ? 'open' : 'shut'}`;
     b.setAttribute('aria-label', `Gate ${PORTS[i]}, ${NAMES[i]}: ${on ? 'open' : 'shut'}. Tap to switch.`);
   };
   PORTS.forEach((_, i) => { const b = gateTarget(ctx, i, '', (btn) => { d[i] = d[i] ? 0 : 1; paint(i, btn); swingGate(ctx, i, d[i]); }); paint(i, b); });
-  button(ctx, 'Send traffic', 'go', () => ctx.done({ r: d.slice() }));
+  ctx.button(SEND_X, 820, 'Send traffic', () => ctx.done({ r: d.slice() }));
 }
 function actPeek(ctx) {
   const show = (b) => {
@@ -528,8 +503,7 @@ function actPeek(ctx) {
     m.textContent = 'The wall only checks the gate number, not what is inside. A firewall is one guard, not the whole defense.';
     ctx.slot.appendChild(m); ctx.ready({});
   };
-  if (isNarrow(ctx)) button(ctx, 'Look inside', '', show);
-  else ctx.hit(985, GY[0], 200, 110, 'Look inside', show, 'top');
+  ctx.hit(985, GY[0], 200, 110, 'Look inside', show, 'top');
 }
 
 const quiz = [
