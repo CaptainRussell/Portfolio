@@ -171,7 +171,9 @@ Anim.KINDS.brickwall = {
     });
     const label = cfg.label ? el('text', { x: W / 2, y: H + 34, 'text-anchor': 'middle', 'font-family': Anim.FONT, 'font-size': 24, 'font-weight': 700, fill: C.soft }, root) : null;
     if (label) label.textContent = cfg.label;
-    return { root, rowsG, plugs, plugFlames, top, gs, face, rows, label };
+    const hd = { root, rowsG, plugs, plugFlames, top, gs, face, rows, label };
+    root.classList.add('m4-wall'); root._wall = hd;   // so a learner's tap can swing a gate live (see swingGate)
+    return hd;
   },
   update(h, p) {
     sa(h.root, 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)})`);
@@ -183,10 +185,12 @@ Anim.KINDS.brickwall = {
     });
     const done = clamp01(p.build * 1.2 - 0.2);
     sa(h.top, 'opacity', done.toFixed(3));
+    h.heat = p.heat;
     h.gs.forEach((q, i) => {
       const open = p['g' + i], cut = p['cut' + i];
       h.plugs[i].forEach((b) => sa(b, 'opacity', (1 - cut).toFixed(3)));
       h.plugFlames[i].forEach((f) => sizeFlame(f, p.heat * (1 - cut)));
+      q.open = open; if (q.raf) { cancelAnimationFrame(q.raf); q.raf = 0; }
       sa(q.door, 'transform', `translate(0 ${(-GH * open).toFixed(1)})`);
       sa(q.glow, 'opacity', (open * 0.14).toFixed(3));
       q.flames.forEach((f) => sizeFlame(f, p.heat * (1 - open) * cut));
@@ -484,6 +488,27 @@ function gateTarget(ctx, i, label, onTap) {
   return ctx.hit(GATE_X, GY[i], 150, 150, label, onTap, 'm4-gate');
 }
 function actOpen25(ctx) { gateTarget(ctx, 0, 'Open gate 25', () => ctx.done({})); }
+// Slide a gate's door open or shut on the stage, the same motion the timeline plays between steps.
+function swingGate(ctx, i, on) {
+  const node = ctx.ov.parentNode.querySelector('.m4-wall'), h = node && node._wall;
+  if (!h) return;
+  const q = h.gs[i], from = q.open || 0, to = on ? 1 : 0;
+  const set = (v) => {
+    q.open = v;
+    sa(q.door, 'transform', `translate(0 ${(-GH * v).toFixed(1)})`);
+    sa(q.glow, 'opacity', (v * 0.14).toFixed(3));
+    q.flames.forEach((f) => sizeFlame(f, h.heat * (1 - v)));
+  };
+  if (q.raf) cancelAnimationFrame(q.raf);
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { set(to); return; }
+  const t0 = performance.now(), D = 800;
+  const tick = (now) => {
+    const k = Math.min(1, (now - t0) / D);
+    set(from + (to - from) * Anim.easeInOut(k));
+    q.raf = k < 1 ? requestAnimationFrame(tick) : 0;
+  };
+  q.raf = requestAnimationFrame(tick);
+}
 function actGates(ctx, start) {
   const d = start.slice();
   const paint = (i, b) => {
@@ -492,7 +517,7 @@ function actGates(ctx, start) {
     else { b.className = 'lz-hit m4-gate ' + (on ? 'open' : 'shut'); b.querySelector('span').textContent = `${PORTS[i]} ${on ? 'open' : 'shut'}`; }
     b.setAttribute('aria-label', `Gate ${PORTS[i]}, ${NAMES[i]}: ${on ? 'open' : 'shut'}. Tap to switch.`);
   };
-  PORTS.forEach((_, i) => { const b = gateTarget(ctx, i, '', (btn) => { d[i] = d[i] ? 0 : 1; paint(i, btn); }); paint(i, b); });
+  PORTS.forEach((_, i) => { const b = gateTarget(ctx, i, '', (btn) => { d[i] = d[i] ? 0 : 1; paint(i, btn); swingGate(ctx, i, d[i]); }); paint(i, b); });
   button(ctx, 'Send traffic', 'go', () => ctx.done({ r: d.slice() }));
 }
 function actPeek(ctx) {
