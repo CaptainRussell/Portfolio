@@ -548,6 +548,8 @@
     S.beat(0.45, (s) => { Object.assign(s.secBg, { o: 1 }); Object.assign(s.secK, { o: 1, content: kicker }); Object.assign(s.secT, { o: 1, content: title }); Object.assign(s.secLine, { o: 1, w: 320 }); });
     S.beat(0.9, (s) => { if (hide) hide(s); });
     S.beat(0.45, (s) => { s.secBg.o = 0; s.secK.o = 0; s.secT.o = 0; Object.assign(s.secLine, { o: 0, w: 0 }); });
+    // Clear the words once hidden so the next card never crossfades from this title.
+    S.beat(0.01, (s) => { s.secK.content = ''; s.secT.content = ''; });
     return S;
   }
   // A small inline SVG fingerprint for page controls.
