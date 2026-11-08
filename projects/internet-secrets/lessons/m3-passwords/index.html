@@ -36,6 +36,32 @@
 .m3-phrase{flex-basis:100%;margin:0;font:700 18px/1.3 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--c-green);min-height:24px}
 .m3-tag{position:absolute;transform:translate(0,-50%);padding:3px 8px;border-radius:8px;background:rgba(7,11,20,.9);border:1px solid var(--c-red);
   color:var(--c-red);font:800 12px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;pointer-events:none;white-space:nowrap;animation:lz-pop .25s ease-out}
+/* controls on the stage: they glow until used, so the learner knows what to tap */
+.m3-tile{position:absolute;transform:translate(-50%,-50%);display:flex;align-items:center;gap:.45em;padding:.4em .65em;border-radius:.45em;border:2px solid var(--c-cyan);
+  background:var(--c-panel2);color:var(--c-ink);font:700 1em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap;cursor:pointer;animation:lz-beckon 1.6s ease-in-out infinite}
+.m3-tile:hover,.m3-tile:focus-visible{background:rgba(34,211,238,.18)}
+.m3-tile[aria-pressed="true"]{border-color:var(--c-amber);color:var(--c-amber);animation:none;box-shadow:0 0 0 .2em rgba(251,191,36,.3)}
+.m3-tile.hit{border-color:var(--c-green);animation:none;cursor:default}
+.m3-tile.used{border-color:var(--c-red);animation:none;cursor:default}
+.m3-tile b{font-family:system-ui,sans-serif;font-size:.8em}
+.m3-tile.hit b{color:var(--c-green)}
+.m3-tile.used b{color:var(--c-red)}
+.m3-tile.letter{min-width:1.6em;justify-content:center;padding:.3em .4em;font-size:1em}
+.m3-tile.animal{flex-direction:column;gap:.15em;padding:.35em .5em;font-family:system-ui,sans-serif}
+.m3-tile.animal i{font-style:normal;font-size:1.9em;line-height:1}
+.m3-tile.animal[aria-pressed="true"]{border-color:var(--c-green);color:var(--c-green);box-shadow:0 0 0 .2em rgba(52,245,164,.3)}
+.m3-lab{position:absolute;transform:translate(-50%,-50%);pointer-events:none!important;white-space:nowrap;color:var(--c-soft);font:700 1em system-ui,sans-serif}
+.m3-lab.ok{color:var(--c-green)}
+.m3-lab.phrase{color:var(--c-green);font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+/* the cracking terminal (Be the thief) */
+.m3-term{position:absolute;transform:translate(-50%,0);width:22em;padding:.7em .9em;border-radius:.6em;border:2px solid var(--c-green);background:rgba(3,10,8,.92);
+  color:var(--c-green);font:700 1em/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;box-shadow:0 0 1.2em rgba(52,245,164,.25);pointer-events:none!important;overflow:hidden}
+.m3-term .g{font-size:1.6em;letter-spacing:.06em;color:#eafff4;text-shadow:0 0 .4em rgba(52,245,164,.8)}
+.m3-term .h{color:var(--c-faint)}
+.m3-term .bad{color:var(--c-red)}
+.m3-term .hit{color:#fff;background:var(--c-red);padding:0 .3em;border-radius:.2em}
+.m3-term::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(0deg,rgba(52,245,164,.06) 0 2px,transparent 2px 4px);pointer-events:none}
+@media (prefers-reduced-motion:reduce){.m3-tile{animation:none}}
 .m3-x{position:absolute;transform:translate(-50%,-50%);color:var(--c-red);font:900 40px/1 system-ui,sans-serif;pointer-events:none;animation:lz-pop .25s ease-out}
 </style>
 </head>
@@ -170,6 +196,8 @@ const cardW = (t) => 40 + 17 * t.length;
 function scene(st) {
   const S = new Scene('m3');
   const pw = st.pw, pw2 = st.pw2 || pw.slice(0, -1) + (pw.slice(-1) === 'x' ? 'y' : 'x');
+  let ci = [...pw2].findIndex((c, i) => c !== pw[i]); if (ci < 0) ci = pw.length - 1;   // the letter that changed
+  const hiAt = (t) => t.slice(0, ci) + '**' + t[ci] + '**' + t.slice(ci + 1);
   const h1 = sha256(pw), h2 = sha256(pw2), hs = sha256('sunshine'), hA = sha256('sunshine' + SALT[0]), hB = sha256('sunshine' + SALT[1]);
   const cabRows = [['sam', 'sunshine'], ['kim', 'dragon42'], ['ana', 'letmein'], [st.user, pw]];
   const row = (n, p) => `${n.padEnd(8, ' ')}${p}`;
@@ -203,8 +231,16 @@ function scene(st) {
   S.add('bar1b', 'print', {}, { x: BL[0], y: BL[1], o: 0, s: 0.2, hex: h1 });
   S.add('same', 'text', { size: 32, weight: 800, mono: true, anchor: 'middle' }, { x: BAR1[0], y: 494, content: '= SAME', fill: C.green, o: 0 });
   S.add('bar2', 'print', {}, { x: BL[0], y: BL[1], o: 0, s: 0.2, hex: h2 });
-  S.add('t1', 'text', { size: 30, weight: 700, mono: true, anchor: 'middle' }, { x: 480, y: 470, content: pw, fill: C.ink, o: 0 });
-  S.add('t2', 'text', { size: 30, weight: 700, mono: true, anchor: 'middle' }, { x: 1120, y: 470, content: pw2, fill: C.amber, o: 0 });
+  // the before and after passwords, with the changed letter in amber in both
+  S.add('t1', 'text', { size: 34, weight: 700, mono: true, anchor: 'middle', hi: C.amber }, { x: 480, y: 470, content: hiAt(pw), fill: C.ink, o: 0 });
+  S.add('t2', 'text', { size: 34, weight: 700, mono: true, anchor: 'middle', hi: C.amber }, { x: 1120, y: 470, content: hiAt(pw2), fill: C.ink, o: 0 });
+  S.add('t1L', 'text', { size: 20, weight: 700, mono: true, anchor: 'middle', ls: 2 }, { x: 480, y: 425, content: 'BEFORE', fill: C.faint, o: 0 });
+  S.add('t2L', 'text', { size: 20, weight: 700, mono: true, anchor: 'middle', ls: 2 }, { x: 1120, y: 425, content: 'AFTER', fill: C.amber, o: 0 });
+  // a box around the changed letter in her password card, and a big "old -> new" above it
+  const CHX = PW_L[0] + (ci - (pw.length - 1) / 2) * 18;
+  S.add('chgBox', 'rect', {}, { x: CHX - 15, y: PW_L[1] - 25, w: 30, h: 50, rx: 6, fill: C.amber, fo: 0.2, stroke: C.amber, sw: 3, o: 0, z: 6 });
+  S.add('chgCh', 'text', { size: 30, weight: 800, mono: true, anchor: 'middle' }, { x: CHX, y: PW_L[1] + 12, content: pw2[ci], fill: C.amber, o: 0, z: 7 });
+  S.add('chgLbl', 'text', { size: 44, weight: 800, mono: true, anchor: 'middle' }, { x: 625, y: PW_L[1] + 15, content: `${pw[ci]} → ${pw2[ci]}`, fill: C.amber, o: 0 });
   const same = [...h1].filter((c, i) => c === h2[i]).length;
   S.add('matchTxt', 'text', { size: 26, weight: 700, mono: true, anchor: 'middle' }, { x: 800, y: 860, content: `Only ${same} of 64 fingerprint characters line up. Every ridge moved.`, fill: C.amber, o: 0 });
   S.add('back', 'arrow', {}, { x: 1000, y: 580, x2: 880, y2: 450, stroke: C.amber, sw: 5, draw: 0, o: 0 });
@@ -215,6 +251,9 @@ function scene(st) {
   S.add('siteB', 'node', { icon: 'server', label: 'Site B', size: 110 }, { x: SB[0], y: SB[1] - 60, o: 0, s: 0.6, tint: C.violet });
   S.add('pwA', 'packet', { text: 'sunshine', size: 28, w: 280 }, { x: SA[0], y: 420, o: 0, s: 0.9 });
   S.add('pwB', 'packet', { text: 'sunshine', size: 28, w: 280 }, { x: SB[0], y: 420, o: 0, s: 0.9 });
+  // once salted, a small copy of the site's own shaker rides next to the password (no random letters)
+  S.add('mA', 'shaker', { style: 'tall' }, { x: SA[0] + 182, y: 420, o: 0, s: 0.55, grain: SALT_C[0], z: 4 });
+  S.add('mB', 'shaker', { style: 'round' }, { x: SB[0] + 182, y: 420, o: 0, s: 0.55, grain: SALT_C[1], z: 4 });
   // two different salts: a tall shaker of fine white salt, and a round grinder of coarse pink salt
   S.add('shA', 'shaker', { style: 'tall' }, { x: SA[0] + 210, y: 330, o: 0, grain: SALT_C[0] });
   S.add('shB', 'shaker', { style: 'round' }, { x: SB[0] + 210, y: 330, o: 0, grain: SALT_C[1] });
@@ -273,7 +312,7 @@ function scene(st) {
   };
 
   // 1. Sign up
-  S.step({ head: 'Make an account.', body: 'Alice is signing up. Pick a **username** and one of three **passwords**, then press **Sign up**.', act: actSignUp });
+  S.step({ head: 'Make an account.', body: 'Alice is signing up. Tap a **username** and one of three **passwords**, then tap **Sign up**.', act: actSignUp });
   Anim.section(S, 'PART 1', 'Sign up');
   S.beat(1.0, (s) => {
       ['alice', 'site'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
@@ -315,7 +354,7 @@ function scene(st) {
     .beat(0.8, (s) => { fhs.forEach((id) => { s[id].fill = C.red; }); s.noPw.o = 1; s.eve.look = -0.5; }, stagger(fhs.concat(['noPw']), 0.1));
 
   // 5. Same again; change a letter
-  S.step({ head: 'Exactly the same.', body: 'Now pick **one letter** below to change, then press **Change it**.', act: actChange })
+  S.step({ head: 'Exactly the same.', body: 'Now tap **one letter** of her password to change it, then tap **Change it**.', act: actChange })
     .beat(0.6, (s) => { fade(s, ['cab', 'cabLbl', 'unlock', 'eve', 'noPw'].concat(fns, fps, fhs)); s.eve.pulse = 0; s.eve.look = 0; s.bar1.o = 1; })
     .beat(0.8, (s) => { Object.assign(s.bar1, { x: BAR1[0], y: BAR1[1], s: 0.75 }); });
   blend('bar1b', BAR1B, (s) => { s.same.o = 1; s.bar1.edge = C.green; s.bar1b.edge = C.green; });
@@ -323,19 +362,20 @@ function scene(st) {
 
   // 6. One letter changes everything; no way back
   S.step({ head: 'One letter changed.', body: 'Her password is now one letter off. **Tap** it to blend it.', act: actBlend })
-    .beat(0.6, (s) => { fade(s, ['bar1b', 'same']); Object.assign(s.bar1, { x: 480, y: 650, s: 0.8, edge: C.line }); s.t1.o = 1; })
-    .beat(0.4, (s) => { s.pwBox.s = 1.15; s.pwBox.glow = 1; s.pwBox.edge = C.amber; })
-    .beat(0.6, (s) => { s.pwBox.content = pw2; s.pwBox.ink = C.amber; })
-    .beat(0.4, (s) => { s.pwBox.s = 1; s.pwBox.glow = 0; });
+    .beat(0.6, (s) => { fade(s, ['bar1b', 'same']); Object.assign(s.bar1, { x: 480, y: 650, s: 0.8, edge: C.line }); s.t1.o = 1; s.t1L.o = 1; })
+    .beat(0.5, (s) => { s.chgBox.o = 1; s.pwBox.glow = 1; s.pwBox.edge = C.amber; })
+    .beat(0.7, (s) => { s.pwBox.content = pw2; s.chgCh.o = 1; s.chgLbl.o = 1; })
+    .beat(0.4, (s) => { s.pwBox.glow = 0; });
   S.step({ head: 'One letter changes everything.', body: 'A brand new fingerprint, not a small change. Now try to **un-blend** it back into the password.', act: actUnblend });
-  blend('bar2', [1120, 650], (s) => { s.t2.o = 1; s.bar2.edge = C.amber; });
+  S.beat(0.4, (s) => { fade(s, ['chgBox', 'chgCh', 'chgLbl']); });
+  blend('bar2', [1120, 650], (s) => { s.t2.o = 1; s.t2L.o = 1; s.bar2.edge = C.amber; });
   S.beat(0.5, (s) => { s.matchTxt.o = 1; s.pwBox.o = 0; })
     .beat(0.7, (s) => { s.back.o = 1; s.back.draw = 1; s.backQ.o = 1; });
 
   // 7. Sites keep the fingerprint; log in
-  S.step({ head: 'Good sites keep only the fingerprint.', body: 'Left, the bad way: real passwords. Right, the good way: each **username** with only its **fingerprint**. At login the site blends what you type and compares. **Log in** twice: once with her password, once with a wrong one.',
+  S.step({ head: 'Good sites keep only the fingerprint.', body: 'Left, the bad way: real passwords. Right, the good way: each **username** with only its **fingerprint**. At login the site blends what you type and compares. **Log in** with her password and with a wrong one. Try all four if you like.',
     act: (ctx) => actLogin(ctx, pw, pw2) })
-    .beat(0.6, (s) => { fade(s, ['blender', 'bLbl', 'bar2', 't1', 't2', 'back', 'backQ', 'matchTxt']); })
+    .beat(0.6, (s) => { fade(s, ['blender', 'bLbl', 'bar2', 't1', 't2', 't1L', 't2L', 'back', 'backQ', 'matchTxt']); })
     // the bad cabinet comes back with the plain passwords; the good one fills with fingerprints
     .beat(0.9, (s) => {
       ['cabP', 'cabPLbl', 'site', 'cab', 'lock'].forEach((id) => { s[id].o = 1; });
@@ -348,53 +388,62 @@ function scene(st) {
     .beat(0.9, (s) => { Object.assign(s.bar1, { x: ROW3[0], y: ROW3[1], s: 0.17, edge: C.line }); })
     .beat(0.4, (s) => { s.bar1.o = 0; s.fp3.o = 1; s.fh3.o = 1; });
 
-  // 8. Salt
-  S.step({ head: 'A pinch of salt.', body: 'Two sites, same password, same fingerprint. Tap each **salt shaker**.', act: actSalt });
-  Anim.section(S, 'PART 3', 'A pinch of salt', (s) => fade(s, ['site', 'cab', 'cabLbl', 'lock', 'cabP', 'cabPLbl'].concat(rs, fns, fps, fhs)));
+  // 8. Salt: two sites, same password, same fingerprint; tap Site A's shaker
+  S.step({ head: 'A pinch of salt.', body: "Two sites, same password, same fingerprint. Tap **Site A's salt shaker**.", act: (ctx) => actSalt(ctx, 0) });
+  // fade the login view before the part card, so its words never sit under the card
+  S.beat(0.5, (s) => fade(s, ['alice', 'site', 'cab', 'cabLbl', 'lock', 'cabP', 'cabPLbl'].concat(rs, fns, fps, fhs)));
+  Anim.section(S, 'PART 3', 'A pinch of salt');
   S.beat(0.9, (s) => {
       ['siteA', 'siteB'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
       ['pwA', 'pwB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame'].forEach((id) => { s[id].o = 1; });
     }, stagger(['siteA', 'siteB', 'pwA', 'pwB', 'blA', 'blB', 'barA', 'barB', 'saltSame', 'shA', 'shB'], 0.06));
 
-  // 9. Different fingerprints
+  // each shaker tips over its password and moves along it, shaking; three grains fall on every shake; then that site blends
   const NG = 18, gs = [...Array(NG).keys()].map((i) => 'ga' + i), gbs = [...Array(NG).keys()].map((i) => 'gb' + i);
-  // each shaker tips over its password and moves along it, shaking; three grains fall on every shake
-  const SHAKES = 6, sides = [['shA', SA, gs, 50], ['shB', SB, gbs, 56]];
+  const SHAKES = 6;
   const shX = (base, k) => base[0] + 110 - 40 * k, shRot = (k) => (k % 2 ? -118 : -146);
   const mouth = (base, k, d) => { const a = shRot(k) * Math.PI / 180; return [shX(base, k) + d * Math.sin(a), 335 - d * Math.cos(a)]; };
-  const st9 = S.step({ head: 'Same password, different fingerprints.', body: 'Each site shakes in its **own salt**, then blends. A thief who cracks one site still has to start over on the other.' })
-    .beat(0.7, (s) => sides.forEach(([sh, base, grains, d]) => {
+  const salt = (stp, side) => {
+    const [sh, base, grains, d, pwId, mini, bl, bar, hex] = side;
+    stp.beat(0.7, (s) => {
       Object.assign(s[sh], { x: shX(base, 0), y: 335, rot: -130 });
       grains.forEach((g, i) => { const m = mouth(base, Math.floor(i / 3), d); Object.assign(s[g], { x: m[0], y: m[1], o: 0 }); });
-    }));
-  for (let k = 0; k < SHAKES; k++) {
-    const now = [0, 1, 2].map((j) => 3 * k + j);
-    st9.beat(0.24, (s) => sides.forEach(([sh, base, grains, d]) => {
-      Object.assign(s[sh], { x: shX(base, k + 1), rot: shRot(k + 1) });
-      now.forEach((i, j) => { const m = mouth(base, k, d); Object.assign(s[grains[i]], { o: 1, x: m[0] - 14 + 14 * j, y: 398 + ((i * 7) % 24) }); });
-    }), (id) => { const i = +id.slice(2); return /^g[ab]\d/.test(id) && now.includes(i) ? { w: [(i % 3) * 0.12, Math.min(1, (i % 3) * 0.12 + 0.75)] } : null; });
-  }
-  st9.beat(0.5, (s) => sides.forEach(([sh, base]) => Object.assign(s[sh], { x: base[0] + 210, y: 330, rot: 0 })))
-    .beat(0.6, (s) => {
-      gs.concat(gbs).forEach((id) => { s[id].o = 0; s[id].y += 20; });
-      s.pwA.content = 'sunshine + ' + SALT[0]; s.pwB.content = 'sunshine + ' + SALT[1]; s.pwA.edge = C.amber; s.pwB.edge = C.amber;
-    })
-    .beat(0.5, (s) => { Object.assign(s.pwA, { y: 500, s: 0.3, o: 0 }); Object.assign(s.pwB, { y: 500, s: 0.3, o: 0 }); s.blA.glow = 1; s.blB.glow = 1; })
-    .beat(1.2, (s) => { s.blA.spin += 3; s.blB.spin += 3; s.blA.chop = 1; s.blB.chop = 1; s.barA.hex = hA; s.barB.hex = hB; })
-    .beat(0.6, (s) => { s.blA.chop = 0; s.blB.chop = 0; s.blA.glow = 0; s.blB.glow = 0; Object.assign(s.pwA, { y: 420, s: 0.9, o: 1 }); Object.assign(s.pwB, { y: 420, s: 0.9, o: 1 });
-      s.saltSame.content = 'DIFFERENT'; s.saltSame.fill = C.green; s.barA.edge = C.green; s.barB.edge = C.green; });
+    });
+    for (let k = 0; k < SHAKES; k++) {
+      const now = [0, 1, 2].map((j) => 3 * k + j);
+      stp.beat(0.24, (s) => {
+        Object.assign(s[sh], { x: shX(base, k + 1), rot: shRot(k + 1) });
+        now.forEach((i, j) => { const m = mouth(base, k, d); Object.assign(s[grains[i]], { o: 1, x: m[0] - 14 + 14 * j, y: 398 + ((i * 7) % 24) }); });
+      }, (id) => { const i = +id.slice(2); return grains.includes(id) && now.includes(i) ? { w: [(i % 3) * 0.12, Math.min(1, (i % 3) * 0.12 + 0.75)] } : null; });
+    }
+    stp.beat(0.5, (s) => Object.assign(s[sh], { x: base[0] + 210, y: 330, rot: 0 }))
+      .beat(0.6, (s) => { grains.forEach((id) => { s[id].o = 0; s[id].y += 20; }); s[pwId].content = 'sunshine +'; s[pwId].edge = C.amber; s[mini].o = 1; s.saltSame.o = 0; })
+      .beat(0.5, (s) => { Object.assign(s[pwId], { y: 500, s: 0.3, o: 0 }); Object.assign(s[mini], { x: base[0], y: 500, s: 0.1, o: 0 }); s[bl].glow = 1; })
+      .beat(1.2, (s) => { s[bl].spin += 3; s[bl].chop = 1; s[bar].hex = hex; })
+      .beat(0.6, (s) => { s[bl].chop = 0; s[bl].glow = 0; Object.assign(s[pwId], { y: 420, s: 0.9, o: 1 }); Object.assign(s[mini], { x: base[0] + 182, y: 420, s: 0.55, o: 1 }); s[bar].edge = C.green; });
+    return stp;
+  };
+
+  // 9. Site A salts and blends; tap Site B's shaker
+  salt(S.step({ head: 'Site A adds its own salt.', body: "Site A shakes in **its own salt**, then blends. A brand new fingerprint. Now tap **Site B's salt shaker**.", act: (ctx) => actSalt(ctx, 1) }),
+    ['shA', SA, gs, 50, 'pwA', 'mA', 'blA', 'barA', hA]);
+
+  // 10. Site B salts and blends: different fingerprints
+  salt(S.step({ head: 'Same password, different fingerprints.', body: 'Site B uses **different salt**, so its fingerprint is different too. A thief who cracks one site still has to start over on the other.' }),
+    ['shB', SB, gbs, 56, 'pwB', 'mB', 'blB', 'barB', hB])
+    .beat(0.6, (s) => { Object.assign(s.saltSame, { o: 1, content: 'DIFFERENT', fill: C.green }); });
 
   // 10. Be the thief
   const lst = ['list', 'listLbl'].concat(STOLEN.flatMap((_, i) => ['sn' + i, 'sb' + i, 'sh' + i]));
-  S.step({ head: 'Be the thief.', body: 'Eve stole a list of fingerprints. She can only **guess, blend and compare**. Press **Try them all** below.', act: actCrack })
-    .beat(0.6, (s) => { fade(s, ['alice', 'siteA', 'siteB', 'pwA', 'pwB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame']); })
+  S.step({ head: 'Be the thief.', body: 'Eve stole a list of fingerprints. She can only **guess, blend and compare**. Tap **Try password combinations**.', act: actCrack })
+    .beat(0.6, (s) => { fade(s, ['alice', 'siteA', 'siteB', 'pwA', 'pwB', 'mA', 'mB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame']); })
     .beat(1.0, (s) => {
       Object.assign(s.eve, { x: 260, y: 420, o: 1, s: 1, pulse: 0, glow: 1 });
       lst.forEach((id) => { s[id].o = 1; });
     }, stagger(['eve'].concat(lst), 0.04));
 
   // 11. Crack time
-  S.step({ head: 'Length beats tricky symbols.', body: 'How long each would take to guess. Now build a **long** one: tap **4 animals** below.', act: actPhrase });
+  S.step({ head: 'Length beats tricky symbols.', body: 'How long each would take to guess. Now build a **long** one: tap **4 animals**, then tap **Test it**.', act: actPhrase });
   Anim.section(S, 'PART 4', 'Strong passwords', (s) => fade(s, ['eve'].concat(lst)));
   S.beat(0.5, (s) => { s.uni.o = 1; s.uniLbl.o = 1; [0, 1].forEach((i) => { s['cl' + i].o = 1; }); })
     .beat(1.6, (s) => { [0, 1].forEach((i) => { Object.assign(s['cb' + i], { o: 1, w: rowsTxt[i].w }); s['ct' + i].o = 1; }); }, stagger(['cb0', 'ct0', 'cb1', 'ct1'], 0.1));
@@ -408,6 +457,19 @@ function scene(st) {
 }
 
 // ---------------------------------------------------------------- learner actions
+// Controls on the stage. Sizes are in stage units (the stage is 1600 wide) and follow the stage when it resizes.
+function sized(ctx, node, size) {
+  const fit = () => { node.style.fontSize = (size * ctx.ov.clientWidth / 1600) + 'px'; };
+  fit(); window.addEventListener('resize', fit); return node;
+}
+function tile(ctx, x, y, html, size, cls) {
+  const b = document.createElement('button'); b.className = 'm3-tile' + (cls ? ' ' + cls : ''); b.innerHTML = html;
+  Object.assign(b.style, ctx.pos(x, y)); ctx.ov.appendChild(b); return sized(ctx, b, size);
+}
+function label(ctx, x, y, text, size, cls) {
+  const d = document.createElement('div'); d.className = 'm3-lab' + (cls ? ' ' + cls : ''); d.setAttribute('aria-live', 'polite'); d.innerHTML = text;
+  Object.assign(d.style, ctx.pos(x, y)); ctx.ov.appendChild(d); return sized(ctx, d, size);
+}
 // The picks hover over Alice's head until Sign up confirms them.
 function bubble(ctx, at, size) {
   const b = document.createElement('div'); b.className = 'lz-bubble'; b.setAttribute('aria-live', 'polite'); b.textContent = '?';
@@ -418,16 +480,16 @@ function bubble(ctx, at, size) {
 function actSignUp(ctx) {
   let user = null, pw = null;
   const bu = bubble(ctx, USER_AT, 24), bp = bubble(ctx, PW_AT, 24);
-  ctx.slot.innerHTML = `<p class="m3-msg">1. Username</p><div class="m3-row">${USERS.map((u) => `<button class="m3-chip" data-user="${u}" aria-pressed="false">@${u}</button>`).join('')}</div>
-    <p class="m3-msg">2. Password (practice only)</p><div class="m3-row">${PWS.map((p) => `<button class="m3-chip" data-pw="${p}" aria-pressed="false">${p}</button>`).join('')}</div>
-    <div class="m3-row"><button class="lz-btn go" data-send disabled><span>Sign up</span></button></div>`;
-  const go = ctx.slot.querySelector('[data-send]');
-  const pick = (attr, set) => ctx.slot.querySelectorAll(`[data-${attr}]`).forEach((b) => b.addEventListener('click', () => {
-    ctx.slot.querySelectorAll(`[data-${attr}]`).forEach((x) => x.setAttribute('aria-pressed', x === b)); set(b.dataset[attr]); go.disabled = !(user && pw);
-  }));
-  pick('user', (v) => { user = v; bu.textContent = '@' + v; bu.classList.add('on'); });
-  pick('pw', (v) => { pw = v; bp.textContent = v; bp.classList.add('on'); });
-  go.addEventListener('click', () => { if (user && pw) ctx.done({ user, pw, pw2: null }); });
+  label(ctx, 760, 395, '1. Pick a username', 30);
+  const us = USERS.map((u, i) => tile(ctx, 760 + (i - 1.5) * 225, 470, '@' + u, 30));
+  label(ctx, 760, 565, '2. Pick a password (practice only)', 30);
+  const ps = PWS.map((p, i) => tile(ctx, 760 + (i - 1) * 260, 640, p, 30));
+  const go = ctx.button(760, 780, 'Sign up', () => { if (user && pw) ctx.done({ user, pw, pw2: null }); }); go.disabled = true;
+  const pick = (list, vals, set) => list.forEach((b, i) => { b.setAttribute('aria-pressed', 'false'); b.addEventListener('click', () => {
+    list.forEach((x) => x.setAttribute('aria-pressed', x === b)); set(vals[i]); go.disabled = !(user && pw);
+  }); });
+  pick(us, USERS, (v) => { user = v; bu.textContent = '@' + v; bu.classList.add('on'); });
+  pick(ps, PWS, (v) => { pw = v; bp.textContent = v; bp.classList.add('on'); });
 }
 function actLock(ctx) {
   ctx.hit(LOCK[0], LOCK[1], 110, 110, 'Break in', () => ctx.done({}), 'top');
@@ -435,24 +497,23 @@ function actLock(ctx) {
 function actBlend(ctx) {
   ctx.hit(PW_L[0], PW_L[1], Math.min(380, cardW(ctx.state.pw2 || ctx.state.pw)), 80, 'Blend it', () => ctx.done({}), 'top');
 }
-// Pick a letter (it flips to the next one), then confirm the change.
+// Tap a letter of her password on the stage (it flips to the next one), then tap Change it.
 function actChange(ctx) {
-  const pw = ctx.state.pw;
+  const pw = ctx.state.pw, n = pw.length;
   let v = null;
-  ctx.slot.innerHTML = `<div class="m3-row">${[...pw].map((c, i) => `<button class="m3-chip m3-letter" data-i="${i}" aria-pressed="false" aria-label="Change ${c}">${c}</button>`).join('')}</div>
-    <p class="m3-phrase" aria-live="polite"></p>
-    <div class="m3-row"><button class="lz-btn go" data-send disabled><span>Change it</span></button></div>
-    <p class="hint">Pick any letter or number. It becomes the next one (a becomes b).</p>`;
-  const out = ctx.slot.querySelector('.m3-phrase'), go = ctx.slot.querySelector('[data-send]'), btns = [...ctx.slot.querySelectorAll('.m3-letter')];
-  btns.forEach((b) => b.addEventListener('click', () => {
-    const i = +b.dataset.i;
-    v = pw.slice(0, i) + bump(pw[i]) + pw.slice(i + 1);
-    btns.forEach((x, k) => { x.setAttribute('aria-pressed', x === b); x.textContent = pw[k]; x.classList.remove('flip'); });
-    void b.offsetWidth; b.textContent = v[i]; b.classList.add('flip');
-    out.innerHTML = `${pw.slice(0, i)}<span style="color:var(--c-amber)">${v[i]}</span>${pw.slice(i + 1)}`;
-    go.disabled = false;
-  }));
-  go.addEventListener('click', () => { if (v) ctx.done({ pw2: v }); });
+  const tiles = [...pw].map((c, i) => {
+    const t = tile(ctx, PW_L[0] + (i - (n - 1) / 2) * 58, 480, c, 34, 'letter');
+    t.setAttribute('aria-pressed', 'false'); t.setAttribute('aria-label', `Change ${c}`);
+    t.addEventListener('click', () => {
+      v = pw.slice(0, i) + bump(pw[i]) + pw.slice(i + 1);
+      tiles.forEach((x, k) => { x.setAttribute('aria-pressed', x === t); x.textContent = pw[k]; });
+      t.textContent = v[i]; go.disabled = false;
+      hint.innerHTML = `${pw[i]} → <span style="color:var(--c-amber)">${v[i]}</span>`;
+    });
+    return t;
+  });
+  const hint = label(ctx, PW_L[0], 565, 'Tap any letter or number', 28);
+  const go = ctx.button(PW_L[0], 640, 'Change it', () => { if (v) ctx.done({ pw2: v }); }); go.disabled = true;
 }
 function actUnblend(ctx) {
   ctx.hit(950, 515, 130, 100, 'Un-blend', (b) => {
@@ -463,76 +524,91 @@ function actUnblend(ctx) {
     ctx.ready({});
   }, 'top');
 }
-// Pick what to type at login: her password, the one-letter-off one, or another.
+// Log in on the stage with any of four passwords: her password, the one-letter-off one, or another.
+// Next lights up once she has tried a right one and a wrong one; every option stays open to try.
 function actLogin(ctx, pw, pw2) {
   const want = sha256(pw), others = PWS.filter((p) => p !== pw);
   const opts = [others[0], pw2, pw, others[1]];
   let right = false, wrong = false;
-  ctx.slot.innerHTML = `<div class="m3-row">${opts.map((p) => `<button class="m3-chip" data-p="${p}">${p}</button>`).join('')}</div>
-    <p class="m3-msg">Saved: ${miniBC(want)} Tap a password to log in with it.</p><div class="m3-log" aria-live="polite"></div>`;
-  const msg = ctx.slot.querySelector('.m3-msg'), log = ctx.slot.querySelector('.m3-log'), chips = [...ctx.slot.querySelectorAll('.m3-chip')];
-  chips.forEach((b) => b.addEventListener('click', () => {
-    if (b.disabled) return;
-    const v = b.dataset.p, h = sha256(v), ok = h === want;
-    b.disabled = true; b.classList.add(ok ? 'hit' : 'used');
-    if (ok) right = true; else wrong = true;
-    const p = document.createElement('p');
-    p.innerHTML = `${miniBC(h)} <b>${v}</b> <span style="color:var(${ok ? '--c-green' : '--c-red'})">${ok ? 'Match. You are in.' : 'No match. Try again.'}</span>`;
-    log.appendChild(p);
-    if (right && wrong) { msg.textContent = 'The site never needed her real password, only its fingerprint.'; msg.className = 'm3-msg ok'; chips.forEach((x) => { x.disabled = true; }); ctx.ready({}); }
-    else if (right) { msg.textContent = 'Now log in with a wrong one.'; msg.className = 'm3-msg'; }
-    else { msg.textContent = 'Now log in with her real password.'; msg.className = 'm3-msg'; }
-  }));
-}
-function actSalt(ctx) {
-  let left = 2;
-  [SA, SB].forEach((p) => ctx.hit(p[0] + 210, 330, 110, 120, 'Shake', (b) => {
-    if (b.disabled) return; b.disabled = true; b.classList.add('used');
-    if (--left === 0) setTimeout(() => ctx.done({}), 300);
-  }));
-}
-function actCrack(ctx) {
-  let tried = 0, cracked = 0, over = false;
-  ctx.slot.innerHTML = `<div class="m3-row"><button class="lz-btn go" data-all><span>Try them all</span></button></div>
-    <div class="m3-row">${COMMON.map((p) => `<button class="m3-chip" data-p="${p}">${p}</button>`).join('')}</div>
-    <p class="m3-msg" aria-live="polite">The 20 most common passwords. Press <b>Try them all</b>, or tap one at a time.</p>`;
-  const msg = ctx.slot.querySelector('.m3-msg'), chips = [...ctx.slot.querySelectorAll('.m3-chip')];
-  const finish = () => {
-    if (over) return; over = true;
-    chips.forEach((b) => { b.disabled = true; }); ctx.slot.querySelector('[data-all]').disabled = true;
-    msg.textContent = `${cracked} cracked in seconds. The 2 passphrases never matched.`; msg.className = 'm3-msg ok';
-    ctx.ready({});
-  };
-  const guess = (b) => {
-    if (b.disabled || over) return;
-    b.disabled = true; b.classList.add('used'); tried++;
-    const p = b.dataset.p, h = sha256(p), i = STOLEN.findIndex((u) => u.h === h);
-    if (i >= 0) {
-      cracked++; b.classList.add('hit');
-      const t = document.createElement('div'); t.className = 'm3-tag'; t.textContent = 'CRACKED: ' + p;
-      Object.assign(t.style, ctx.pos(1120, 228 + 110 * i)); ctx.ov.appendChild(t);
-      msg.textContent = `"${p}" matches ${STOLEN[i].n}'s fingerprint.`; msg.className = 'm3-msg bad';
-    } else { msg.textContent = `"${p}": no match.`; msg.className = 'm3-msg'; }
-    if (tried === COMMON.length) finish();
-  };
-  chips.forEach((b) => b.addEventListener('click', () => guess(b)));
-  ctx.slot.querySelector('[data-all]').addEventListener('click', () => {
-    chips.filter((b) => !b.disabled).forEach((b, k) => setTimeout(() => guess(b), k * 90));
+  label(ctx, 300, 410, 'Log in with:', 28);
+  const msg = label(ctx, 820, 790, 'The site blends what you type and compares fingerprints.', 26);
+  opts.forEach((p, i) => {
+    const t = tile(ctx, 300, 480 + 78 * i, p, 27);
+    t.addEventListener('click', () => {
+      if (t.classList.contains('hit') || t.classList.contains('used')) return;
+      const ok = sha256(p) === want;
+      t.classList.add(ok ? 'hit' : 'used'); t.innerHTML = `${p} <b>${ok ? '✓ match' : '✕ no match'}</b>`;
+      if (ok) right = true; else wrong = true;
+      if (right && wrong) { msg.textContent = 'The site never needed her real password, only its fingerprint.'; msg.className = 'm3-lab ok'; ctx.ready({}); }
+      else msg.textContent = right ? 'You are in. Now try a wrong one.' : 'No match. Now try her real password.';
+    });
   });
 }
+// Tap one site's salt shaker (0 = Site A, 1 = Site B).
+function actSalt(ctx, k) {
+  const p = [SA, SB][k];
+  ctx.hit(p[0] + 210, 330, 110, 120, 'Shake', (b) => {
+    if (b.disabled) return; b.disabled = true; b.classList.add('used');
+    setTimeout(() => ctx.done({}), 250);
+  });
+}
+// Try password combinations: a terminal under Eve flickers through each guess, blends it and compares.
+function actCrack(ctx) {
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let started = false, cracked = 0;
+  const go = ctx.button(260, 600, 'Try password combinations', () => {
+    if (started) return; started = true; go.disabled = true; run(0);
+  });
+  const term = document.createElement('div'); term.className = 'm3-term'; term.setAttribute('aria-live', 'polite');
+  Object.assign(term.style, ctx.pos(260, 660)); ctx.ov.appendChild(term); sized(ctx, term, 19);
+  term.innerHTML = '<div>READY: 20 most common passwords</div><div class="g">_</div><div class="h">waiting</div>';
+  const CH = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*';
+  const rnd = (n) => Array.from({ length: n }, () => CH[Math.floor(Math.random() * CH.length)]).join('');
+  const show = (k, g, line) => { term.innerHTML = `<div>GUESS ${String(k + 1).padStart(2, '0')}/${COMMON.length} · cracked ${cracked}</div><div class="g">${g}</div><div class="h">${line}</div>`; };
+  function run(k) {
+    if (k >= COMMON.length) {
+      term.innerHTML = `<div>DONE · ${COMMON.length} guesses</div><div class="g">${cracked} cracked</div><div class="h">The 2 passphrases never matched.</div>`;
+      ctx.ready({}); return;
+    }
+    const p = COMMON[k];
+    let f = 0;
+    const frames = reduce ? 0 : 5;
+    const flick = () => {
+      if (f < frames) { show(k, rnd(p.length), 'generating…'); f++; setTimeout(flick, 32); return; }
+      const h = sha256(p), i = STOLEN.findIndex((u) => u.h === h);
+      if (i >= 0) {
+        cracked++;
+        show(k, p, `${h.slice(0, 10)}… <span class="hit">MATCH: ${STOLEN[i].n}</span>`);
+        const t = document.createElement('div'); t.className = 'm3-tag'; t.textContent = 'CRACKED: ' + p;
+        Object.assign(t.style, ctx.pos(1120, 228 + 110 * i)); ctx.ov.appendChild(t);
+        setTimeout(() => run(k + 1), reduce ? 200 : 520);
+      } else {
+        show(k, p, `${h.slice(0, 10)}… <span class="bad">no match</span>`);
+        setTimeout(() => run(k + 1), reduce ? 80 : 150);
+      }
+    };
+    flick();
+  }
+}
+// Tap 4 animals on the stage; the passphrase builds on the stage; then Test it.
 function actPhrase(ctx) {
   const pick = [];
-  ctx.slot.innerHTML = `<div class="m3-animals">${ANIMALS.map(([w, e]) => `<button class="m3-animal" data-w="${w}" aria-pressed="false"><span aria-hidden="true">${e}</span>${w}</button>`).join('')}</div>
-    <p class="m3-phrase" aria-live="polite"></p>
-    <button class="lz-btn go" data-test disabled><span>Test it</span></button><p class="hint">Tap 4 animals, in any order.</p>`;
-  const out = ctx.slot.querySelector('.m3-phrase'), test = ctx.slot.querySelector('[data-test]');
-  const show = () => { out.textContent = pick.join(' '); test.disabled = pick.length !== 4; };
-  ctx.slot.querySelectorAll('.m3-animal').forEach((b) => b.addEventListener('click', () => {
-    const w = b.dataset.w, i = pick.indexOf(w);
-    if (i >= 0) pick.splice(i, 1); else if (pick.length < 4) pick.push(w); else return;
-    b.setAttribute('aria-pressed', i < 0); show();
-  }));
-  test.addEventListener('click', () => { if (pick.length === 4) ctx.done({ phrase: pick.join(' ') }); });
+  const out = label(ctx, 700, 760, 'Tap 4 animals, in any order', 30, 'phrase');
+  const test = ctx.button(1400, 760, 'Test it', () => { if (pick.length === 4) ctx.done({ phrase: pick.join(' ') }); }); test.disabled = true;
+  const emo = (w) => ANIMALS.find((a) => a[0] === w)[1];
+  const draw = () => {
+    out.innerHTML = pick.length ? pick.map((w) => `${emo(w)} ${w}`).join('&nbsp;&nbsp;') : 'Tap 4 animals, in any order';
+    test.disabled = pick.length !== 4;
+  };
+  ANIMALS.forEach(([w, e], i) => {
+    const t = tile(ctx, 170 + 180 * i, 615, `<i aria-hidden="true">${e}</i>${w}`, 24, 'animal');
+    t.setAttribute('aria-pressed', 'false'); t.setAttribute('aria-label', w);
+    t.addEventListener('click', () => {
+      const k = pick.indexOf(w);
+      if (k >= 0) pick.splice(k, 1); else if (pick.length < 4) pick.push(w); else return;
+      t.setAttribute('aria-pressed', k < 0); draw();
+    });
+  });
 }
 
 const quiz = [
