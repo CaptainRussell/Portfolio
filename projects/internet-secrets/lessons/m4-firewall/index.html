@@ -35,7 +35,7 @@
 <h1 class="vh">The Fire Wall</h1>
 <main class="wrap">
   <div id="lesson"></div>
-  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">Tap the glowing outline on the screen to keep going. Keys: right arrow or Space to go on, left arrow for Back, R to replay a step.</p>
 </main>
 
 <footer class="pf-foot">
@@ -306,7 +306,8 @@ function scene(st) {
     .beat(0.7, (s) => fresh(s.mail, GY[0]));
 
   // 2. It just works
-  S.step({ head: 'Easy! Bob got it.', body: "Her email travels across the internet as a packet and lands in Bob's **inbox**." })
+  S.step({ head: 'Easy! Bob got it.', body: "Her email travels across the internet as a packet and lands in Bob's **inbox**. But someone else is out there. **Tap below Alice** to see who.",
+    go: [140, GY[1], 190, 190, 'Who else is out there?'] })
     .beat(1.6, (s) => Object.assign(s.mail, { x: ROOM_X, s: 0.46 }), (id) => (id === 'mail' ? { arc: 30 } : null))
     .beat(0.6, (s) => { s.mail.ok = 1; s.room0.stroke = C.green; });
 
@@ -317,7 +318,8 @@ function scene(st) {
     .beat(0.7, (s) => fresh(s.ctl, GY[1]));
 
   // 4. Crisis
-  S.step({ head: 'Oh no! Eve takes over Bob\'s shop.', body: 'Nothing stops her packet. Now Eve runs Bob\'s computer from far away. She changes his prices, deletes his files and locks his register.' })
+  S.step({ head: 'Oh no! Eve takes over Bob\'s shop.', body: 'Nothing stops her packet. Now Eve runs Bob\'s computer from far away. She changes his prices, deletes his files and locks his register. **Tap Bob** to help him.',
+    go: [SHOP.x + 80, 790, 150, 150, 'Help Bob', 'top'] })
     .beat(1.6, (s) => Object.assign(s.ctl, { x: ROOM_X, s: 0.46 }), (id) => (id === 'ctl' ? { arc: 30 } : null))
     .beat(0.8, (s) => { s.ctl.o = 0; s.ctlLine.o = 1; Object.assign(s.evil, { o: 1, s: 1 }); s.eve.glow = 1; s.room1.stroke = C.red; s.roomIc1.tint = C.red; s.roomS1.content = 'Eve is in control!'; s.roomS1.fill = C.red; })
     .beat(1.4, (s) => { ids('cr', 3).forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); }, stagger(ids('cr', 3), 0.25))
@@ -337,7 +339,8 @@ function scene(st) {
     });
 
   // 7. Fire
-  S.step({ head: 'Anything that hits the wall burns.', body: 'Eve tries again. Her packet hits the fire and **burns to ash**. Bob\'s computer is safe.' })
+  S.step({ head: 'Anything that hits the wall burns.', body: 'Eve tries again. Her packet hits the fire and **burns to ash**. Bob\'s computer is safe. But what about Alice? **Tap Alice**.',
+    go: [140, GY[0], 170, 230, 'Tap Alice'] })
     .beat(1.0, (s) => { s.wall.heat = 1; })
     .beat(0.5, (s) => fresh(s.ctl, GY[1]))
     .beat(1.0, (s) => { s.ctl.x = FRONT + 6; })
@@ -349,7 +352,8 @@ function scene(st) {
     .beat(0.7, (s) => fresh(s.mail, GY[0]));
 
   // 9. Too strict
-  S.step({ head: 'Oh no, Alice\'s email burned too.', body: 'The wall burns **everything**, even the email Bob wants. Bob needs a way to let email in, and only email.' })
+  S.step({ head: 'Oh no, Alice\'s email burned too.', body: 'The wall burns **everything**, even the email Bob wants. Bob needs a way to let email in, and only email. **Tap the wall** where her email burned.',
+    go: [GATE_X, GY[0], 150, 150, 'Cut a gate here', 'top'] })
     .beat(1.0, (s) => { s.mail.x = FRONT + 6; })
     .beat(1.6, (s) => { s.mail.burn = 1; })
     .beat(0.4, (s) => { s.mail.o = 0; });
@@ -361,7 +365,8 @@ function scene(st) {
   S.beat(1.0, (s) => { s.wall.cut0 = 1; s.path0.o = 1; });
 
   // 11. Through gate 25
-  S.step({ head: 'Alice\'s email asks for gate 25.', body: "Her packet carries the gate number on its label. Gate **25** is open, so her email goes straight to Bob's inbox." })
+  S.step({ head: 'Alice\'s email asks for gate 25.', body: "Her packet carries the gate number on its label. Gate **25** is open, so her email goes straight to Bob's inbox. **Tap the wall** across from Eve for the next gate.",
+    go: [GATE_X, GY[1], 150, 150, 'Cut gate 22'] })
     .beat(0.8, (s) => { s.wall.g0 = 1; })
     .beat(0.6, (s) => fresh(s.mail, GY[0]))
     .beat(1.0, (s) => { s.mail.num = 1; s.mail.glow = 1; })
@@ -369,7 +374,8 @@ function scene(st) {
     .beat(1.2, (s) => { Object.assign(s.mail, { x: ROOM_X, s: 0.46, ok: 1 }); s.room0.stroke = C.green; });
 
   // 12. The second gate: 22
-  S.step({ head: 'Remote control uses gate 22.', body: 'Eve\'s packet asks for gate **22**, the gate for running a computer from far away. Bob keeps it **shut**, so her packet burns.' })
+  S.step({ head: 'Remote control uses gate 22.', body: 'Eve\'s packet asks for gate **22**, the gate for running a computer from far away. Bob keeps it **shut**, so her packet burns. Now you run the gates. **Tap Bob** to take over.',
+    go: [SHOP.x + 80, 790, 150, 150, 'Take over for Bob', 'top'] })
     .beat(0.5, (s) => { s.mail.o = 0; s.room0.stroke = C.line; })
     .beat(1.0, (s) => { s.wall.cut1 = 1; s.path1.o = 1; })
     .beat(0.6, (s) => fresh(s.ctl, GY[1]))
@@ -383,7 +389,8 @@ function scene(st) {
     .beat(0.6, (s) => gates(s, r));
 
   // 14. Results
-  S.step({ head: 'Perfect gates.', body: "Alice's emails came through gate **25**. Eve's packets hit gate **22** and **burned**. Bob's shop is open for email and safe from Eve." });
+  S.step({ head: 'Perfect gates.', body: "Alice's emails came through gate **25**. Eve's packets hit gate **22** and **burned**. Bob's shop is open for email and safe from Eve. **Tap Bob's shop** for the rule to remember.",
+    go: [SHOP.x + SHOP.w / 2, 100, 360, 80, 'The rule to remember'] });
   const Q = [[], []];
   WAVE.forEach((it, i) => Q[it.g].push(i));
   const all = WAVE.map((_, i) => 'p' + i);
