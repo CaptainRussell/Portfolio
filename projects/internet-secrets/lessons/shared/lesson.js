@@ -10,13 +10,19 @@
  *                                  // with those choices and play the next step. ctx.drag() makes a piece the
  *                                  // learner drags (or taps) onto a target. meta.optional: the controls show but
  *                                  // Next is not blocked (extras such as a math peek).
+ *                                  // meta.go = [x, y, w, h, label, cls] (or (state) => that array) is the on-screen
+ *                                  // thing the learner taps to move on once the step is at rest (and, on a "your
+ *                                  // turn" step, once its action is done). Every step but the last should have one
+ *                                  // or end with an action, so the bottom-right Next is only the way into the quiz.
  *     quiz: [{q, choices: [...], answer: 0, why: 'one sentence'}],   // five questions
  *     pass: 4,                     // correct answers needed (default 4 of 5, 80%)
  *     next: {href, label},         // where the score screen sends the learner: the next lesson, or the final review
  *   });
  *
- * Controls: Next (or the right arrow or Space) plays the next step, and skips to the end of a step that is
- * still playing. Back (left arrow) shows the previous step at rest. Replay (R) plays the current step again.
+ * Controls: the learner moves on by tapping something on the stage (an action, or the step's meta.go cue);
+ * tapping the stage while a step plays skips to its end. The right arrow or Space does the same from the
+ * keyboard. The bottom-right button shows only on the last step (the big way into the quiz), or on a step
+ * that has neither an action nor a cue. Back (left arrow) shows the previous step at rest. Replay (R) plays the current step again.
  * The dots jump to any step. After the last step, Next opens the self-check quiz.
  * Reduced motion: steps appear at rest, with no movement.
  *
@@ -62,8 +68,26 @@
     let player = new root.Anim.Player(svg, sc);
     let step = -1, raf = 0, playing = false, t0 = 0, reached = 0;
     const doneActs = {};
+    // a tap target on the stage, centered on (x, y), w by h scene units
+    function hit(x, y, w, h, label, onTap, cls) {
+      const b = document.createElement('button');
+      b.className = 'lz-hit' + (cls ? ' ' + cls : '');
+      Object.assign(b.style, { left: (x / sc.w * 100) + '%', top: (y / sc.h * 100) + '%', width: (w / sc.w * 100) + '%', height: (h / sc.h * 100) + '%' });
+      b.setAttribute('aria-label', label);
+      b.innerHTML = `<span>${esc(label)}</span>`;
+      b.addEventListener('click', () => onTap(b));
+      ov.appendChild(b); return b;
+    }
+    // the step's "move on" cue: something on the stage to tap, in the same beckoning outline as every action
+    function showGo() {
+      const m = sc.steps[step].meta;
+      if (!m.go || step >= N - 1 || playing || pending() || ov.querySelector('.lz-go')) return null;
+      const g = typeof m.go === 'function' ? m.go(state) : m.go;
+      const b = hit(g[0], g[1], g[2], g[3], g[4], () => next(), 'lz-go' + (g[5] ? ' ' + g[5] : ''));
+      b.setAttribute('aria-label', g[4] + ' (continue)');
+      return b;
+    }
     const pending = () => { const m = sc.steps[step].meta; return !!(m.act && !m.optional && !doneActs[step]); };
-    const hasAct = () => { const m = sc.steps[step].meta; return !!(m.act && (m.optional || !doneActs[step])); };
 
     function paint(frac) {
       dots.querySelectorAll('.lz-dot').forEach((d, i) => {
@@ -80,10 +104,12 @@
       $('.lz-head').innerHTML = rich(m.head || '');
       $('.lz-body').innerHTML = rich(m.body || '');
       $('[data-act="back"]').disabled = step <= 0;
-      const nb = $('[data-act="next"]'), wait = pending();
+      const nb = $('[data-act="next"]'), wait = pending(), last = step === N - 1;
+      // moving on happens on the stage; the bottom-right box is only the way into the quiz (or a step with nothing to tap)
+      nb.hidden = !last && !!(m.act || m.go);
       nb.disabled = wait; nb.classList.toggle('wait', wait); nb.classList.remove('nudge');
-      nb.querySelector('span').textContent = wait ? 'Your turn' : step === N - 1 ? 'Check yourself' : 'Next';
-      nb.classList.toggle('big', step === N - 1 && !wait);   // the way into the quiz is a big box, bottom right
+      nb.querySelector('span').textContent = wait ? 'Your turn' : last ? 'Check yourself' : 'Next';
+      nb.classList.toggle('big', last && !wait);   // the way into the quiz is a big box, bottom right
     }
 
     // ---- learner actions. A step's meta.act(ctx) builds its controls once the step has finished playing.
@@ -92,7 +118,8 @@
     function showAll() { hidden.forEach((id) => { const n = player.h[id] && player.h[id]._node; if (n) n.style.visibility = ''; }); hidden.clear(); }
     function startAct() {
       clearAct();
-      if (!hasAct()) return;
+      const m = sc.steps[step].meta;
+      if (!m.act) { const g = showGo(); focusIn(g); return; }
       if (pending()) host.classList.add('acting');
       const k = step;
       const ctx = {
@@ -100,15 +127,7 @@
         // percent position on the stage for a point in scene units
         pos: (x, y) => ({ left: (x / sc.w * 100) + '%', top: (y / sc.h * 100) + '%' }),
         // a tap target on the stage, centered on (x, y), w by h scene units
-        hit(x, y, w, h, label, onTap, cls) {
-          const b = document.createElement('button');
-          b.className = 'lz-hit' + (cls ? ' ' + cls : '');
-          Object.assign(b.style, ctx.pos(x, y), { width: (w / sc.w * 100) + '%', height: (h / sc.h * 100) + '%' });
-          b.setAttribute('aria-label', label);
-          b.innerHTML = `<span>${esc(label)}</span>`;
-          b.addEventListener('click', () => onTap(b));
-          ov.appendChild(b); return b;
-        },
+        hit,
         // a piece the learner drags onto a target (to = {x, y, r, label}); a plain tap or Enter also drops it,
         // so it works without dragging. color fills the piece. onDrop() runs once.
         drag(x, y, w, h, label, to, onDrop, opt) {
@@ -159,12 +178,14 @@
           const t = document.createElement('div'); t.className = 'lz-toast'; t.textContent = msg;
           ov.appendChild(t); setTimeout(() => t.remove(), 1600);
         },
-        // the action is finished but its result stays on screen: Next lights up, and the learner moves on when ready
+        // the action is finished but its result stays on screen: the step's cue on the stage appears (or, on the
+        // last step, the way into the quiz lights up), and the learner moves on when ready
         ready(patch) {
-          if (step !== k || doneActs[k]) return;
-          Object.assign(state, patch || {});
-          doneActs[k] = true; host.classList.remove('acting'); caption();
-          const nb = $('[data-act="next"]'); nb.classList.add('nudge'); nb.focus({ preventScroll: true });
+          if (step !== k) return;
+          if (!doneActs[k]) { Object.assign(state, patch || {}); doneActs[k] = true; host.classList.remove('acting'); caption(); }
+          const g = showGo();
+          if (g) g.focus({ preventScroll: true });
+          else if (step === N - 1) { const nb = $('[data-act="next"]'); nb.classList.add('nudge'); nb.focus({ preventScroll: true }); }
         },
         done(patch) {
           if (step !== k) return;
@@ -174,10 +195,12 @@
           if (k < N - 1) play(k + 1); else caption();
         },
       };
+      // a finished action can be done again (Back, then pick again); its cue shows beside it
       sc.steps[k].meta.act(ctx);
-      const first = ov.querySelector('button, input') || slot.querySelector('button, input');
-      if (first && document.activeElement && host.contains(document.activeElement)) first.focus({ preventScroll: true });
+      showGo();
+      focusIn(ov.querySelector('button, input') || slot.querySelector('button, input'));
     }
+    function focusIn(el) { if (el && document.activeElement && host.contains(document.activeElement)) el.focus({ preventScroll: true }); }
 
     function finish() { cancelAnimationFrame(raf); playing = false; player.renderEnd(step); paint(1); startAct(); }
     function play(k) {
@@ -202,6 +225,8 @@
     function back() { if (playing) finish(); if (step > 0) rest(step - 1); }
 
     host.addEventListener('click', (e) => {
+      // a tap on the stage while a step plays skips to its end, so its action or cue shows at once
+      if (playing && e.target.closest('.lz-stage')) { finish(); return; }
       const b = e.target.closest('button'); if (!b || !host.contains(b)) return;
       if (b.dataset.act === 'next') next();
       else if (b.dataset.act === 'back') back();

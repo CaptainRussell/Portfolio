@@ -20,10 +20,6 @@
 .m2-peek .eq em{font-style:normal;color:var(--c-green)}
 .m2-num{min-width:40px;padding:6px 0;border-radius:10px;border:2px solid var(--c-line);background:var(--c-panel2);color:var(--c-ink);font:700 15px/1 ui-monospace,monospace;cursor:pointer}
 .m2-num[aria-pressed="true"]{border-color:var(--c-cyan);box-shadow:0 0 0 3px rgba(34,211,238,.25)}
-/* message chips on the stage (step 13) */
-.m2-chip{position:absolute;transform:translate(-50%,-50%);padding:.45em .7em;border-radius:.5em;border:2px solid var(--c-cyan);background:var(--c-panel2);color:var(--c-ink);font:700 1em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.05em;white-space:nowrap;cursor:pointer;animation:lz-beckon 1.6s ease-in-out infinite}
-.m2-chip:hover,.m2-chip:focus-visible{background:rgba(34,211,238,.18)}
-@media (prefers-reduced-motion:reduce){.m2-chip{animation:none}}
 </style>
 </head>
 <body style="--tone:#0d9488">
@@ -35,7 +31,7 @@
 <h1 class="vh">Mixing Secret Colors</h1>
 <main class="wrap">
   <div id="lesson"></div>
-  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Tap a glowing paint can or key when asked, and watch it pour or turn. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">Tap the glowing outline on the screen to keep going. Keys: right arrow or Space to go on, left arrow for Back, R to replay a step.</p>
 </main>
 
 <footer class="pf-foot">
@@ -162,7 +158,8 @@ function scene(st) {
   const spyOff = (s) => { s.spy.o = 0; s.eve.glow = 0; s.eve.pulse = 0; };
 
   // 1. Meet Eve: she copies whatever crosses the open road
-  S.step({ head: 'Alice and Bob need a secret.', body: 'They talk over the open internet, and **Eve** copies everything they send.' })
+  S.step({ head: 'Alice and Bob need a secret.', body: 'They talk over the open internet, and **Eve** copies everything they send. **Tap Alice** to begin.',
+    go: [AL[0], AL[1] + 22, 170, 230, 'Tap Alice'] })
     .beat(1.0, (s) => { ['road', 'roadLbl', 'alice', 'bob', 'eve'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); }, stagger(['road', 'roadLbl', 'alice', 'bob', 'eve'], 0.1))
     .beat(0.4, (s) => { s.ping.o = 1; })
     .beat(0.8, (s) => { s.ping.x = 800; })
@@ -227,7 +224,8 @@ function scene(st) {
     .beat(0.6, (s) => { Object.assign(s.bPub, { x: aSpot[0], y: aSpot[1], s: 1 }); spyOff(s); });
 
   // 10. Same color on both sides; Eve's copies do not have it
-  S.step({ head: 'The same color, on both sides.', body: "Neither secret was sent. Paint cannot be unmixed, so Eve's copies **cannot** make this color." })
+  S.step({ head: 'The same color, on both sides.', body: "Neither secret was sent. Paint cannot be unmixed, so Eve's copies **cannot** make this color. **Tap the shared color** to put it to work.",
+    go: [800, 312, 700, 90, 'Use the shared color', 'top'] })
     .beat(0.7, (s) => { pourA(s, aSpot); pourB(s, bSpot); })
     .beat(0.9, (s) => { s.bPub.paint = SHARED; s.aPub.paint = SHARED; s.bPub.tag = 'Shared'; s.aPub.tag = 'Shared'; })
     .beat(0.6, (s) => { homeA(s); homeB(s); })
@@ -348,7 +346,7 @@ function actMsg(ctx) {
   MSGS.forEach((m, i) => {
     const x = i % 2 ? 400 : 160, y = 405 + 70 * Math.floor(i / 2);
     const at = i === 4 ? [280, 545] : [x, y];
-    const b = document.createElement('button'); b.className = 'm2-chip'; b.dataset.msg = m;
+    const b = document.createElement('button'); b.className = 'lz-chip'; b.dataset.msg = m;
     b.textContent = m; Object.assign(b.style, ctx.pos(at[0], at[1]));
     b.addEventListener('click', () => ctx.done({ msg: m }));
     ctx.ov.appendChild(b); fit.push(b);

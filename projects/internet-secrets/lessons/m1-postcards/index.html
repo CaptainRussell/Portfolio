@@ -20,7 +20,7 @@
 <h1 class="vh">Postcards on the Internet</h1>
 <main class="wrap">
   <div id="lesson"></div>
-  <p class="muted" style="color:var(--soft);font-size:13.5px">When a step says <b>Your turn</b>, do the action on the screen to keep going. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">Tap the glowing outline on the screen to keep going. Keys: right arrow or Space to go on, left arrow for Back, R to replay a step.</p>
 </main>
 
 <footer class="pf-foot">
@@ -136,7 +136,7 @@ function scene(st) {
   const unglow = (s) => ['wifi', 'A', 'B', 'D', 'F', 'G'].forEach((r) => { s[r].glow = 0; });
 
   // 1. Pick a message
-  S.step({ head: 'Send Bob a message.', body: 'You are **Alice**. Pick a message for Bob below.',
+  S.step({ head: 'Send Bob a message.', body: 'You are **Alice**. Tap a message for Bob, then tap **Send**.',
     act: actPick });
   Anim.section(S, 'PART 1', 'Plain postcards');
   S.beat(1.0, (s) => {
@@ -215,7 +215,8 @@ function scene(st) {
   S.beat(0.7, (s) => ids.forEach((_, i) => { s['sl' + i].o = 1; s['sn' + i].o = 1; }), stagger(ids.map((_, i) => 'sl' + i), 0.1));
 
   // 7. One tap sorted them: Bob reads the whole message
-  S.step({ head: 'Bob has the whole message.', body: 'The numbers put it back together, even when the pieces arrive out of order.' })
+  S.step({ head: 'Bob has the whole message.', body: 'The numbers put it back together, even when the pieces arrive out of order. But was anyone else watching? **Tap Eve**.',
+    go: [P.eve[0], P.eve[1], 190, 190, 'Tap Eve'] })
     .beat(0.9, (s) => ids.forEach((id, i) => Object.assign(s[id], { x: slotX(i, n), edge: C.green })), stagger(ids, 0.12))
     .beat(0.9, (s) => { ids.forEach((id, i) => { Object.assign(s[id], { o: 0, x: TRAY.x }); s['sl' + i].o = 0; s['sn' + i].o = 0; }); Object.assign(s.bobMsg, { o: 1, s: 1 }); s.bob.glow = 1; s.jam.o = 0.35; s.jamTxt.o = 0; });
 
@@ -247,15 +248,16 @@ function actPick(ctx) {
   bub.style.left = ((P.alice[0] + 20) / 16) + '%'; bub.style.top = (HEAD_Y / 9) + '%'; bub.textContent = '?';
   const fit = () => { const k = ctx.ov.clientWidth / 1600; bub.style.fontSize = (30 * 0.8 * k) + 'px'; };
   fit(); window.addEventListener('resize', fit); ctx.ov.appendChild(bub);
-  const btns = MSGS.map((m) => {
-    const b = document.createElement('button'); b.className = 'lz-btn lz-pick'; b.dataset.msg = m; b.setAttribute('aria-pressed', 'false');
-    b.innerHTML = `<span style="font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.06em">${m}</span>`;
+  // five message chips on the open map, then Send on the stage under them
+  const btns = MSGS.map((m, i) => {
+    const b = document.createElement('button'); b.className = 'lz-chip'; b.dataset.msg = m; b.setAttribute('aria-pressed', 'false');
+    b.textContent = m; Object.assign(b.style, ctx.pos(900, 240 + 80 * i));
     b.addEventListener('click', () => { pick = m; bub.textContent = disp(m); bub.classList.add('on'); btns.forEach((x) => x.setAttribute('aria-pressed', x === b)); go.disabled = false; });
-    ctx.slot.appendChild(b); return b;
+    ctx.ov.appendChild(b); return b;
   });
-  const go = document.createElement('button'); go.className = 'lz-btn go'; go.dataset.send = ''; go.disabled = true;
-  go.innerHTML = '<span>Send this message</span>'; ctx.slot.appendChild(go);
-  go.addEventListener('click', () => { if (pick) ctx.done({ msg: pick }); });
+  const size = () => btns.forEach((b) => { b.style.fontSize = (24 * ctx.ov.clientWidth / 1600) + 'px'; });
+  size(); window.addEventListener('resize', size);
+  const go = ctx.button(900, 735, 'Send this message', () => { if (pick) ctx.done({ msg: pick }); }); go.dataset.send = ''; go.disabled = true;
 }
 function actCut(ctx) {
   ctx.hit(STRIP_X, 388, 120, 110, 'Cut', () => ctx.done({}));

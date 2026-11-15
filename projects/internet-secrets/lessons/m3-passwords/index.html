@@ -74,7 +74,7 @@
 <h1 class="vh">Crack the Password</h1>
 <main class="wrap">
   <div id="lesson"></div>
-  <p class="muted" style="color:var(--soft);font-size:13.5px">Make up a practice password. Never type a real one. Nothing you type leaves this page. Keys: right arrow or Space for Next, left arrow for Back, R to replay a step.</p>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">Make up a practice password. Never type a real one. Nothing you type leaves this page. Tap the glowing outline on the screen to keep going. Keys: right arrow or Space to go on, left arrow for Back, R to replay a step.</p>
 </main>
 
 <footer class="pf-foot">
@@ -366,7 +366,8 @@ function scene(st) {
     .beat(0.5, (s) => { s.chgBox.o = 1; s.pwBox.glow = 1; s.pwBox.edge = C.amber; })
     .beat(0.7, (s) => { s.pwBox.content = pw2; s.chgCh.o = 1; s.chgLbl.o = 1; })
     .beat(0.4, (s) => { s.pwBox.glow = 0; });
-  S.step({ head: 'One letter changes everything.', body: 'A brand new fingerprint, not a small change. Now try to **un-blend** it back into the password.', act: actUnblend });
+  S.step({ head: 'One letter changes everything.', body: 'A brand new fingerprint, not a small change. Now try to **un-blend** it back into the password.', act: actUnblend,
+    go: [480, 650, 330, 90, 'See where sites keep it'] });
   S.beat(0.4, (s) => { fade(s, ['chgBox', 'chgCh', 'chgLbl']); });
   blend('bar2', [1120, 650], (s) => { s.t2.o = 1; s.t2L.o = 1; s.bar2.edge = C.amber; });
   S.beat(0.5, (s) => { s.matchTxt.o = 1; s.pwBox.o = 0; })
@@ -374,7 +375,7 @@ function scene(st) {
 
   // 7. Sites keep the fingerprint; log in
   S.step({ head: 'Good sites keep only the fingerprint.', body: 'Left, the bad way: real passwords. Right, the good way: each **username** with only its **fingerprint**. At login the site blends what you type and compares. **Log in** with her password and with a wrong one. Try all four if you like.',
-    act: (ctx) => actLogin(ctx, pw, pw2) })
+    act: (ctx) => actLogin(ctx, pw, pw2), go: [SITE[0], SITE[1], 170, 170, 'Try two sites'] })
     .beat(0.6, (s) => { fade(s, ['blender', 'bLbl', 'bar2', 't1', 't2', 't1L', 't2L', 'back', 'backQ', 'matchTxt']); })
     // the bad cabinet comes back with the plain passwords; the good one fills with fingerprints
     .beat(0.9, (s) => {
@@ -429,13 +430,15 @@ function scene(st) {
     ['shA', SA, gs, 50, 'pwA', 'mA', 'blA', 'barA', hA]);
 
   // 10. Site B salts and blends: different fingerprints
-  salt(S.step({ head: 'Same password, different fingerprints.', body: 'Site B uses **different salt**, so its fingerprint is different too. A thief who cracks one site still has to start over on the other.' }),
+  salt(S.step({ head: 'Same password, different fingerprints.', body: 'Site B uses **different salt**, so its fingerprint is different too. A thief who cracks one site still has to start over on the other. Now be the thief: **tap a fingerprint** to steal it.',
+    go: [SB[0], 700, 340, 90, 'Steal it'] }),
     ['shB', SB, gbs, 56, 'pwB', 'mB', 'blB', 'barB', hB])
     .beat(0.6, (s) => { Object.assign(s.saltSame, { o: 1, content: 'DIFFERENT', fill: C.green }); });
 
   // 10. Be the thief
   const lst = ['list', 'listLbl'].concat(STOLEN.flatMap((_, i) => ['sn' + i, 'sb' + i, 'sh' + i]));
-  S.step({ head: 'Be the thief.', body: 'Eve stole a list of fingerprints. She can only **guess, blend and compare**. Tap **Try password combinations**.', act: actCrack })
+  S.step({ head: 'Be the thief.', body: 'Eve stole a list of fingerprints. She can only **guess, blend and compare**. Tap **Try password combinations**.', act: actCrack,
+    go: [1010, 448, 900, 92, 'Why did this one survive?'] })
     .beat(0.6, (s) => { fade(s, ['alice', 'siteA', 'siteB', 'pwA', 'pwB', 'mA', 'mB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame']); })
     .beat(1.0, (s) => {
       Object.assign(s.eve, { x: 260, y: 420, o: 1, s: 1, pulse: 0, glow: 1 });
