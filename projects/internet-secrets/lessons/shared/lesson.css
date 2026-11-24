@@ -139,7 +139,7 @@
   .lz{margin:16px -6px 8px;padding:10px;border-radius:16px}
   .lz-btn{padding:10px 12px}
   .lz-dots{min-width:60px;gap:4px}
-  .lz-bar .lz-btn.ghost span,.lz-bar:not(.end) [data-act="back"] span{display:none}
+  .lz-bar:not(.end) .lz-btn.ghost span,.lz-bar:not(.end) [data-act="back"] span{display:none}
   .lz-cap{min-height:136px}
 }
 @media (prefers-reduced-motion:reduce){
@@ -182,3 +182,18 @@ a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 /* the "move on" cue: the same beckoning outline as an action, with a chevron after its label */
 .lz-hit.lz-go span::after{content:" \203A";font-weight:900}
 @media (max-width:640px){.lz-hit span{font-size:10.5px;padding:2px 6px}}
+
+/* Send my answers (shared/submit.js): an opt-in box under the score, in the main window */
+.lz-send{display:flex;align-items:center;gap:10px 18px;flex-wrap:wrap;margin:0 0 14px;padding:14px 16px;border-radius:14px;border:1px dashed var(--c-cyan);background:rgba(34,211,238,.06)}
+.lz-send-txt{flex:1 1 300px}
+.lz-send-txt p{margin:0;color:var(--c-soft);font-size:15px}
+.lz-send-txt .lz-count{margin-bottom:4px}
+.lz-btn.send{min-height:46px;padding:12px 18px;border-color:var(--c-cyan);font-size:15px}
+.lz-btn.send:hover:not(:disabled){background:rgba(34,211,238,.16)}
+.lz-send-msg{flex-basis:100%;margin:0;color:var(--c-soft);font-size:14px}
+.lz-send-msg:empty{display:none}
+.lz-send.sent{border-style:solid;border-color:var(--c-green);background:rgba(52,245,164,.06)}
+.lz-send.sent .lz-btn.send{opacity:1;border-color:var(--c-green);color:var(--c-green);background:transparent}
+.lz-send.sent .lz-send-msg{color:var(--c-green)}
+.lz-send.err .lz-send-msg{color:var(--c-red)}
+@media (max-width:640px){.lz-btn.send{flex:1 1 100%;justify-content:center}}

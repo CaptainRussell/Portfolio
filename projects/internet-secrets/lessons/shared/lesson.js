@@ -251,8 +251,9 @@
     }
 
     // ------------------------------------------------------------ quiz
-    let qi = 0, right = 0;
-    function openQuiz() { qi = 0; right = 0; quiz.classList.remove('scored'); swap('quiz'); ask(); }
+    let qi = 0, right = 0, picks = [];
+    const born = Date.now();   // minutes in the lesson, for the anonymous results (shared/submit.js)
+    function openQuiz() { qi = 0; right = 0; picks = []; quiz.classList.remove('scored'); swap('quiz'); ask(); }
     function ask() {
       const Q = L.quiz[qi];
       quiz.innerHTML = `
@@ -267,6 +268,7 @@
     function pick(c) {
       const Q = L.quiz[qi], ok = c === Q.answer;
       if (ok) right++;
+      picks[qi] = c;
       quiz.querySelectorAll('.lz-choice').forEach((b, i) => {
         b.disabled = true;
         if (i === Q.answer) { b.classList.add('right'); b.querySelector('.lz-key').innerHTML = I.check; }
@@ -297,6 +299,10 @@
           <button class="lz-btn ${L.next ? 'ghost' : 'go'}" data-q="retake"><span>Retake quiz</span></button>
           ${L.next ? `<a class="lz-btn go big" href="${esc(L.next.href)}"><span>${esc(L.next.label)}</span>${I.next}</a>` : ''}
         </div>`;
+      const S = root.Submit;
+      if (S) S.panel(quiz.querySelector('.lz-score'), { lesson: L.id, attempt: S.count(L.id), score: right, of: L.quiz.length, pass,
+        answers: L.quiz.map((q, i) => (picks[i] === q.answer ? 1 : 0)), picks: picks.slice(), key: L.quiz.map((q) => q.answer),
+        questions: L.quiz.map((q) => S.plain(q.q)), secs: (Date.now() - born) / 1000 });
       quiz.querySelector('h2').focus({ preventScroll: true });
       quiz.querySelector('[data-q="watch"]').addEventListener('click', () => { swap('watch'); rest(0); });
       quiz.querySelector('[data-q="retake"]').addEventListener('click', openQuiz);
