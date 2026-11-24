@@ -3,7 +3,8 @@
  *
  *   FR.CHAPTERS     the four chapters in order (the chapter picker and each chapter's last button)
  *   FR.next(id)     where a chapter's score screen sends the learner
- *   Anim.KINDS.money  a dollar figure that counts smoothly between values: props num, fill; cfg size, weight, anchor, pre, post, k (show in thousands)
+ *   Anim.KINDS.money  a dollar figure that counts smoothly between values: props num, fill; cfg size, weight, anchor, pre, post,
+ *                     k (show in thousands), les (an LES amount, 7737.00), fit (as for text)
  *   FR.fmt(n)       "$10,732", "−$20,000"
  * Code organized with help from Claude (Anthropic), Nov 2026.
  */
@@ -23,6 +24,7 @@
   }
   const fmt = (n, o) => {
     o = o || {};
+    if (o.les) return (n < 0 ? '-' : '') + Math.abs(n).toFixed(2);   // an LES amount: 7737.00
     let v = Math.round(n);
     const neg = v < 0; v = Math.abs(v);
     const body = o.k ? (v / 1000).toLocaleString('en-US', { maximumFractionDigits: v < 10000 && v % 1000 ? 1 : 0 }) + 'K' : v.toLocaleString('en-US');
@@ -33,7 +35,7 @@
     create(g, cfg) {
       const r = el('g', {}, g);
       const t = el('text', { 'font-family': cfg.mono ? root.Anim.MONO : FONT, 'font-size': cfg.size || 40, 'font-weight': cfg.weight || 800,
-        'text-anchor': cfg.anchor || 'middle', ...(cfg.fit === false ? { 'data-fit': 'no' } : {}) }, r);
+        'text-anchor': cfg.anchor || 'middle', ...(cfg.fit != null ? { 'data-fit': cfg.fit === false ? 'no' : cfg.fit } : {}) }, r);
       return { root: r, t, cfg, s: null, a: {} };
     },
     update(h, p) {
