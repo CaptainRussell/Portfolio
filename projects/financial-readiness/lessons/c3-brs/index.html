@@ -1,0 +1,238 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 3: The BRS · Financial Readiness · Scott D. Russell</title>
+<meta name="description" content="Chapter 3 of Financial Readiness: the three parts of the Blended Retirement System, and what the 5% rule is worth after 20 years.">
+<link rel="icon" href="../../../../shared/favicon.png" type="image/png">
+<link rel="stylesheet" href="../../../../shared/portfolio.css">
+<link rel="stylesheet" href="../../../internet-secrets/lessons/shared/lesson.css">
+<script src="../../../../shared/portfolio.js"></script>
+</head>
+<body style="--tone:#16a34a">
+<header class="pf-bar">
+  <a class="pf-up" href="../../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Financial Readiness</span><span class="pf-brand"><img class="pf-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="26" height="26"><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<h1 class="vh">The Blended Retirement System</h1>
+<main class="wrap">
+  <div id="lesson"></div>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">Tap the glowing outline on the screen to keep going. Keys: right arrow or Space to go on, left arrow for Back, R to replay a step.</p>
+</main>
+
+<footer class="pf-foot">
+  <img class="foot-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="52" height="52">
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">Operations Flight Commander · AFROTC Detachment 250, Iowa State University</p>
+  <p class="source-line">Financial Readiness · AFAS 3410, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government. Projections are estimates, not financial advice.</p>
+</footer>
+
+<script src="../../../internet-secrets/lessons/shared/engine.js"></script>
+<script src="../../../internet-secrets/lessons/shared/lesson.js"></script>
+<script src="../shared/fr.js"></script>
+<script>
+/* =====================================================================
+   Chapter 3: The Blended Retirement System
+   The three parts: the pension (2% x years x the average of the highest
+   36 months of base pay, at 20 or more years), the TSP (1% automatic
+   from 60 days, then a match of up to 4% more after 2 full years, 5% in
+   all when you put in 5%) and continuation pay (a bonus between 7 and 12
+   years for 4 more years). The learner picks a TSP contribution and sees
+   the monthly money and what it grows to after 20 years next to the
+   other choices. Then Roth or Traditional, and the 5% rule.
+   Sources: Congressional Research Service RL34751 (BRS overview and the
+   pension share), DoD Blended Retirement System fact sheet (Jan 2026),
+   DFAS 2026 officer basic pay table, my LES (2026 TSP agency YTD).
+   The 20 year projection uses a typical officer path at 2026 pay with no
+   raises (O-1, O-2 from year 3, O-3 from year 5, O-4 from year 11,
+   O-5 from year 17), monthly contributions, 7% a year after inflation.
+   Code organized with help from Claude (Anthropic).
+   ===================================================================== */
+const { Scene, C } = Anim;
+const fmt = FR.fmt;
+
+// ---------------------------------------------------------------- the money
+const BASE1 = 4150.20;
+const pay = (y) => (y <= 2 ? 4150.2 : y <= 3 ? 5446.2 : y <= 4 ? 6272.4 : y <= 6 ? 7382.7 : y <= 10 ? 7737 : y <= 12 ? 8900 : y <= 16 ? 9888.3 : 11000);
+// what the Air Force puts in for a given contribution: 1% always; after 2 years, 100% of the first 3% and 50% of the next 2%
+const govPct = (x, yr) => (yr <= 2 ? 1 : 1 + Math.min(x, 3) + Math.max(0, Math.min(x, 5) - 3) * 0.5);
+function at20(x) {
+  let b = 0;
+  for (let y = 1; y <= 20; y++) for (let m = 0; m < 12; m++) b = b * Math.pow(1.07, 1 / 12) + pay(y) * (x + govPct(x, y)) / 100;
+  return Math.round(b);
+}
+const CHOICES = [0, 1, 3, 5];
+const END = CHOICES.map(at20);
+const YTD = 851.07 + 3404.28;   // my LES: TSP agency automatic + match, 2026 so far
+
+function scene(st) {
+  const S = new Scene('fr3');
+  const all = [];
+  const add = (id, kind, cfg, props) => { all.push(id); return S.add(id, kind, cfg, props); };
+  const X = st.pct, xi = Math.max(0, CHOICES.indexOf(X));
+
+  // ---- the three parts, as tabs along the top
+  const TABS = [['Pension', 'Defined benefit'], ['TSP', 'Defined contribution'], ['Continuation pay', 'Mid-career bonus']];
+  TABS.forEach(([t, sub], i) => {
+    const x = 300 + i * 500;
+    add('tab' + i, 'rect', {}, { x: x - 220, y: 260, w: 440, h: 360, rx: 28, fill: C.panel2, stroke: C.line, sw: 3, o: 0 });
+    add('tabN' + i, 'text', { size: 120, anchor: 'middle', weight: 850, mono: true }, { x, y: 420, content: String(i + 1), fill: C.faint, o: 0 });
+    add('tabT' + i, 'text', { size: 46, anchor: 'middle', weight: 800 }, { x, y: 520, content: t, fill: C.ink, o: 0 });
+    add('tabS' + i, 'text', { size: 28, anchor: 'middle', weight: 600 }, { x, y: 568, content: sub, fill: C.soft, o: 0 });
+  });
+  add('title', 'text', { size: 52, anchor: 'middle', weight: 800 }, { x: 800, y: 170, content: 'The Blended Retirement System', fill: C.ink, o: 0 });
+  add('since', 'text', { size: 28, anchor: 'middle', weight: 600 }, { x: 800, y: 214, content: 'Everyone who joined on or after 1 January 2018', fill: C.soft, o: 0 });
+
+  // ---- 1: the pension, 2% a year
+  add('pHead', 'text', { size: 46, anchor: 'start', weight: 800 }, { x: 120, y: 140, content: 'Pension: 2% for every year you serve', fill: C.ink, o: 0 });
+  for (let i = 0; i < 30; i++) {
+    const col = i % 10, row = Math.floor(i / 10);
+    add('blk' + i, 'rect', {}, { x: 120 + col * 86, y: 210 + row * 86, w: 74, h: 74, rx: 12, fill: i < 20 ? C.amber : C.panel2, stroke: C.line, sw: i < 20 ? 0 : 2, o: 0, s: 1 });
+  }
+  add('pYears', 'text', { size: 30, anchor: 'start', weight: 700 }, { x: 120, y: 500, content: 'Each block is one year: 2%', fill: C.soft, o: 0 });
+  add('pBig', 'money', { size: 120, anchor: 'start', weight: 850, pre: '', post: '%' }, { x: 1060, y: 330, num: 0, fill: C.amber, o: 0 });
+  add('pBigS', 'text', { size: 30, anchor: 'start', weight: 700 }, { x: 1065, y: 380, content: 'of your top 36 months', fill: C.soft, o: 0 });
+  add('pBigS2', 'text', { size: 30, anchor: 'start', weight: 700 }, { x: 1065, y: 420, content: 'of base pay, for life', fill: C.soft, o: 0 });
+  add('pCatch', 'text', { size: 40, anchor: 'start', weight: 800 }, { x: 120, y: 650, content: 'The catch: serve 20 years. Leave at 19 and get $0.', fill: C.red, o: 0 });
+  add('pStat', 'text', { size: 32, anchor: 'start', weight: 600 }, { x: 120, y: 710, content: 'About half of officers ever collect one (CRS RL34751).', fill: C.soft, o: 0 });
+
+  // ---- 2: the TSP, pick a number
+  add('tHead', 'text', { size: 46, anchor: 'start', weight: 800 }, { x: 120, y: 140, content: 'TSP: the Air Force adds money to yours', fill: C.ink, o: 0 });
+  add('tL1', 'text', { size: 34, anchor: 'start', weight: 700 }, { x: 120, y: 230, content: 'From day 60: 1% of base pay, even if you put in nothing', fill: C.cyan, o: 0 });
+  add('tL2', 'text', { size: 34, anchor: 'start', weight: 700 }, { x: 120, y: 290, content: 'After 2 years: they match you, up to 4% more', fill: C.green, o: 0 });
+  add('tQ', 'text', { size: 40, anchor: 'start', weight: 800 }, { x: 120, y: 410, content: 'How much of your base pay will you put in?', fill: C.ink, o: 0 });
+  CHOICES.forEach((c, i) => {
+    add('c' + i, 'rect', {}, { x: 260 + i * 360 - 130, y: 470, w: 260, h: 170, rx: 26, fill: C.panel2, stroke: C.cyan, sw: 4, o: 0 });
+    add('ct' + i, 'text', { size: 76, anchor: 'middle', weight: 850, mono: true }, { x: 260 + i * 360, y: 582, content: c + '%', fill: C.cyan, o: 0 });
+  });
+
+  // ---- 2b: the monthly money for that choice, as two stacks
+  const you = Math.round(BASE1 * X) / 100, gov = Math.round(BASE1 * govPct(X, 3)) / 100;
+  const SY = 720, K = 0.9;   // stacks grow up from SY, K units per dollar
+  add('mHead', 'text', { size: 44, anchor: 'start', weight: 800 }, { x: 120, y: 140, content: `You picked ${X}%. Each month, as a 2d Lt after 2 years:`, fill: C.ink, o: 0 });
+  add('sYou', 'rect', {}, { x: 300, y: SY, w: 260, h: 0, rx: 10, fill: C.cyan, o: 0 });
+  add('sGov', 'rect', {}, { x: 700, y: SY, w: 260, h: 0, rx: 10, fill: C.green, o: 0 });
+  add('sYouV', 'money', { size: 52, anchor: 'middle', weight: 850, mono: true }, { x: 430, y: SY - 30, num: 0, fill: C.cyan, o: 0 });
+  add('sGovV', 'money', { size: 52, anchor: 'middle', weight: 850, mono: true }, { x: 830, y: SY - 30, num: 0, fill: C.green, o: 0 });
+  add('sYouL', 'text', { size: 32, anchor: 'middle', weight: 700 }, { x: 430, y: SY + 56, content: `You (${X}%)`, fill: C.ink, o: 0 });
+  add('sGovL', 'text', { size: 32, anchor: 'middle', weight: 700 }, { x: 830, y: SY + 56, content: `Air Force (${govPct(X, 3)}%)`, fill: C.ink, o: 0 });
+  add('sNote', 'text', { size: 36, anchor: 'start', weight: 800 }, { x: 1060, y: 330, content: X >= 5 ? 'Every free dollar.' : 'Free money left behind:', fill: X >= 5 ? C.green : C.red, o: 0 });
+  add('sLeft', 'money', { size: 64, anchor: 'start', weight: 850, mono: true, post: ' a year' }, { x: 1060, y: 410, num: Math.round(BASE1 * (5 - govPct(X, 3)) / 100 * 12), fill: C.red, o: 0 });
+  add('sMine', 'text', { size: 28, anchor: 'start', weight: 600 }, { x: 1060, y: 480, content: 'The Air Force has put', fill: C.soft, o: 0 });
+  add('sMine2', 'text', { size: 28, anchor: 'start', weight: 600 }, { x: 1060, y: 518, content: `${fmt(YTD)} in my TSP in 2026.`, fill: C.soft, o: 0 });
+
+  // ---- 2c: 20 years later, all four choices
+  add('eHead', 'text', { size: 44, anchor: 'start', weight: 800 }, { x: 120, y: 140, content: 'Your TSP after 20 years, for each choice', fill: C.ink, o: 0 });
+  add('eSub', 'text', { size: 26, anchor: 'start', weight: 600 }, { x: 120, y: 184, content: '2026 pay, 7% after inflation', fill: C.soft, o: 0 });
+  const EB = 760, EMAX = 400000, EH = 480;
+  CHOICES.forEach((c, i) => {
+    const x = 300 + i * 300, h = END[i] / EMAX * EH, me = i === xi;
+    add('e' + i, 'rect', {}, { x: x - 95, y: EB, w: 190, h: 0, rx: 12, fill: me ? C.amber : C.cyan, fo: me ? 1 : 0.55, o: 0 });
+    add('ev' + i, 'money', { size: 38, anchor: 'middle', weight: 850, mono: true, k: true }, { x, y: EB - h - 20, num: END[i], fill: me ? C.amber : C.ink, o: 0 });
+    add('el' + i, 'text', { size: 32, anchor: 'middle', weight: 800, mono: true }, { x, y: EB + 46, content: c + '%' + (me ? ' (you)' : ''), fill: me ? C.amber : C.soft, o: 0 });
+  });
+  add('eDiff', 'text', { size: 34, anchor: 'start', weight: 800 }, { x: 1290 - 40, y: 300, content: '', fill: C.green, o: 0 });
+
+  // ---- 3: continuation pay
+  add('cHead', 'text', { size: 46, anchor: 'start', weight: 800 }, { x: 120, y: 140, content: 'Continuation pay: a bonus to stay', fill: C.ink, o: 0 });
+  const TX0 = 140, TX1 = 1460, tx = (y) => TX0 + (TX1 - TX0) * y / 20, TY = 430;
+  add('cLine', 'rect', {}, { x: TX0, y: TY - 4, w: TX1 - TX0, h: 8, rx: 4, fill: C.line, o: 0 });
+  add('cWin', 'rect', {}, { x: tx(7), y: TY - 34, w: 0, h: 68, rx: 12, fill: C.violet, fo: 0.35, stroke: C.violet, sw: 3, o: 0 });
+  [2, 7, 12, 20].forEach((y) => add('cy' + y, 'text', { size: 28, anchor: 'middle', weight: 700, mono: true }, { x: tx(y), y: TY + 80, content: y ? `${y} yrs` : 'Day 1', fill: C.faint, o: 0 }));
+  add('cWinL', 'text', { size: 32, anchor: 'middle', weight: 800 }, { x: tx(9.5), y: TY - 60, content: 'Offered between 7 and 12 years', fill: C.violet, o: 0 });
+  add('c2y', 'text', { size: 26, anchor: 'middle', weight: 700 }, { x: tx(2), y: TY - 60, content: 'Match starts', fill: C.green, o: 0 });
+  add('c20', 'text', { size: 26, anchor: 'middle', weight: 700 }, { x: tx(20) - 40, y: TY - 60, content: 'Pension', fill: C.amber, o: 0 });
+  add('cAmt', 'text', { size: 40, anchor: 'start', weight: 800 }, { x: 140, y: 650, content: 'At least 2.5 months of base pay, for 4 more years of service', fill: C.ink, o: 0 });
+  add('cEx', 'text', { size: 32, anchor: 'start', weight: 600 }, { x: 140, y: 710, content: `A Major over 12 years: 2.5 × ${fmt(9888.30)} = ${fmt(2.5 * 9888.30)}, in one payment.`, fill: C.soft, o: 0 });
+
+  // ---- Roth or Traditional
+  add('rHead', 'text', { size: 46, anchor: 'start', weight: 800 }, { x: 120, y: 140, content: 'Roth or Traditional?', fill: C.ink, o: 0 });
+  [['Roth', 'Pay the tax now.', 'Every dollar comes out tax free.', C.green], ['Traditional', 'Skip the tax now.', 'Pay tax when you take it out.', C.cyan]].forEach(([t, a, b, col], i) => {
+    const x = 120 + i * 700;
+    add('rc' + i, 'rect', {}, { x, y: 210, w: 640, h: 300, rx: 24, fill: C.panel2, stroke: col, sw: 3, o: 0 });
+    add('rt' + i, 'text', { size: 56, anchor: 'start', weight: 850 }, { x: x + 40, y: 300, content: t, fill: col, o: 0 });
+    add('ra' + i, 'text', { size: 34, anchor: 'start', weight: 700 }, { x: x + 40, y: 380, content: a, fill: C.ink, o: 0 });
+    add('rb' + i, 'text', { size: 30, anchor: 'start', weight: 600 }, { x: x + 40, y: 432, content: b, fill: C.soft, o: 0 });
+  });
+  add('rWhy', 'text', { size: 36, anchor: 'start', weight: 800 }, { x: 120, y: 670, content: 'As a 2d Lt, your tax rate will never be lower.', fill: C.ink, o: 0 });
+  add('rWhy2', 'text', { size: 30, anchor: 'start', weight: 600 }, { x: 120, y: 720, content: 'BAH and BAS are not taxed, so your taxable pay is small.', fill: C.soft, o: 0 });
+  add('rMe', 'text', { size: 30, anchor: 'start', weight: 600 }, { x: 120, y: 770, content: 'Me: 100% Roth TSP, 100% C Fund, and I convert the match to Roth too.', fill: C.green, o: 0 });
+
+  // ---- the rule
+  add('rule', 'text', { size: 300, anchor: 'middle', weight: 900, mono: true }, { x: 800, y: 520, content: '5%', fill: C.green, o: 0, s: 0.6 });
+  add('ruleS', 'text', { size: 44, anchor: 'middle', weight: 800 }, { x: 800, y: 640, content: 'The least you should ever put in the TSP.', fill: C.ink, o: 0 });
+  add('ruleS2', 'text', { size: 32, anchor: 'middle', weight: 600 }, { x: 800, y: 700, content: 'Set it on day 1 in myPay, before you get used to the money.', fill: C.soft, o: 0 });
+
+  const off = (s) => all.forEach((i) => { s[i].o = 0; });
+  const on = (s, list) => list.forEach((i) => { s[i].o = 1; });
+  const tabs = ['title', 'since'].concat(all.filter((i) => /^tab/.test(i)));
+
+  // ================================================================ steps
+  S.step({ head: 'Three parts, one system', body: 'The BRS blends a smaller pension with TSP money and a mid-career bonus. Most of it is up to you.', go: [300, 440, 450, 370, 'Start with the pension'] })
+    .beat(0.8, (s) => { s.title.o = 1; s.since.o = 1; })
+    .beat(1.4, (s) => { on(s, tabs); }, (id) => { const m = /^tab[NTS]?(\d)$/.exec(id); return m ? { w: [+m[1] / 4, (+m[1] + 2) / 4] } : null; });
+
+  S.step({ head: '1. The pension', body: '**2% × years served × the average of your highest 36 months of base pay.** At 20 years that is 40%, paid every month for life.', go: [1260, 340, 440, 220, 'Next: the TSP'] })
+    .beat(0.6, (s) => { off(s); s.pHead.o = 1; s.pYears.o = 1; for (let i = 0; i < 30; i++) { s['blk' + i].o = i < 20 ? 0 : 0.5; } })
+    .beat(2.0, (s) => { for (let i = 0; i < 20; i++) s['blk' + i].o = 1; s.pBig.o = 1; s.pBig.num = 40; s.pBigS.o = 1; s.pBigS2.o = 1; }, (id) => { const m = /^blk(\d+)$/.exec(id); return m ? { w: [+m[1] / 22, (+m[1] + 2) / 22] } : null; })
+    .beat(0.8, (s) => { s.pCatch.o = 1; s.pStat.o = 1; });
+
+  S.step({ head: '2. The TSP: your choice', body: 'Tap how much of your base pay you would put in.',
+    act(ctx) { CHOICES.forEach((c, i) => ctx.hit(260 + i * 360, 555, 270, 180, c + '%', () => ctx.done({ pct: c }), 'quiet')); } })
+    .beat(0.6, (s) => { off(s); s.tHead.o = 1; })
+    .beat(0.8, (s) => { s.tL1.o = 1; })
+    .beat(0.8, (s) => { s.tL2.o = 1; })
+    .beat(0.6, (s) => { s.tQ.o = 1; CHOICES.forEach((c, i) => { s['c' + i].o = 1; s['ct' + i].o = 1; }); });
+
+  S.step({ head: 'Every month', body: X >= 5 ? 'Put in 5% and the Air Force puts in 5%. **Doubled, on day one.**' : `At ${X}%, the Air Force puts in only ${govPct(X, 3)}%. **Put in 5% and they put in 5%.**`, go: [830, SY - (gov * K + 90) / 2 + 40, 320, gov * K + 170, 'And after 20 years?'] })
+    .beat(0.6, (s) => { off(s); s.mHead.o = 1; s.sYouL.o = 1; s.sGovL.o = 1; })
+    .beat(1.6, (s) => { s.sYou.o = 1; s.sYou.h = Math.max(4, you * K); s.sYou.y = SY - Math.max(4, you * K); s.sYouV.o = 1; s.sYouV.num = you; s.sYouV.y = SY - Math.max(4, you * K) - 24;
+      s.sGov.o = 1; s.sGov.h = gov * K; s.sGov.y = SY - gov * K; s.sGovV.o = 1; s.sGovV.num = gov; s.sGovV.y = SY - gov * K - 24; })
+    .beat(0.8, (s) => { s.sNote.o = 1; if (X < 5) s.sLeft.o = 1; s.sMine.o = 1; s.sMine2.o = 1; });
+
+  const diff = END[3] - END[xi];
+  S.step({ head: 'Twenty years later', body: X >= 5 ? 'Same career, same pay. **The 5% habit is the difference.**' : `Same career, same pay. The 5% version ends up **${fmt(diff, { k: true })} ahead.**`, go: [1200, EB - (END[3] / EMAX * EH + 80) / 2, 240, END[3] / EMAX * EH + 90, 'Next: continuation pay', 'top'] })
+    .beat(0.6, (s) => { off(s); s.eHead.o = 1; s.eSub.o = 1; CHOICES.forEach((c, i) => { s['el' + i].o = 1; }); })
+    .beat(2.2, (s) => { CHOICES.forEach((c, i) => { const h = END[i] / EMAX * EH; s['e' + i].o = 1; s['e' + i].h = h; s['e' + i].y = EB - h; s['ev' + i].o = 1; }); },
+      (id) => { const m = /^ev?(\d)$/.exec(id); return m ? { w: [+m[1] / 5, (+m[1] + 2) / 5] } : null; });
+
+  S.step({ head: '3. Continuation pay', body: 'A one-time bonus, offered between 7 and 12 years of service, if you agree to serve 4 more. The Air Force sets the amount each year.', go: [800, 680, 1360, 130, 'Roth or Traditional?'] })
+    .beat(0.6, (s) => { off(s); s.cHead.o = 1; s.cLine.o = 1; [2, 7, 12, 20].forEach((y) => { s['cy' + y].o = 1; }); s.c2y.o = 1; s.c20.o = 1; })
+    .beat(1.0, (s) => { s.cWin.o = 1; s.cWin.w = tx(12) - tx(7); s.cWinL.o = 1; })
+    .beat(0.8, (s) => { s.cAmt.o = 1; s.cEx.o = 1; });
+
+  S.step({ head: 'Roth or Traditional?', body: 'Both get the same match. The question is only **when you pay the tax**.', go: [800, 360, 1420, 310, 'The one rule'] })
+    .beat(0.6, (s) => { off(s); s.rHead.o = 1; })
+    .beat(1.0, (s) => { [0, 1].forEach((i) => ['rc', 'rt', 'ra', 'rb'].forEach((k) => { s[k + i].o = 1; })); })
+    .beat(0.8, (s) => { s.rWhy.o = 1; s.rWhy2.o = 1; s.rMe.o = 1; });
+
+  S.step({ head: 'The one rule', body: 'Put in at least 5% from your first paycheck. Less than that is a pay cut you give yourself. **Chapter 4: money calls.**' })
+    .beat(0.5, (s) => { off(s); })
+    .beat(0.9, (s) => { s.rule.o = 1; s.rule.s = 1; })
+    .beat(0.7, (s) => { s.ruleS.o = 1; s.ruleS2.o = 1; });
+
+  return S;
+}
+
+Lesson.mount(document.getElementById('lesson'), {
+  id: 'fr3',
+  title: 'Chapter 3',
+  state: { pct: 0 },
+  scene,
+  pass: 2,
+  quiz: [
+    { q: 'How much must **you** put in the TSP to get the full 5% from the Air Force?', choices: ['5% of base pay', '1% of base pay', '3% of base pay', 'Nothing at all'], answer: 0,
+      why: 'The 1% is automatic. The match adds up to 4% more, but only when you put in 5%.' },
+    { q: 'You retire after exactly 20 years. Your pension is:', choices: ['40% of your highest 36 months', '20% of your final base pay', '50% of your final base pay', '2% of your highest 36 months'], answer: 0,
+      why: '2% × 20 years = 40% of the average of your highest 36 months of base pay.' },
+    { q: 'When does the TSP **match** start?', choices: ['After 2 years of service', 'On your first day', 'After 60 days', 'At 12 years of service'], answer: 0,
+      why: 'The automatic 1% starts after 60 days. The match starts after 2 full years of service.' },
+  ],
+  next: FR.next('fr3'),
+});
+</script>
+</body>
+</html>
