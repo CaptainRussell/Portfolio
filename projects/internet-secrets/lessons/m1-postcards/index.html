@@ -297,7 +297,22 @@ const quiz = [
     why: 'Every router, and Eve watching them, could read it. Lesson 2 fixes that.' },
 ];
 
-Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 1 · Postcards on the Internet', id: 'm1', state: { msg: 'PIN IS 4821' }, scene, quiz, next: Lessons.next('m1') });
+// A short intro before step 1 (Captain Russell, 24 Nov 2026: learners now start right on Lesson 1), shown until
+// Lesson 1's check is done on this device.
+const INTRO = [
+  { kicker: 'Internet Secrets · Welcome', head: 'How does the internet keep your secrets?',
+    body: 'A short game in four lessons, about 15 minutes. Help **Alice** send messages to **Bob** while **Eve** tries to snoop.',
+    art: '<img src="../../card.svg" alt="" width="96" height="96">', go: ['How to play', 'button'] },
+  { kicker: 'How to play', head: 'Watch, then tap.',
+    body: 'Each step plays a short animation. When it stops, something on the screen glows with a dashed outline. **Tap it** to take your turn or move on. Back and Replay sit under the picture.',
+    go: ['Tap the glowing outline', 'outline'] },
+  { kicker: 'How to finish', head: 'Check yourself, then send.',
+    body: 'Each lesson ends with five quick questions. After Lesson 4, take the final review and tap **Send my answers**. No name is collected.',
+    art: '<div class="lz-path"><b>Lesson 1</b>›<b>2</b>›<b>3</b>›<b>4</b>›<b>Final review</b>›<b class="send">Send my answers</b></div>',
+    go: ['Start Lesson 1', 'button'] },
+];
+Lesson.mount(document.getElementById('lesson'), { title: 'Lesson 1 · Postcards on the Internet', id: 'm1', state: { msg: 'PIN IS 4821' }, scene, quiz,
+  intro: Lessons.scores().m1 == null ? INTRO : null, next: Lessons.next('m1') });
 </script>
 </body>
 </html>

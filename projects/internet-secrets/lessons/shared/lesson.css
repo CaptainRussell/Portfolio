@@ -201,3 +201,23 @@ a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 .lz-send.locked .lz-count{color:var(--c-soft)}
 .lz-send.locked .lz-btn.send:disabled{opacity:.6;border-color:var(--c-line);color:var(--c-soft)}
 @media (max-width:640px){.lz-btn.send{flex:1 1 100%;justify-content:center}}
+
+/* Lesson 1's intro cards: what this is and how to play, one card at a time, same size as the lesson */
+.lz-intro{min-height:min(560px,calc((100vw - 60px) * .5625 + 150px))}
+.lz-icard{min-height:inherit;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;padding:28px 16px 18px;animation:lz-irise .45s ease-out both}
+.lz-icard .lz-body{margin:0 auto;max-width:56ch}
+.lz-icard .lz-head{margin:6px 0 8px;font-size:clamp(22px,3vw,30px);outline:none}
+.lz-iart img,.lz-iart svg{display:block;width:96px;height:96px;margin:0 auto}
+.lz-iart .lz-path{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;font:700 13px/1 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;color:var(--c-soft)}
+.lz-iart .lz-path b{padding:7px 10px;border-radius:9px;border:1px solid var(--c-line);background:var(--c-panel2);color:var(--c-ink)}
+.lz-iart .lz-path b.send{border-color:var(--c-cyan);color:var(--c-cyan)}
+.lz-igo{display:flex;justify-content:center;width:100%}
+.lz-idots{width:min(220px,60%);margin:6px auto 0}
+/* the "tap the glowing outline" demo: the same dashed beckoning outline as every action on the stage */
+.lz-demo{min-width:min(320px,90%);min-height:84px;padding:0 24px;border-radius:16px;border:2px dashed var(--c-cyan);background:rgba(34,211,238,.08);color:var(--c-cyan);
+  font:800 17px/1.2 system-ui,sans-serif;cursor:pointer;animation:lz-beckon-flat 1.6s ease-in-out infinite}
+.lz-demo span::after{content:" \203A";font-weight:900}
+.lz-demo:hover,.lz-demo:focus-visible{background:rgba(34,211,238,.2);border-style:solid}
+@keyframes lz-beckon-flat{0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,.45)}50%{box-shadow:0 0 0 12px rgba(34,211,238,0)}}
+@keyframes lz-irise{from{opacity:0;transform:translateY(10px)}}
+@media (prefers-reduced-motion:reduce){.lz-icard,.lz-demo{animation:none}}
