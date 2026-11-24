@@ -291,7 +291,6 @@ function scene(st) {
   S.add('ctl', 'parcel', { icon: 'terminal', port: 22, tag: 'Control', from: 'from Eve' }, { x: SEND_X, y: GY[1], edge: C.red, num: 0, o: 0, s: 0.8, z: 3 });
   WAVE.forEach((it, i) => S.add('p' + i, 'parcel', { icon: GICON[it.g], port: PORTS[it.g], from: it.k === 'a' ? 'from Alice' : 'from Eve' }, { x: 140, y: GY[it.g], edge: it.k === 'a' ? C.cyan : C.red, o: 0, s: 0.4, z: 3 }));
 
-  Anim.addSection(S);
   const ids = (pre, n) => Array.from({ length: n }, (_, i) => pre + i);
   const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * span, Math.min(1, k * span + 0.5)] }; };
   const gates = (s, open) => open.forEach((on, i) => { s.wall['g' + i] = on ? 1 : 0; });
@@ -301,7 +300,6 @@ function scene(st) {
   // ================================================================ PART 1
   // 1. Alice emails Bob
   S.step({ head: 'Alice wants to email Bob.', body: 'Bob runs a shop on the internet. Alice wants to send him an email. **Tap Send email**.', act: (ctx) => actSend(ctx, 'mail', 'Send email') });
-  Anim.section(S, 'PART 1', "Bob's shop");
   S.beat(0.9, (s) => { ['netLbl', 'roof', 'shopName', 'shop', 'bob'].forEach((id) => { s[id].o = 1; }); GY.forEach((_, i) => { ['room', 'roomIc', 'roomT', 'roomS'].forEach((k) => { s[k + i].o = 1; }); }); })
     .beat(0.7, (s) => { s.alice.o = 1; })
     .beat(0.7, (s) => fresh(s.mail, GY[0]));
@@ -362,7 +360,6 @@ function scene(st) {
   // ================================================================ PART 2
   // 10. The first gate: 25
   S.step({ head: 'Bob cuts a gate for email.', body: 'A gate in the wall has a number, called a **port**. Email uses gate **25**. **Tap the gate** to open it.', act: actOpen25 });
-  Anim.section(S, 'PART 2', 'Numbered gates');
   S.beat(1.0, (s) => { s.wall.cut0 = 1; s.path0.o = 1; });
 
   // 11. Through gate 25

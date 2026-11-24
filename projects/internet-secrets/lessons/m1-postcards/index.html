@@ -126,7 +126,6 @@ function scene(st) {
   const copyFrom = (i) => (i === 0 ? 'D' : 'G');
   ids.forEach((id, i) => S.add('ec' + i, 'packet', { text: texts[i], num: i + 1, tab: TAB, size: 28, w: cardW(texts[i]) }, { x: P[copyFrom(i)][0], y: P[copyFrom(i)][1], o: 0, s: MAP_S, edge: C.red, ink: C.red, z: 8 }));
   S.add('eveMsg', 'packet', { text: disp(msg), size: 30, w: 36 + CH * msg.length }, { x: 470, y: 600, o: 0, s: 0.8, edge: C.red, ink: C.red, z: 9 });
-  Anim.addSection(S);
 
   const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * (span || 0.16), k * (span || 0.16) + 0.6] }; };
   // Move cards to a point, stacked; the router they reach lights up.
@@ -139,7 +138,6 @@ function scene(st) {
   // 1. Pick a message
   S.step({ head: 'Send Bob a message.', body: 'You are **Alice**. Tap a message for Bob, then tap **Send**.',
     act: actPick });
-  Anim.section(S, 'PART 1', 'Plain postcards');
   S.beat(1.0, (s) => {
       ['cafe', 'cafeLbl', 'alice', 'wifi', 'bob'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
       Object.assign(s.eve, { o: 0.35, s: 1 });
@@ -176,7 +174,7 @@ function scene(st) {
   // 4. Router to router; a road jams and one postcard is lost on it
   S.step({ head: 'Routers pass postcards hand to hand.', body: 'Each router picks the next hop. Then a road jams and **#1** is lost. Tap a **clear road** for the rest.',
     act: actRoad });
-  Anim.section(S, 'PART 2', 'Router to router', (s) => { s.tofrom.o = 0; });
+  S.beat(0.5, (s) => { s.tofrom.o = 0; });
   S.beat(1.0, (s) => { ['A', 'B', 'D', 'F', 'G'].forEach((r) => Object.assign(s[r], { o: 1, s: 1 })); lines.forEach((l) => { s[l].draw = 1; }); },
     (id) => { const k = lines.indexOf(id); return k < 0 ? null : { w: [k * 0.05, k * 0.05 + 0.5] }; });
   hop(0.9, ids, 'wifi');
@@ -226,7 +224,6 @@ function scene(st) {
   const ecs = ids.map((_, i) => 'ec' + i), spies = SPY.map((r) => 'spy' + r);
   S.step({ head: 'Anyone holding a postcard can read it.', body: 'Every router that held one could read it. **Eve** can see every router from the café Wi-Fi. Tap her copies.',
     act: actEve });
-  Anim.section(S, 'PART 3', 'Who else can read it?');
   S.beat(0.7, (s) => { Object.assign(s.eve, { o: 1, s: 1, glow: 1 }); s.bob.glow = 0; })
     .beat(1.0, (s) => { spies.forEach((id) => { s[id].o = 0.85; }); touched.forEach((r) => { s[r].tint = C.red; s[r].glow = 1; }); s.eve.look = 1; }, stagger(spies, 0.08))
     .beat(0.4, (s) => ecs.forEach((id) => { s[id].o = 1; }))

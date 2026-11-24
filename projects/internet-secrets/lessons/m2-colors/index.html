@@ -147,7 +147,6 @@ function scene(st) {
   S.add('bar', 'rect', {}, { x: 470, y: 800, w: 660, h: 76, rx: 38, fill: C.panel2, fo: 1, stroke: C.green, sw: 2, o: 0 });
   S.add('barLock', 'glyph', { icon: 'lock', size: 40, sw: 2.2 }, { x: 520, y: 838, o: 0, tint: C.green });
   S.add('barTxt', 'text', { size: 30, weight: 700, mono: true }, { x: 560, y: 849, content: 'https://bob.example', fill: C.green, o: 0 });
-  Anim.addSection(S);
 
   const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * (span || 0.12), Math.min(1, k * (span || 0.12) + 0.6)] }; };
   const sas = SEC.map((_, i) => 'sa' + i), sbs = SEC.map((_, i) => 'sb' + i), chs = PUB.map((_, i) => 'ch' + i);
@@ -170,7 +169,6 @@ function scene(st) {
 
   // 2. Alice picks a public color, under her
   S.step({ head: 'Alice picks a public color.', body: 'It is the color they both start with. **Tap** a can to send it to Bob. Eve will copy it, and that is fine.', act: actPublic });
-  Anim.section(S, 'PART 1', 'Mix a secret color');
   S.beat(0.7, (s) => { chs.forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); s.alice.glow = 1; }, stagger(chs, 0.12));
 
   // 3. The public color crosses the road (Eve copies it); Alice picks a secret on her private side
@@ -235,7 +233,7 @@ function scene(st) {
 
   // 11. Alice paints her white key (Alice's shared can is bPub, the mix that came from Bob)
   S.step({ head: 'Alice paints her key.', body: "Here are two plain **white keys**. **Tap** Alice's shared paint to pour it on her key.", act: (ctx) => actTap(ctx, [[aSpot, 'Paint her key']]) });
-  Anim.section(S, 'PART 2', 'Paint a key', (s) => {
+  S.beat(0.5, (s) => {
     ['aSec', 'bSec', 'same', 'recipe', 'noMix'].forEach((id) => { s[id].o = 0; });
     ['ePub', 'eA', 'eB'].forEach((id) => { s[id].glow = 0; });
     s.aPub.glow = 0; s.bPub.glow = 0; s.eve.look = 0;
@@ -258,7 +256,6 @@ function scene(st) {
 
   // 14. The message floats over Alice, the sender; tap her key to lock it
   S.step({ head: "Lock it with Alice's key.", body: "The message is on Alice's **locked side**, where Eve can't see. **Tap** her key to lock it.", act: (ctx) => actTap(ctx, [[KEY_A, 'Lock', 220]]) });
-  Anim.section(S, 'PART 3', 'Lock and unlock');
   S.beat(0.8, (s) => { Object.assign(s.msg, { o: 1, s: 1 }); s.alice.glow = 1; })
     .beat(0.5, (s) => { s.pad.o = 1; });
 
