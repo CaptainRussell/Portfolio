@@ -22,10 +22,11 @@ const NOW = 290039;
 const NW = [[2019, -20000], [2020, -12000], [2021, -3500], [2022, 24000], [2023, 58000], [2024, 110000], [2025, 170000], [2026, 240000], [2026.9, NOW]];
 const PAY_IN = [['Base pay', 7737, C.cyan], ['BAH', 2280, C.violet], ['BAS', 328.48, C.blue], ['TSP match', 386.85, C.green]];
 const GROSS = 10732.33;
-const OUT = [['Saving and investing', 5398.17, C.green], ['Living', 3990.94, C.amber], ['Taxes and insurance', 1334.16, C.red]];
+const OUT = [['Saving and investing', 5398.17, C.green], ['Living', 4095.47, C.amber], ['Taxes and insurance', 1334.16, C.red]];
 const SAVE = [['Roth TSP (27%)', 2088.99], ['Emergency fund', 1672.33], ['Roth IRA', 625], ['Spouse Roth IRA', 625], ['TSP 1% + 4% match', 386.85]];
-const LIVE = [['Mortgage', 1550], ['Groceries', 900], ['Misc', 450], ['Utilities', 445.46], ['Pets', 200], ['Subscriptions + haircut', 120],
-  ['Gasoline', 100], ['Eating out', 100], ['Sydney', 100], ['Car insurance', 25.47]];
+// a normal month (Captain Russell, 24 Nov 2026: October's $1,550 mortgage was a one-off escrow adjustment)
+const LIVE = [['Mortgage', 1300], ['Groceries', 900], ['Sydney', 500], ['Misc', 450], ['Utilities', 400], ['Pets', 200],
+  ['Subscriptions + haircut', 120], ['Gasoline', 100], ['Eating out', 100], ['Car insurance', 25.47]];
 const WORTH = [['Roth TSP (C Fund)', 198148, C.green], ['Roth IRAs', 54091, C.cyan], ['Emergency fund', 16000, C.blue], ['Cars', 15000, C.violet], ['Home equity', 6500, C.amber], ['Brokerage', 300, C.soft]];
 // The projection (Captain Russell, 24 Nov 2026: "show that I've already won the game"): what is invested today
 // (TSP + both Roth IRAs + brokerage) grows at 7% a year after inflation, in today's dollars. Keep going adds this
@@ -185,7 +186,7 @@ function scene(st) {
 
   // ---- where it goes
   add('outHead', 'text', { size: 40, anchor: 'start', weight: 800 }, { x: BX, y: 525, content: 'Where it goes', fill: C.ink, o: 0 });
-  const OU = segs(OUT, GROSS);
+  const OU = segs(OUT, OUT.reduce((a, o) => a + o[1], 0));   // a normal month's living runs a little past what is left of gross
   OUT.forEach((s, i) => {
     add('out' + i, 'rect', {}, { x: OU[i].x, y: 552, w: 0, h: 96, rx: 6, fill: s[2], fo: 0.85, o: 0 });
     const wide = OU[i].w > 300;
@@ -204,7 +205,7 @@ function scene(st) {
     add('sV' + i, 'text', { size: 27, anchor: 'end', weight: 800, mono: true }, { x: 740, y, content: fmt(r[1]), fill: C.ink, o: 0 });
     add('sB' + i, 'rect', {}, { x: 110, y: y + 12, w: 0, h: 14, rx: 7, fill: C.green, o: 0, wTo: r[1] / maxA * 630 });
   });
-  add('lHead', 'text', { size: 34, anchor: 'start', weight: 800 }, { x: 860, y: 150, content: 'Living  $3,991', fill: C.amber, o: 0 });
+  add('lHead', 'text', { size: 34, anchor: 'start', weight: 800 }, { x: 860, y: 150, content: 'Living  $4,095', fill: C.amber, o: 0 });
   LIVE.forEach((r, i) => {
     const y = 210 + i * ROW * 1.12;
     add('lL' + i, 'text', { size: 26, anchor: 'start', weight: 650 }, { x: 860, y, content: r[0], fill: C.ink, o: 0 });
@@ -380,7 +381,7 @@ function scene(st) {
     .beat(1.6, (s) => { s.outHead.o = 1; OUT.forEach((p, i) => { s['out' + i].o = 1; s['out' + i].w = OU[i].w - 3; s['outL' + i].o = 1; }); }, (id) => { const m = /^outL?(\d)$/.exec(id); return m ? { w: [+m[1] / 4, (+m[1] + 2) / 4] } : null; })
     .beat(0.8, (s) => { s.outPct.o = 1; s.outGuess.o = 1; s.outGuess.content = st.guess ? (st.guess === '50%' ? 'You guessed 50%. Spot on.' : `You guessed ${st.guess}.`) : ''; });
 
-  S.step({ head: 'The line items', body: 'This is my actual October budget, straight from my spreadsheet.', go: [425, 385, 680, 390, 'What it adds up to'] })
+  S.step({ head: 'The line items', body: 'This is our actual budget for a normal month, straight from my spreadsheet.', go: [425, 385, 680, 390, 'What it adds up to'] })
     .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); })
     .beat(2.2, (s) => { s.sHead.o = 1; s.lHead.o = 1;
       SAVE.forEach((r, i) => { s['sL' + i].o = 1; s['sV' + i].o = 1; s['sB' + i].o = 1; s['sB' + i].w = r[1] / maxA * 630; });
