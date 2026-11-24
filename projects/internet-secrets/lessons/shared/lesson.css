@@ -25,9 +25,10 @@
 .lz-ov > *{pointer-events:auto}
 .lz-hit{position:absolute;transform:translate(-50%,-50%);min-width:40px;min-height:40px;padding:0;border-radius:16px;cursor:pointer;
   border:2px dashed var(--c-cyan);background:rgba(34,211,238,.08);color:var(--c-ink);animation:lz-beckon 1.6s ease-in-out infinite}
-.lz-hit span{position:absolute;left:50%;top:100%;transform:translate(-50%,6px);white-space:nowrap;padding:3px 8px;border-radius:8px;
+.lz-hit span{position:absolute;left:50%;top:100%;transform:translate(calc(-50% + var(--dx,0px)),6px);white-space:nowrap;padding:3px 8px;border-radius:8px;
   background:rgba(7,11,20,.88);border:1px solid var(--c-line);font:700 12px/1.2 system-ui,sans-serif;color:var(--c-cyan);pointer-events:none}
-.lz-hit.top span{top:auto;bottom:100%;transform:translate(-50%,-6px)}
+.lz-hit.top span{top:auto;bottom:100%;transform:translate(calc(-50% + var(--dx,0px)),-6px)}
+.lz-hit.side span{top:50%;left:auto;right:100%;transform:translate(-6px,-50%)}
 .lz-hit.quiet span{display:none}
 .lz-hit.thin{min-width:0}
 .lz-hit.thin span{display:none}
@@ -172,7 +173,7 @@ a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 @media (max-width:640px){.lz-btn.big{flex:1 1 100%;min-width:0}}
 /* an action button that sits on the stage itself */
 .lz-stagebtn{position:absolute;transform:translate(-50%,-50%);z-index:3;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.45)}
-@media (max-width:640px){.lz-stagebtn{padding:7px 11px;font-size:13px}}
+@media (max-width:640px){.lz-stagebtn{padding:7px 11px;font-size:13px;white-space:normal;width:max-content;max-width:38%;text-align:center;line-height:1.2}}
 
 /* choice chips placed on the stage (message pickers) */
 .lz-chip{position:absolute;transform:translate(-50%,-50%);padding:.45em .7em;border-radius:.5em;border:2px solid var(--c-cyan);background:var(--c-panel2);color:var(--c-ink);font:700 1em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.05em;white-space:nowrap;cursor:pointer;animation:lz-beckon 1.6s ease-in-out infinite}
@@ -221,3 +222,33 @@ a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 @keyframes lz-beckon-flat{0%,100%{box-shadow:0 0 0 0 rgba(34,211,238,.45)}50%{box-shadow:0 0 0 12px rgba(34,211,238,0)}}
 @keyframes lz-irise{from{opacity:0;transform:translateY(10px)}}
 @media (prefers-reduced-motion:reduce){.lz-icard,.lz-demo{animation:none}}
+
+/* ---------- phones (Captain Russell, 24 Nov 2026) ----------
+   Upright: the lesson fills the screen edge to edge so the picture is as wide as it can be (small text in the
+   picture also grows, in engine.js). Sideways: the picture takes the height of the screen, with the caption and
+   controls in a column beside it, so nothing needs scrolling. Every tap target gets a bigger invisible touch area. */
+@media (max-width:640px){
+  .lz{margin:8px -16px 8px;padding:8px 6px 10px;border-radius:0;border-left:0;border-right:0}
+  .lz-stage{border-radius:10px}
+  .lz-cap{padding:12px 6px 2px}
+  .lz-chip{padding:.2em .5em}
+}
+@media (pointer:coarse){
+  .lz-hit::before,.lz-chip::before,.lz-stagebtn::before{content:"";position:absolute;inset:-8px}
+  .lz-chip::before{inset:-3px -10px}
+  /* the outline follows the picture it covers; the wider touch area above still makes it easy to hit */
+  .lz-hit{min-width:28px;min-height:28px;border-radius:10px}
+}
+@media (orientation:landscape) and (max-height:520px){
+  .lz{max-width:none;margin:4px auto;padding:8px}
+  .lz-view[data-view="watch"]:not([hidden]){display:grid;grid-template-columns:auto minmax(200px,1fr);grid-template-rows:1fr auto;gap:0 12px;align-items:start}
+  .lz-view[data-view="watch"] .lz-stage{grid-row:1 / span 2;width:min(calc((100svh - 64px) * 1.778),calc(100vw - 260px))}
+  .lz-view[data-view="watch"] .lz-cap{grid-column:2;padding:4px 2px 0;min-height:0}
+  .lz-view[data-view="watch"] .lz-head{font-size:18px}
+  .lz-view[data-view="watch"] .lz-body{font-size:14.5px}
+  .lz-view[data-view="watch"] .lz-bar{grid-column:2;align-self:end;padding:8px 0 0}
+  .lz-view[data-view="watch"] .lz-btn.big{min-height:48px;padding:10px 14px;font-size:16px}
+  .lz-intro{min-height:calc(100svh - 64px)}
+  .lz-icard{gap:10px;padding:10px}
+  .lz-iart img{width:64px;height:64px}
+}

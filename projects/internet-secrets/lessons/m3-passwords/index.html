@@ -214,7 +214,7 @@ function scene(st) {
   S.add('lock', 'glyph', { icon: 'lock', size: 48, sw: 2 }, { x: LOCK[0], y: LOCK[1], o: 0, tint: C.amber });
   S.add('unlock', 'glyph', { icon: 'unlock', size: 48, sw: 2 }, { x: LOCK[0], y: LOCK[1], o: 0, tint: C.red });
   S.add('eve', 'eye', { size: 120 }, { x: EVE[0], y: EVE[1], o: 0, s: 0.6 });
-  S.add('noPw', 'text', { size: 26, weight: 800, mono: true, anchor: 'middle' }, { x: CAB.x + CAB.w / 2, y: CAB.y + CAB.h + 44, content: 'NO PASSWORDS, ONLY FINGERPRINTS', fill: C.green, o: 0 });
+  S.add('noPw', 'text', { size: 26, weight: 800, mono: true, anchor: 'middle', fit: 1.15 }, { x: CAB.x + CAB.w / 2, y: CAB.y + CAB.h + 44, content: 'NO PASSWORDS, ONLY FINGERPRINTS', fill: C.green, o: 0 });
   // a second cabinet for the good way: each username with only its fingerprint
   S.add('cabP', 'rect', {}, { x: PLAIN.x, y: PLAIN.y, w: PLAIN.w, h: PLAIN.h, rx: 18, fill: C.panel2, fo: 0.9, stroke: C.red, sw: 2, o: 0, z: -3 });
   S.add('cabPLbl', 'text', { size: 22, weight: 700, mono: true }, { x: PLAIN.x + 22, y: PLAIN.y + 44, content: 'BAD: PASSWORDS', fill: C.red, o: 0 });
@@ -294,8 +294,8 @@ function scene(st) {
   let at = 0;
   const ws = words.map((wd, k) => {
     const cx = X0 + (at + wd.length / 2) * CW; at += wd.length + 1;
-    S.add('pwW' + k, 'text', { size: 28, weight: 800, mono: true, anchor: 'middle' }, { x: cx, y: ROWS[2] - 36, content: wd, fill: C.cyan, o: 0 });
-    S.add('pwE' + k, 'text', { size: 40, anchor: 'middle' }, { x: cx, y: ROWS[2] - 76, content: (ANIMALS.find((a) => a[0] === wd) || ['', ''])[1], fill: C.ink, o: 0 });
+    S.add('pwW' + k, 'text', { size: 28, weight: 800, mono: true, anchor: 'middle', fit: false }, { x: cx, y: ROWS[2] - 36, content: wd, fill: C.cyan, o: 0 });
+    S.add('pwE' + k, 'text', { size: 40, anchor: 'middle', fit: false }, { x: cx, y: ROWS[2] - 76, content: (ANIMALS.find((a) => a[0] === wd) || ['', ''])[1], fill: C.ink, o: 0 });
     return ['pwE' + k, 'pwW' + k];
   }).flat();
   S.add('how', 'text', { size: 22, weight: 500 }, { x: X0, y: 860, content: 'How we counted: (possible characters) to the power of (length), spaces not counted, at 10 billion guesses a second.', fill: C.faint, o: 0 });
@@ -459,8 +459,8 @@ function scene(st) {
 
 // ---------------------------------------------------------------- learner actions
 // Controls on the stage. Sizes are in stage units (the stage is 1600 wide) and follow the stage when it resizes.
-function sized(ctx, node, size) {
-  const fit = () => { node.style.fontSize = (size * ctx.ov.clientWidth / 1600) + 'px'; };
+function sized(ctx, node, size, cap) {
+  const fit = () => { node.style.fontSize = Anim.fitPx(size, ctx.ov.clientWidth, cap) + 'px'; };
   fit(); window.addEventListener('resize', fit); return node;
 }
 function tile(ctx, x, y, html, size, cls) {
@@ -475,7 +475,7 @@ function label(ctx, x, y, text, size, cls) {
 function bubble(ctx, at, size) {
   const b = document.createElement('div'); b.className = 'lz-bubble'; b.setAttribute('aria-live', 'polite'); b.textContent = '?';
   b.style.left = (at[0] / 16) + '%'; b.style.top = (at[1] / 9) + '%';
-  const fit = () => { b.style.fontSize = (size * ctx.ov.clientWidth / 1600) + 'px'; };
+  const fit = () => { b.style.fontSize = Anim.fitPx(size, ctx.ov.clientWidth) + 'px'; };
   fit(); window.addEventListener('resize', fit); ctx.ov.appendChild(b); return b;
 }
 function actSignUp(ctx) {
@@ -493,7 +493,7 @@ function actSignUp(ctx) {
   pick(ps, PWS, (v) => { pw = v; bp.textContent = v; bp.classList.add('on'); });
 }
 function actLock(ctx) {
-  ctx.hit(LOCK[0], LOCK[1], 110, 110, 'Break in', () => ctx.done({}), 'top');
+  ctx.hit(LOCK[0], LOCK[1], 110, 110, 'Break in', () => ctx.done({}), 'quiet');
 }
 function actBlend(ctx) {
   ctx.hit(PW_L[0], PW_L[1], Math.min(380, cardW(ctx.state.pw2 || ctx.state.pw)), 80, 'Blend it', () => ctx.done({}), 'top');
@@ -523,7 +523,7 @@ function actUnblend(ctx) {
     const x = document.createElement('div'); x.className = 'm3-x'; x.textContent = '✕'; Object.assign(x.style, ctx.pos(950, 515)); ctx.ov.appendChild(x);
     ctx.toast('No way back. A blender only goes one way.');
     ctx.ready({});
-  }, 'top');
+  }, 'quiet');
 }
 // Log in on the stage with any of four passwords: her password, the one-letter-off one, or another.
 // Next lights up once she has tried a right one and a wrong one; every option stays open to try.
@@ -560,9 +560,14 @@ function actCrack(ctx) {
   const go = ctx.button(260, 600, 'Try password combinations', () => {
     if (started) return; started = true; go.disabled = true; run(0);
   });
+  go.style.maxWidth = '30%'; ctx.keepIn(go);   // stays left of the stolen list on a phone
   const term = document.createElement('div'); term.className = 'm3-term'; term.setAttribute('aria-live', 'polite');
-  Object.assign(term.style, ctx.pos(260, 660)); ctx.ov.appendChild(term); sized(ctx, term, 19);
+  Object.assign(term.style, ctx.pos(260, 660)); ctx.ov.appendChild(term); sized(ctx, term, 19, 1.1);
   term.innerHTML = '<div>READY: 20 most common passwords</div><div class="g">_</div><div class="h">waiting</div>';
+  ctx.keepIn(term);
+  // on a phone the button can take two lines: keep the terminal just under it
+  const under = () => { const b = go.offsetTop + go.offsetHeight / 2 + 6; if (b > term.offsetTop) term.style.top = b + 'px'; };
+  under();
   const CH = 'abcdefghijklmnopqrstuvwxyz0123456789!@#$%&*';
   const rnd = (n) => Array.from({ length: n }, () => CH[Math.floor(Math.random() * CH.length)]).join('');
   const show = (k, g, line) => { term.innerHTML = `<div>GUESS ${String(k + 1).padStart(2, '0')}/${COMMON.length} · cracked ${cracked}</div><div class="g">${g}</div><div class="h">${line}</div>`; };
@@ -595,7 +600,7 @@ function actCrack(ctx) {
 function actPhrase(ctx) {
   const pick = [];
   const out = label(ctx, 700, 760, 'Tap 4 animals, in any order', 30, 'phrase');
-  const test = ctx.button(1400, 760, 'Test it', () => { if (pick.length === 4) ctx.done({ phrase: pick.join(' ') }); }); test.disabled = true;
+  const test = ctx.button(1400, 800, 'Test it', () => { if (pick.length === 4) ctx.done({ phrase: pick.join(' ') }); }); test.disabled = true;
   const emo = (w) => ANIMALS.find((a) => a[0] === w)[1];
   const draw = () => {
     out.innerHTML = pick.length ? pick.map((w) => `${emo(w)} ${w}`).join('&nbsp;&nbsp;') : 'Tap 4 animals, in any order';

@@ -72,15 +72,29 @@
     let player = new root.Anim.Player(svg, sc);
     let step = -1, raf = 0, playing = false, t0 = 0, reached = 0;
     const doneActs = {};
+    // keep a tap target's label inside the stage (on a phone, a label near the edge would be cut off)
+    function keepIn(b) {
+      const lab = b.querySelector('span'); if (!lab) return;
+      const o = ov.getBoundingClientRect(), r = lab.getBoundingClientRect();
+      if (!r.width || !o.width) return;
+      const dx = r.left < o.left + 2 ? o.left + 2 - r.left : r.right > o.right - 2 ? o.right - 2 - r.right : 0;
+      if (dx) lab.style.setProperty('--dx', dx + 'px');
+    }
     // a tap target on the stage, centered on (x, y), w by h scene units
     function hit(x, y, w, h, label, onTap, cls) {
+      // on a phone the picture's labels grow and sit a little lower, so a tall target (a picture with its label
+      // under it) reaches further down and wider to keep its outline off the label ('tight' opts out, for packed grids)
+      const sw = svg.getBoundingClientRect().width;
+      if (sw && sw < 700 && h >= 120 && !/\btight\b/.test(cls || '')) { const add = Math.round(Math.min(40, (700 - sw) / 10)); h += add; y += add / 2; w += add * 2;
+        // but never past the edge of the stage
+        w = Math.min(w, 2 * Math.min(x, sc.w - x) - 8); const bot = Math.min(y + h / 2, sc.h - 4), top = y - h / 2; y = (top + bot) / 2; h = bot - top; }
       const b = document.createElement('button');
       b.className = 'lz-hit' + (cls ? ' ' + cls : '');
       Object.assign(b.style, { left: (x / sc.w * 100) + '%', top: (y / sc.h * 100) + '%', width: (w / sc.w * 100) + '%', height: (h / sc.h * 100) + '%' });
       b.setAttribute('aria-label', label);
       b.innerHTML = `<span>${esc(label)}</span>`;
       b.addEventListener('click', () => onTap(b));
-      ov.appendChild(b); return b;
+      ov.appendChild(b); keepIn(b); return b;
     }
     // the step's "move on" cue: something on the stage to tap, in the same beckoning outline as every action
     function showGo() {
@@ -175,7 +189,14 @@
           Object.assign(b.style, ctx.pos(x, y));
           b.innerHTML = `<span>${esc(label)}</span>`;
           b.addEventListener('click', () => onTap(b));
-          ov.appendChild(b); return b;
+          ov.appendChild(b); ctx.keepIn(b); return b;
+        },
+        // slide an element laid over the stage sideways until it is fully inside the stage
+        keepIn(e) {
+          const o = ov.getBoundingClientRect(), r = e.getBoundingClientRect();
+          if (!r.width || !o.width || r.width > o.width) return;
+          const dx = r.left < o.left + 2 ? o.left + 2 - r.left : r.right > o.right - 2 ? o.right - 2 - r.right : 0;
+          if (dx) e.style.left = `calc(${e.style.left} + ${dx}px)`;
         },
         hide(ids) { ids.forEach((id) => { const n = player.h[id] && player.h[id]._node; if (n) { n.style.visibility = 'hidden'; hidden.add(id); } }); },
         toast(msg) {
@@ -312,6 +333,16 @@
       quiz.querySelector('[data-q="retake"]').addEventListener('click', openQuiz);
     }
 
+    // A phone turned sideways (or a window resized a lot): rebuild the stage at rest so its text sizes follow.
+    let lastW = svg.getBoundingClientRect().width, rt = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(rt);
+      rt = setTimeout(() => {
+        const w = svg.getBoundingClientRect().width;
+        if (!w || Math.abs(w - lastW) / lastW < 0.2 || playing || step < 0) return;
+        lastW = w; player = new root.Anim.Player(svg, sc); rest(step);
+      }, 250);
+    });
     // ------------------------------------------------------------ intro (Lesson 1: what this is, how to play)
     // One card at a time in the lesson window; each moves on by a tap inside the card, never on its own.
     const introV = host.querySelector('.lz-intro');
@@ -328,7 +359,7 @@
           <div class="lz-qbar lz-idots" aria-hidden="true">${L.intro.map((_, i) => `<i class="${i < k ? 'done' : i === k ? 'cur' : ''}"></i>`).join('')}</div>
         </div>`;
       introV.querySelector('[data-intro="go"]').addEventListener('click', () => {
-        if (last) { swap('watch'); player.renderBase(); play(0); } else { swap('intro'); intro(k + 1); }
+        if (last) { swap('watch'); lastW = svg.getBoundingClientRect().width; player = new root.Anim.Player(svg, sc); player.renderBase(); play(0); } else { swap('intro'); intro(k + 1); }
       });
       introV.querySelector('h2').focus({ preventScroll: true });
     }

@@ -85,7 +85,7 @@ function scene(st) {
   S.add('cafeLbl', 'text', { size: 28, weight: 700, mono: true, anchor: 'end' }, { x: 536, y: 186, content: 'CAFÉ', fill: C.soft, o: 0, z: -4 });
   LINKS.forEach(([a, b], i) => S.add('ln' + i, 'path', { d: `M ${P[a][0]} ${P[a][1]} L ${P[b][0]} ${P[b][1]}` }, { draw: 0, stroke: C.line, sw: 5, z: -3 }));
   S.add('jam', 'path', { d: `M ${P.D[0]} ${P.D[1]} L ${P.F[0]} ${P.F[1]}` }, { draw: 0, stroke: C.red, sw: 9, z: -2 });
-  S.add('jamTxt', 'text', { size: 30, weight: 800, anchor: 'middle', mono: true }, { x: mid('D', 'F')[0] + 70, y: mid('D', 'F')[1] + 10, content: 'JAMMED', fill: C.red, o: 0 });
+  S.add('jamTxt', 'text', { size: 30, weight: 800, anchor: 'middle', mono: true, fit: false }, { x: mid('D', 'F')[0] + 70, y: mid('D', 'F')[1] + 10, content: 'JAMMED', fill: C.red, o: 0 });
   S.add('alice', 'person', { who: 'alice' }, { x: P.alice[0], y: P.alice[1], o: 0, s: 0.6 });
   S.add('wifi', 'node', { icon: 'router', label: 'Wi-Fi', size: 96, labelSize: 30 }, { x: P.wifi[0], y: P.wifi[1], o: 0, s: 0.6, tint: C.soft });
   S.add('eve', 'eye', { size: 130 }, { x: P.eve[0], y: P.eve[1], o: 0, s: 0.6 });
@@ -98,7 +98,7 @@ function scene(st) {
   pieces(st.msg).forEach((p, i, a) => {
     const w = cardW(cardText(i, p)) * TRAY_S + 16;
     S.add('sl' + i, 'rect', { dash: '8 7' }, { x: slotX(i, a.length) - w / 2, y: TRAY.y - 37, w, h: 74, rx: 12, fill: 'none', fo: 0, stroke: C.amber, sw: 2.5, o: 0, z: -3 });
-    S.add('sn' + i, 'text', { size: 22, weight: 800, mono: true, anchor: 'middle' }, { x: slotX(i, a.length), y: TRAY.y + 68, content: 'SLOT ' + (i + 1), fill: C.amber, o: 0 });
+    S.add('sn' + i, 'text', { size: 22, weight: 800, mono: true, anchor: 'middle', fit: false }, { x: slotX(i, a.length), y: TRAY.y + 68, content: 'SLOT ' + (i + 1), fill: C.amber, o: 0 });
   });
   // ---- the message, its scissors and its postcards
   // the message starts over Alice's head, where she picked it
@@ -244,7 +244,7 @@ function actPick(ctx) {
   let pick = null;
   const bub = document.createElement('div'); bub.className = 'lz-bubble'; bub.setAttribute('aria-live', 'polite');
   bub.style.left = ((P.alice[0] + 20) / 16) + '%'; bub.style.top = (HEAD_Y / 9) + '%'; bub.textContent = '?';
-  const fit = () => { const k = ctx.ov.clientWidth / 1600; bub.style.fontSize = (30 * 0.8 * k) + 'px'; };
+  const fit = () => { const k = ctx.ov.clientWidth / 1600; bub.style.fontSize = Anim.fitPx(30 * 0.8, ctx.ov.clientWidth) + 'px'; };
   fit(); window.addEventListener('resize', fit); ctx.ov.appendChild(bub);
   // five message chips on the open map, then Send on the stage under them
   const btns = MSGS.map((m, i) => {
@@ -253,15 +253,15 @@ function actPick(ctx) {
     b.addEventListener('click', () => { pick = m; bub.textContent = disp(m); bub.classList.add('on'); btns.forEach((x) => x.setAttribute('aria-pressed', x === b)); go.disabled = false; });
     ctx.ov.appendChild(b); return b;
   });
-  const size = () => btns.forEach((b) => { b.style.fontSize = (24 * ctx.ov.clientWidth / 1600) + 'px'; });
+  const size = () => btns.forEach((b) => { b.style.fontSize = Anim.fitPx(24, ctx.ov.clientWidth) + 'px'; });
   size(); window.addEventListener('resize', size);
   const go = ctx.button(900, 735, 'Send this message', () => { if (pick) ctx.done({ msg: pick }); }); go.dataset.send = ''; go.disabled = true;
 }
 function actCut(ctx) {
-  ctx.hit(STRIP_X, 388, 120, 110, 'Cut', () => ctx.done({}));
+  ctx.hit(STRIP_X, 388, 120, 110, 'Cut', () => ctx.done({}), 'top');
 }
 function actSend(ctx) {
-  ctx.hit(P.wifi[0], P.wifi[1], 130, 130, 'Send', () => ctx.done({}));
+  ctx.hit(P.wifi[0], P.wifi[1] + 16, 130, 164, 'Send', () => ctx.done({}), 'top');
 }
 function actRoad(ctx) {
   const g = mid('D', 'G'), f = mid('D', 'F');
@@ -273,7 +273,7 @@ function actAsk(ctx) {
 }
 // One tap on Bob's phone puts the postcards in number order.
 function actOrder(ctx) {
-  ctx.hit(TRAY.x, TRAY.y + 10, 560, 170, 'Put in order', () => ctx.done({}));
+  ctx.hit(TRAY.x, TRAY.y + 16, 560, 148, 'Put in order', () => ctx.done({}), 'tight');
 }
 function actEve(ctx) {
   ctx.hit(470, 590, 200, 220, 'Read them', () => ctx.done({}));

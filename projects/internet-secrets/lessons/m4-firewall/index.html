@@ -318,7 +318,7 @@ function scene(st) {
 
   // 4. Crisis
   S.step({ head: 'Oh no! Eve takes over Bob\'s shop.', body: 'Nothing stops her packet. Now Eve runs Bob\'s computer from far away. She changes his prices, deletes his files and locks his register. **Tap Bob** to help him.',
-    go: [SHOP.x + 80, 790, 150, 150, 'Help Bob', 'top'] })
+    go: [SHOP.x + 80, 790, 150, 150, 'Help Bob', 'side tight'] })
     .beat(1.6, (s) => Object.assign(s.ctl, { x: ROOM_X, s: 0.46 }), (id) => (id === 'ctl' ? { arc: 30 } : null))
     .beat(0.8, (s) => { s.ctl.o = 0; s.ctlLine.o = 1; Object.assign(s.evil, { o: 1, s: 1 }); s.eve.glow = 1; s.room1.stroke = C.red; s.roomIc1.tint = C.red; s.roomS1.content = 'Eve is in control!'; s.roomS1.fill = C.red; })
     .beat(1.4, (s) => { ids('cr', 3).forEach((id) => Object.assign(s[id], { o: 1, s: 1 })); }, stagger(ids('cr', 3), 0.25))
@@ -373,7 +373,7 @@ function scene(st) {
 
   // 12. The second gate: 22
   S.step({ head: 'Remote control uses gate 22.', body: 'Eve\'s packet asks for gate **22**, the gate for running a computer from far away. Bob keeps it **shut**, so her packet burns. Now you run the gates. **Tap Bob** to take over.',
-    go: [SHOP.x + 80, 790, 150, 150, 'Take over for Bob', 'top'] })
+    go: [SHOP.x + 80, 790, 150, 150, 'Take over for Bob', 'quiet tight'] })
     .beat(0.5, (s) => { s.mail.o = 0; s.room0.stroke = C.line; })
     .beat(1.0, (s) => { s.wall.cut1 = 1; s.path1.o = 1; })
     .beat(0.6, (s) => fresh(s.ctl, GY[1]))
@@ -406,7 +406,7 @@ function scene(st) {
       } else Object.assign(o, { x: FRONT + 6, burn: 1 });
     })));
   }
-  S.beat(0.6, (s) => { s.tally.content = `**${r[0] ? 3 : 0}** of 3 emails in  ·  **${r[1] ? 0 : 3}** of 3 attacks burned`; s.tally.o = 1; s.netLbl.o = 0; });
+  S.beat(0.6, (s) => { s.tally.content = `**${r[0] ? 3 : 0}** of 3 emails in\n**${r[1] ? 0 : 3}** of 3 attacks burned`; s.tally.o = 1; s.netLbl.o = 0; });
 
   // 15. Wrap up
   S.step({ head: 'Open only the gates you need.', body: 'The wall burns anything that does not come through an open gate. Gate **25** stays open for email, gate **22** stays shut. Next, check yourself.' })
@@ -423,10 +423,10 @@ function actBuild(ctx) { ctx.button(GATE_X, WALL.y + WALL.h / 2, 'Build the wall
 function actSend(ctx, id, label) { ctx.hit(SEND_X, GY[0], 190, 110, label, () => ctx.done({}), 'top'); }
 function actSendCtl(ctx) { ctx.hit(SEND_X, GY[1], 190, 110, 'Send it', () => ctx.done({}), 'top'); }
 function actLight(ctx) {
-  ctx.hit(GATE_X, WALL.y + WALL.h / 2, 150, WALL.h, 'Light it', () => ctx.done({}), 'top');
+  ctx.hit(GATE_X, WALL.y + WALL.h / 2, 150, WALL.h, 'Light it', () => ctx.done({}), 'top tight');
 }
 // A tap target per gate, on the wall itself.
-const gateTarget = (ctx, i, label, onTap) => ctx.hit(GATE_X, GY[i], 150, 150, label, onTap, 'm4-gate');
+const gateTarget = (ctx, i, label, onTap) => ctx.hit(GATE_X, GY[i], 150, 150, label, onTap, 'm4-gate side tight');
 function actOpen25(ctx) { gateTarget(ctx, 0, 'Open gate 25', () => ctx.done({})); }
 // Slide a gate's door open or shut on the stage, the same motion the timeline plays between steps.
 function swingGate(ctx, i, on) {
@@ -453,7 +453,7 @@ function actGates(ctx, start) {
   const d = start.slice();
   const paint = (i, b) => {
     const on = !!d[i];
-    b.className = 'lz-hit m4-gate ' + (on ? 'open' : 'shut'); b.querySelector('span').textContent = `${PORTS[i]} ${on ? 'open' : 'shut'}`;
+    b.className = 'lz-hit m4-gate side tight ' + (on ? 'open' : 'shut'); b.querySelector('span').textContent = `${PORTS[i]} ${on ? 'open' : 'shut'}`;
     b.setAttribute('aria-label', `Gate ${PORTS[i]}, ${NAMES[i]}: ${on ? 'open' : 'shut'}. Tap to switch.`);
   };
   // Send traffic stays off until the gates are right: 25 (email) open, 22 (remote control) shut
