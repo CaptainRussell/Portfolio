@@ -7,6 +7,7 @@ The lessons send each learner's right and wrong answers to a Google Sheet you ow
 1. Go to https://sheets.new (signed in to the Google account you want to own the data). Name the Sheet, for example **Internet Secrets results**.
 2. Click **Extensions > Apps Script**.
 3. Delete everything in the editor, then paste all of `tools/results/Code.gs` from this repo. Click the save icon.
+   (If you made the script on its own at script.google.com instead, that works too: it makes a Sheet named **Internet Secrets results** in your Google Drive the first time it runs.)
 4. Optional: pick `setup` in the function list at the top and click **Run** (approve the access prompt). This makes the **Responses** and **Questions** tabs now; otherwise they appear with the first result.
 
 ## 2. Publish it as a web app

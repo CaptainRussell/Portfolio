@@ -13,7 +13,7 @@
  * Code organized with help from Claude (Anthropic). */
 (function (root) {
   'use strict';
-  const ENDPOINT = '';   // Google Apps Script web app address, ending in /exec
+  const ENDPOINT = 'https://script.google.com/macros/s/AKfycbwgB4n4SlAhoMHa_Pesv9x_DNZdWFC0AqmjiUGpgLlb02FG8OvtzRF5K4pfVM86kxxU/exec';   // Google Apps Script web app address, ending in /exec
   const STORE = 'ihks-learner-v1';   // {id, group, tries: {m1: 2, ...}, quiz: {m1: {first, last}}, sent: {'final#1': true}}
 
   function load() { try { return JSON.parse(localStorage.getItem(STORE)) || {}; } catch (e) { return {}; } }

@@ -21,8 +21,21 @@ for (var j = 1; j <= MAXQ; j++) HEAD.push('Pick' + j);
 
 function out_(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
 
+// The results Sheet: the Sheet this script was made from (Extensions > Apps Script), or, for a script made on
+// its own at script.google.com, a Sheet named "Internet Secrets results" that it makes in your Drive the first
+// time it runs (its id is kept in Project Settings > Script Properties as SHEET_ID).
+function ss_() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (ss) return ss;
+  var props = PropertiesService.getScriptProperties(), id = props.getProperty('SHEET_ID');
+  if (id) return SpreadsheetApp.openById(id);
+  ss = SpreadsheetApp.create('Internet Secrets results');
+  props.setProperty('SHEET_ID', ss.getId());
+  return ss;
+}
+
 function tab_(name, head) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet(), sh = ss.getSheetByName(name);
+  var ss = ss_(), sh = ss.getSheetByName(name);
   if (!sh) {
     sh = ss.insertSheet(name);
     sh.getRange(1, 1, 1, head.length).setValues([head]).setFontWeight('bold');
@@ -32,7 +45,8 @@ function tab_(name, head) {
 }
 
 // Run once from the editor (optional): makes both tabs so the Sheet is ready before the first learner.
-function setup() { tab_('Responses', HEAD); tab_('Questions', ['Lesson', 'Question', 'Text', 'Answer']); }
+// The log (View > Logs, or the Execution log) shows the Sheet's address.
+function setup() { tab_('Responses', HEAD); tab_('Questions', ['Lesson', 'Question', 'Text', 'Answer']); Logger.log('Results Sheet: ' + ss_().getUrl()); }
 
 function doPost(e) {
   var lock = LockService.getScriptLock();
