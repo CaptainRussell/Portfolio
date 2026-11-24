@@ -1,0 +1,65 @@
+/* chars.js: the characters cadets pick on their phones, in the Practicum Adventure 8-bit style.
+ * The AS300s and Lt Col Cacic are 24 x 24 pixel portraits made from their Storm HQ org chart photos
+ * (assets/chars/<key>.png). Guests get a drawn 12 x 12 avatar from Practicum Adventure's preset list
+ * and type their own name.
+ * FRChars.list        [{id, name, img, kind: 'cadet' | 'cadre' | 'guest'}]
+ * FRChars.get(id)     one of them
+ * FRChars.src(id)     the picture's URL (a data: URL for guests)
+ * FRChars.RANKS       the promotion ladder for the scoreboard: [{rank, at, file, ar}]
+ * FRChars.rankOf(pts) the rank a score has earned
+ * Code organized with help from Claude (Anthropic), Nov 2026.
+ */
+(function (root) {
+  'use strict';
+  const BASE = (document.currentScript && document.currentScript.src || '').replace(/live\/chars\.js.*$/, 'assets/');
+  const CADETS = [['AshbackerMiloK', 'Milo Ashbacker'], ['BarszczCadenN', 'Caden Barszcz'], ['BourekAkrynJ', 'Akryn Bourek'], ['BradleeColinR', 'Colin Bradlee'],
+    ['CollierJonathanG', 'Jonathan Collier'], ['CooperTylerL', 'Tyler Cooper'], ['CoulthardNikalo', 'Nikalo Coulthard'], ['CurtisRobertT', 'Robert Curtis'],
+    ['DavilaJoaquinD', 'Joaquin Davila'], ['DavisMartiG', 'Marti Davis'], ['GaulStephenJ', 'Stephen Gaul'], ['HaderAshtenM', 'Ashten Hader'],
+    ['HelleNicolasD', 'Nicolas Helle'], ['HumistonVictoriaR', 'Victoria Humiston'], ['JalodiaAnika', 'Anika Jalodia'], ['MarschangAllissaA', 'Allissa Marschang'],
+    ['TuMicahJ', 'Micah Tu'], ['VanDevanderDonC', 'Don Van Devander']];
+  // guests: Practicum Adventure's preset avatars (practicum-adventure/data.js AVATARS)
+  const GUESTS = [
+    { id: 'g-pilot', name: 'Guest pilot', skin: '#c68642', hair: '#111', style: 'none', acc: 'pilot', shirt: '#2f4f9f' },
+    { id: 'g-shades', name: 'Guest in shades', skin: '#e0ac69', hair: '#111', style: 'buzz', acc: 'shades', shirt: '#556b2f' },
+    { id: 'g-bun', name: 'Guest', skin: '#ffdbac', hair: '#d4a017', style: 'bun', acc: 'none', shirt: '#7a2b2b' },
+    { id: 'g-glasses', name: 'Guest', skin: '#f1c27d', hair: '#a0522d', style: 'short', acc: 'glasses', shirt: '#2f4f9f' },
+    { id: 'g-beret', name: 'Guest', skin: '#8d5524', hair: '#111', style: 'puff', acc: 'beret', shirt: '#3d5a80' },
+    { id: 'g-robot', name: 'Guest robot', skin: '#8d5524', hair: '#2b1d0e', style: 'short', acc: 'robot', shirt: '#5b5b5b' },
+  ];
+  function draw(a, i) {
+    const c = document.createElement('canvas'); c.width = c.height = 12;
+    const x = c.getContext('2d'), R = (col, px, py, w, h) => { x.fillStyle = col; x.fillRect(px, py, w, h); };
+    R(`hsl(${(i * 47 + 200) % 360},40%,22%)`, 0, 0, 12, 12);
+    R(a.shirt, 1, 10, 10, 2); R('#ffd23f', 3, 10, 1, 1);
+    R(a.skin, 3, 3, 6, 7); R(a.skin, 2, 5, 1, 2); R(a.skin, 9, 5, 1, 2);
+    if (a.style === 'short') { R(a.hair, 3, 2, 6, 2); R(a.hair, 2, 3, 1, 2); R(a.hair, 9, 3, 1, 2); }
+    if (a.style === 'buzz') R(a.hair, 3, 2, 6, 1);
+    if (a.style === 'bun') { R(a.hair, 3, 2, 6, 2); R(a.hair, 5, 0, 2, 2); }
+    if (a.style === 'puff') { R(a.hair, 2, 0, 8, 3); R(a.hair, 1, 1, 1, 3); R(a.hair, 10, 1, 1, 3); }
+    R('#000', 4, 6, 1, 1); R('#000', 7, 6, 1, 1); R('#7a2b2b', 5, 8, 2, 1);
+    switch (a.acc) {
+      case 'shades': R('#000', 3, 5, 6, 2); R('#3fd8ff', 4, 5, 1, 1); R('#3fd8ff', 7, 5, 1, 1); break;
+      case 'glasses': R('#ddd', 3, 5, 2, 2); R('#ddd', 7, 5, 2, 2); R('#000', 4, 6, 1, 1); R('#000', 7, 6, 1, 1); break;
+      case 'beret': R('#2b6cb0', 2, 1, 8, 2); R('#2b6cb0', 8, 3, 2, 1); R('#ffd23f', 3, 2, 1, 1); break;
+      case 'pilot': R('#6b4423', 2, 1, 8, 3); R('#9ad', 3, 4, 2, 1); R('#9ad', 7, 4, 2, 1); break;
+      case 'robot': R('#9aa4b1', 3, 3, 6, 7); R('#ff2e63', 4, 6, 1, 1); R('#ff2e63', 7, 6, 1, 1); R('#9aa4b1', 5, 0, 2, 3); R('#555', 4, 8, 4, 1); break;
+    }
+    return c.toDataURL();
+  }
+  const list = CADETS.map(([id, name]) => ({ id, name, kind: 'cadet', img: BASE + 'chars/' + id + '.png' }));
+  list.push({ id: 'CacicJohn', name: 'Lt Col Cacic', kind: 'cadre', img: BASE + 'chars/CacicJohn.png' });
+  let guestImgs = null;
+  GUESTS.forEach((g) => list.push({ id: g.id, name: g.name, kind: 'guest', spec: g }));
+  const byId = {}; list.forEach((c) => { byId[c.id] = c; });
+  function src(id) {
+    const c = byId[id]; if (!c) return '';
+    if (c.img) return c.img;
+    if (!guestImgs) { guestImgs = {}; GUESTS.forEach((g, i) => { guestImgs[g.id] = draw(g, i); }); }
+    return guestImgs[id];
+  }
+  // promotions on the scoreboard (Captain Russell, 24 Nov 2026: use the Adventure game's rank insignia)
+  const RANKS = [['2d Lt', 0, '2dLt', 0.4], ['1st Lt', 800, '1stLt', 0.4], ['Capt', 2000, 'Capt', 1.069], ['Maj', 3500, 'Maj', 0.953], ['Lt Col', 5200, 'LtCol', 0.953], ['Col', 7000, 'Col', 2.0]]
+    .map(([rank, at, file, ar]) => ({ rank, at, file: BASE + 'insignia/' + file + '.svg', ar }));
+  const rankOf = (pts) => RANKS.filter((r) => pts >= r.at).pop();
+  root.FRChars = { list, get: (id) => byId[id], src, RANKS, rankOf, BASE };
+})(this);

@@ -97,11 +97,18 @@ function scene(st) {
     add('oeEv' + i, 'text', { size: 26, anchor: 'middle', weight: 800, mono: true }, { x: x + 52, y: OB - oh(ev) - 14, content: fmt(ev, { k: true }), fill: C.amber, o: 0 });
     add('oeG' + i, 'text', { size: 24, anchor: 'middle', weight: 800, mono: true }, { x, y: OB + 38, content: `${og} · ${eg}`, fill: C.soft, o: 0 });
     add('oeY' + i, 'text', { size: 24, anchor: 'middle', weight: 600 }, { x, y: OB + 72, content: yrs, fill: C.faint, o: 0 });
+    // rank insignia over each bar (E-1 wears none)
+    [[og, x - 52, ov, 'oeOi'], [eg, x + 52, ev, 'oeEi']].forEach(([g, cx, v, id]) => {
+      const ins = FR.INSIGNIA[g]; if (!ins) return;
+      const ww = Math.min(70, 44 * ins[1]), h2 = ww / ins[1];
+      add(id + i, 'img', { href: 'insignia/' + ins[0] + '.svg' }, { x: cx - ww / 2, y: OB + 92 + (44 - h2) / 2, w: ww, h: h2, o: 0 });
+    });
   });
   const ex8 = 1380;
   add('oeE8', 'rect', {}, { x: ex8 - 48, y: OB, w: 96, h: 0, rx: 8, fill: C.amber, o: 0 });
   add('oeE8v', 'text', { size: 26, anchor: 'middle', weight: 800, mono: true }, { x: ex8, y: OB - oh(E8) - 14, content: fmt(E8, { k: true }), fill: C.amber, o: 0 });
   add('oeE8g', 'text', { size: 24, anchor: 'middle', weight: 800, mono: true }, { x: ex8, y: OB + 38, content: 'E-8 (SMSgt)', fill: C.soft, o: 0 });
+  { const ins = FR.INSIGNIA['E-8'], h2 = 44; add('oeE8i', 'img', { href: 'insignia/' + ins[0] + '.svg' }, { x: ex8 - h2 * ins[1] / 2, y: OB + 92, w: h2 * ins[1], h: h2, o: 0 }); }
   add('oeE8y', 'text', { size: 24, anchor: 'middle', weight: 600 }, { x: ex8, y: OB + 72, content: '20 years', fill: C.faint, o: 0 });
   add('oeLine', 'rect', {}, { x: ogx(3) - 100, y: OB - oh(10460.5) - 2, w: 0, h: 4, rx: 2, fill: C.cyan, o: 0 });
   add('oeBig', 'text', { size: 34, anchor: 'end', weight: 850, maxw: 900 }, { x: 1440, y: 214, content: 'A captain at 8 years out-earns a', fill: C.ink, o: 0 });
@@ -305,9 +312,9 @@ function scene(st) {
   S.step({ head: 'Now compare it', body: 'Same base, same pay tables. **Check out the last two bars.**', go: [800, 485, 1420, 610, 'What that means'] })
     .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); s.oeHead.o = 1; s.oeSub.o = 1; s.oeKey.o = 1; s.oeKey2.o = 1; })
     .beat(2.2, (s) => { OE.forEach(([, , ov, , ev], i) => { s['oeO' + i].o = 1; s['oeO' + i].h = oh(ov); s['oeO' + i].y = OB - oh(ov); s['oeE' + i].o = 1; s['oeE' + i].h = oh(ev); s['oeE' + i].y = OB - oh(ev);
-        ['Ov', 'Ev', 'G', 'Y'].forEach((k) => { s['oe' + k + i].o = 1; }); }); },
-      (id) => { const m = /^oe(O|E|Ov|Ev|G|Y)(\d)$/.exec(id); return m ? { w: [+m[2] / 6, (+m[2] + 2) / 6] } : null; })
-    .beat(1.0, (s) => { s.oeE8.o = 1; s.oeE8.h = oh(E8); s.oeE8.y = OB - oh(E8); s.oeE8v.o = 1; s.oeE8g.o = 1; s.oeE8y.o = 1; })
+        ['Ov', 'Ev', 'G', 'Y', 'Oi', 'Ei'].forEach((k) => { if (s['oe' + k + i]) s['oe' + k + i].o = 1; }); }); },
+      (id) => { const m = /^oe(O|E|Ov|Ev|G|Y|Oi|Ei)(\d)$/.exec(id); return m ? { w: [+m[2] / 6, (+m[2] + 2) / 6] } : null; })
+    .beat(1.0, (s) => { s.oeE8.o = 1; s.oeE8.h = oh(E8); s.oeE8.y = OB - oh(E8); s.oeE8v.o = 1; s.oeE8g.o = 1; s.oeE8y.o = 1; s.oeE8i.o = 1; })
     .beat(0.9, (s) => { s.oeLine.o = 1; s.oeLine.w = ex8 + 60 - (ogx(3) - 100); })
     .beat(0.7, (s) => { s.oeBig.o = 1; s.oeBig2.o = 1; });
 

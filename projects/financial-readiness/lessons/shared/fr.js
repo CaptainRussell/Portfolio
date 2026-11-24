@@ -48,5 +48,26 @@
       if (s !== h.s) { h.t.textContent = s; h.s = s; }
     },
   };
-  root.FR = { CHAPTERS, next, fmt };
+  // pictures (rank insignia, photos) from ../assets/, wherever the page that loads fr.js lives
+  const ASSET = (document.currentScript && document.currentScript.src || '').replace(/lessons\/shared\/fr\.js.*$/, 'assets/');
+  // Anim.KINDS.img: a picture. props x, y (top left), w, h, o; cfg href (under assets/), round (circle clip)
+  root.Anim.KINDS.img = {
+    defaults: { w: 40, h: 40 },
+    create(g, cfg) {
+      const r = el('g', {}, g);
+      const i = el('image', { href: ASSET + cfg.href, preserveAspectRatio: cfg.cover ? 'xMidYMid slice' : 'xMidYMid meet' }, r);
+      if (cfg.pixel) i.setAttribute('style', 'image-rendering:pixelated');
+      return { root: r, i, a: {} };
+    },
+    update(h, p) {
+      const sa = (n, k, v) => { if (h.a[n + k] !== v) { h.a[n + k] = v; (n === 'r' ? h.root : h.i).setAttribute(k, v); } };
+      sa('r', 'transform', `translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) scale(${p.s.toFixed(4)})`);
+      sa('r', 'opacity', p.o.toFixed(3));
+      sa('i', 'width', p.w.toFixed(1)); sa('i', 'height', p.h.toFixed(1));
+    },
+  };
+  // the rank insignia files in assets/insignia (public domain, from Wikimedia Commons via Practicum Adventure): rank -> [file, width / height]
+  const INSIGNIA = { 'O-1': ['2dLt', 0.4], 'O-2': ['1stLt', 0.4], 'O-3': ['Capt', 1.069], 'O-4': ['Maj', 0.953], 'O-5': ['LtCol', 0.953], 'O-6': ['Col', 2.0],
+    'E-2': ['Amn', 2.182], 'E-3': ['A1C', 1.727], 'E-4': ['SrA', 1.429], 'E-5': ['SSgt', 1.218], 'E-8': ['SMSgt', 0.661] };
+  root.FR = { CHAPTERS, next, fmt, ASSET, INSIGNIA };
 })(this);

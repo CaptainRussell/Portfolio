@@ -151,7 +151,8 @@
       el.innerHTML = `<div class="abs in" style="left:110px;top:120px;--d:.1"><div class="k">AFAS 3410 · Financial Readiness</div></div>
         <h1 class="abs in" style="left:110px;top:170px;font-size:104px;--d:.25">From <span class="r">−$20K</span><br>to <span class="g" id="tNum">$0</span></h1>
         <div class="abs in lab" style="left:114px;top:430px;font-size:30px;width:640px;--d:.5">How a broke college grad with student loans got here on the same pay as every other captain, and how you can do it faster.</div>
-        <div class="abs in lab" style="left:114px;top:760px;font-size:24px;--d:.8">Capt Scott D. Russell · Operations Flight Commander · AFROTC Det 250</div>`;
+        <div class="abs in" style="left:114px;top:690px;display:flex;align-items:center;gap:22px;--d:.8"><img src="${FRChars.BASE}scott-russell.jpg" alt="" width="110" height="110" style="border-radius:50%;border:4px solid var(--gold);object-fit:cover">
+          <div class="lab" style="font-size:26px;line-height:1.35"><b style="color:var(--ink)">Capt Scott D. Russell</b><br>Operations Flight Commander · AFROTC Det 250</div></div>`;
       const svg = sv('svg', { width: 1600, height: 900, style: 'position:absolute;left:0;top:0;pointer-events:none' });
       el.prepend(svg);
       const NW = [[2019.45, -20000], [2020, -12000], [2021, -3500], [2022, 24000], [2023, 58000], [2024, 110000], [2025, 170000], [2026, 240000], [2026.9, 290039]];
@@ -361,7 +362,7 @@
         youR.setAttribute('y', SY - yH); youR.setAttribute('height', Math.max(0, yH));
         govR.setAttribute('y', SY - yH - gH - 4); govR.setAttribute('height', gH);
         lostR.setAttribute('y', SY - yH - gH - lH - 8); lostR.setAttribute('height', Math.max(0, lH)); lostR.setAttribute('opacity', lH > 2 ? 1 : 0);
-        tYou.setAttribute('y', SY - yH / 2 + 10); tYou.textContent = x > 0.3 ? `You: ${fmt(BASE * x / 100)}` : 'You: $0';
+        tYou.setAttribute('y', yH > 30 ? SY - yH / 2 + 10 : SY + 44); tYou.textContent = x > 0.3 ? `You: ${fmt(BASE * x / 100)}` : 'You: $0';
         tGov.setAttribute('y', SY - yH - gH / 2 + 6); tGov.textContent = `Air Force: ${fmt(BASE * gov / 100)}`;
         tLost.setAttribute('y', SY - yH - gH - lH / 2 - 2); tLost.textContent = lH > 2 ? `Left on the table: ${fmt(BASE * (5 - gov) / 100)}` : '';
         grow = Math.min(1, grow + 0.04);
@@ -527,18 +528,270 @@
   };
 
   // ======================================================================
+  // the live room: cadets' phones (../join/), questions, the scoreboard
+  // ======================================================================
+  const store = { get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} } };
+  const ROOM = (function () {
+    let code = store.get('fr-room-code');
+    if (!code) { code = Array.from({ length: 4 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 23)]).join(''); store.set('fr-room-code', code); }
+    // players and scores survive a reload of the deck; the scoreboard reset button on the join slide clears them
+    const R = { code, players: store.get('fr-players-v1') || {}, q: null, phase: null, opened: 0, revealed: store.get('fr-revealed-v1') || {}, status: 'off', listeners: [] };
+    const save = () => { store.set('fr-players-v1', R.players); store.set('fr-revealed-v1', R.revealed); };
+    const taken = () => Object.values(R.players).map((p) => p.char).filter(Boolean);
+    R.changed = () => R.listeners.forEach((f) => f());
+    R.joinUrl = () => location.href.split('#')[0].split('?')[0].replace(/slides\/(index\.html)?$/, 'join/') + '?room=' + code + (FRNet.local() && /local=1/.test(location.search) ? '&local=1' : '');
+    function view(cid) {
+      const p = R.players[cid] || {}, q = R.q, a = q && p.ans && p.ans[q.qid];
+      const st = { t: 'state', taken: taken().filter((c) => c !== p.char), me: { char: p.char || null, name: p.name || '', score: p.score || 0 }, phase: R.phase };
+      if (q) {
+        st.q = { qid: q.qid, type: q.type, prompt: q.prompt, info: q.info, opts: q.opts, min: q.min, max: q.max, step: q.step, unit: q.unit, start: q.start, calls: q.calls };
+        st.mine = a ? a.v : null; st.mineText = a ? q.say(a.v) : '';
+        if (R.phase === 'reveal') st.res = a ? { pts: a.pts || 0, ok: a.pts > 0, text: q.answerText } : { pts: 0, ok: false, text: 'No answer this time. ' + q.answerText };
+      }
+      return st;
+    }
+    R.push = () => { if (R.net) Object.keys(R.players).forEach((cid) => R.net.send(cid, view(cid))); };
+    R.start = () => {
+      if (R.net) return;
+      R.net = FRNet.host(code, {
+        onStatus(s) { R.status = s; R.changed(); },
+        onOpen() { R.push(); },
+        onMsg(cid, m) {
+          if (!m || !m.t) return;
+          const p = R.players[cid] || (R.players[cid] = { score: 0, ans: {} });
+          if (m.t === 'pick') {
+            const c = FRChars.get(m.char);
+            if (c && !taken().includes(m.char)) { p.char = m.char; p.name = c.kind === 'guest' ? String(m.name || 'Guest').slice(0, 24) : c.name; p.joined = Date.now(); save(); R.changed(); }
+          }
+          if (m.t === 'ans' && R.q && R.phase === 'open' && m.qid === R.q.qid && p.char && !p.ans[m.qid]) {
+            p.ans[m.qid] = { v: m.v, t: (performance.now() - R.opened) / 1000 }; save(); R.changed();
+          }
+          R.net.send(cid, view(cid));
+        },
+      });
+    };
+    R.open = (q) => {
+      R.q = q;
+      if (R.revealed[q.qid]) R.phase = 'reveal';
+      else { R.phase = 'open'; R.opened = performance.now(); }
+      R.push(); R.changed();
+    };
+    R.close = () => { R.q = null; R.phase = null; R.push(); R.changed(); };
+    R.reveal = () => {
+      const q = R.q; if (!q || R.phase !== 'open') return;
+      Object.values(R.players).forEach((p) => { const a = p.ans && p.ans[q.qid]; if (a) { a.pts = q.score(a.v, a.t); p.score = (p.score || 0) + a.pts; } });
+      R.revealed[q.qid] = 1; R.phase = 'reveal'; save(); R.push(); R.changed();
+    };
+    R.reset = () => { R.players = {}; R.revealed = {}; save(); R.push(); R.changed(); };
+    R.list = () => Object.entries(R.players).filter(([, p]) => p.char).map(([cid, p]) => Object.assign({ cid }, p));
+    return R;
+  })();
+  const face = (p, px) => `<img class="pxf" src="${FRChars.src(p.char)}" alt="" width="${px}" height="${px}" title="${esc(p.name)}">`;
+  const insig = (r, h) => `<i class="ins" style="height:${h}px;width:${h * r.ar}px;background-image:url('${r.file}')"></i>`;
+
+  // the room badge in the top bar
+  const badge = document.createElement('span'); badge.id = 'roomBadge';
+  $('.ctl').prepend(badge);
+  const paintBadge = () => { const n = ROOM.list().length; badge.innerHTML = `<i class="${ROOM.status}"></i>Room <b>${ROOM.code}</b> · ${n} joined`; };
+  ROOM.listeners.push(paintBadge); paintBadge();
+
+  // ---- join: QR code, room code and everyone who has joined
+  LIVE.join = {
+    head: 'Get your phones out', body: 'Scan the code or go to the link, then **pick your 8-bit self**. Faster right answers score more, and you get promoted as you go.',
+    build(el) {
+      ROOM.start();
+      let qr = '';
+      try { const g = qrcode(0, 'M'); g.addData(ROOM.joinUrl()); g.make(); qr = g.createSvgTag({ cellSize: 8, margin: 2, scalable: true }); } catch (e) { qr = '<div class="lab">QR code needs the internet</div>'; }
+      el.innerHTML = `<div class="abs in qrbox" style="left:80px;top:90px;--d:.1">${qr}</div>
+        <div class="abs in" style="left:560px;top:96px;--d:.2"><div class="k">Room code</div><div class="code">${ROOM.code}</div>
+          <div class="lab" style="font-size:24px;margin-top:8px">${esc(ROOM.joinUrl().replace(/^https?:\/\//, '').replace(/\?.*$/, ''))}</div></div>
+        <div class="abs in" style="left:560px;top:330px;width:980px;--d:.35"><div class="k" id="jn">Joined: 0</div><div class="crew" id="crew"></div></div>
+        <button type="button" class="abs pillbtn in" id="rst" style="left:80px;top:800px;--d:.5;font-size:16px;padding:8px 16px">Reset scores</button>`;
+      const crew = $('#crew', el), seen = new Set();
+      const paint = () => {
+        const L = ROOM.list().sort((a, b) => a.joined - b.joined);
+        $('#jn', el).textContent = `Joined: ${L.length}`;
+        crew.innerHTML = L.map((p) => `<div class="mate${seen.has(p.cid) ? '' : ' new'}">${face(p, 88)}<span>${esc(p.name)}</span></div>`).join('');
+        L.forEach((p) => seen.add(p.cid));
+      };
+      let armed = 0;
+      $('#rst', el).onclick = (e) => { e.currentTarget.blur(); if (Date.now() - armed < 3000) { ROOM.reset(); e.currentTarget.textContent = 'Scores cleared'; } else { armed = Date.now(); e.currentTarget.textContent = 'Press again to clear'; } };
+      ROOM.listeners.push(() => { if (el.isConnected) paint(); });
+      return { enter: paint };
+    },
+  };
+
+  // ---- the questions. Scoring (Captain Russell, 24 Nov 2026): right answers score more the faster they come in,
+  // sliders by how close, the money calls by how high the line ends.
+  const choiceScore = (ans) => (v, t) => (v === ans ? 500 + Math.round(500 * clamp(1 - t / 25, 0, 1)) : 0);
+  const sliderScore = (ans, tol) => (v) => Math.round(1000 * clamp(1 - Math.abs(v - ans) / tol, 0, 1));
+  const CALL_V10 = (pick) => { const p = D4.sim(pick); return p[p.length - 1][1]; };
+  const V_EASY = CALL_V10(D4.EASY), V_BEST = CALL_V10(D4.BEST);
+  const fixPick = (v) => { const o = {}; D4.CALLS.forEach((c) => { const raw = v && v[c.key]; const hit = c.opts.find((q) => String(q[0]) === String(raw)); o[c.key] = hit ? hit[0] : D4.EASY[c.key]; }); return o; };
+  const QS = {
+    post: { type: 'choice', prompt: 'Your discussion post: what does a single 2d Lt in San Antonio make a month?', info: 'Base pay + BAH + BAS, 2026 rates.',
+      opts: ['$4,150.20', '$6,062.68', '$7,601.20', '$5,195.32'], ans: 1, why: 'Base pay $4,150.20 + BAH $1,584 + BAS $328.48.' },
+    captain: { type: 'choice', prompt: 'A captain at 4 years makes about **$9,718 a month**. Who in the enlisted force makes about the same?', info: 'Base pay + BAH + BAS, no dependents, San Antonio.',
+      opts: ['An E-4 at 4 years', 'An E-5 at 8 years', 'An E-8 (SMSgt) at 20 years', 'An E-3 at 2 years'], ans: 2, why: 'A senior master sergeant at 20 years makes about $9,391. You get there in 4.' },
+    life: { type: 'slider', prompt: 'You live on $3,000 and bank **$3,063 a month** for your first 4 years at 7%. Then you stop. What\'s it worth when you\'re 60?',
+      min: 0, max: 3000000, step: 50000, unit: '$M', start: 500000, ans: 1690000, tol: 1300000, why: 'About $1.7 million, from just 4 years of banking the raise.' },
+    taxed: { type: 'choice', prompt: 'Which of these is **taxed**?', opts: ['BAH (housing)', 'BAS (food)', 'Base pay', 'All three'], ans: 2, why: 'Only base pay. Allowances like BAH and BAS aren\'t taxed.' },
+    allot: { type: 'choice', prompt: 'What\'s an **allotment** on your LES?', opts: ['A bonus for a hard assignment', 'Money sent out before your pay hits the bank', 'The tax taken from base pay', 'A loan from the finance office'], ans: 1,
+      why: 'Money that goes out automatically, before you can spend it. The easiest way to pay yourself first.' },
+    pension: { type: 'choice', prompt: 'You get out at **19 years**. What\'s your BRS pension?', opts: ['38% of base pay', '19% of base pay', '$0', 'Half of base pay'], ans: 2, why: '$0. The pension only starts at 20 years.' },
+    match: { type: 'choice', prompt: 'How much do **you** have to put in the TSP to get the full 5% from the Air Force?', opts: ['1%', '3%', '5%', '10%'], ans: 2, why: '5%. The Air Force adds 1% automatically plus up to 4% more in match.' },
+    tsp: { type: 'slider', prompt: 'Brand new 2d Lt: **$4,150.20** a month base pay. The 2026 TSP limit is **$24,500**. What % do you need to hit it this year?', info: 'The TSP only takes whole percents.',
+      min: 0, max: 100, step: 1, unit: '%', start: 5, ans: 50, tol: 30, why: '50%. That\'s $24,901 a year, so you hit the $24,500 limit. 49% comes up just short.' },
+    roth: { type: 'choice', prompt: 'You\'re a 2d Lt. **Roth or Traditional** TSP?', opts: ['Roth: pay the tax now, take it out tax free', 'Traditional: skip the tax now, pay it later'], ans: 0,
+      why: 'Roth. Your tax rate will probably never be lower than it is as a 2d Lt.' },
+    market: { type: 'choice', prompt: 'The market drops **10%** the month after you start investing. What do you do?', opts: ['Sell before it drops more', 'Keep buying every month', 'Stop the TSP until it recovers', 'Move it all to the G Fund'], ans: 1,
+      why: 'Keep buying. You\'re buying on sale, and time in the market beats timing the market.' },
+    calls: { type: 'calls', prompt: 'Make your five money calls. Your score is where your line ends at year 10.',
+      calls: D4.CALLS.map((c) => ({ key: c.key, when: c.title.split(':')[0], ask: c.ask, opts: c.opts.map((o) => [String(o[0]), o[1]]) })),
+      why: 'The best calls end near ' + fmt(V_BEST, { k: true }) + ' at year 10. The easy calls end at ' + fmt(V_EASY, { k: true }) + '.' },
+  };
+  Object.entries(QS).forEach(([id, q]) => {
+    q.qid = id;
+    if (q.type === 'choice') { q.score = choiceScore(q.ans); q.say = (v) => 'You picked: ' + q.opts[v]; q.answerText = '**' + q.opts[q.ans] + '.** ' + q.why; }
+    if (q.type === 'slider') {
+      const f = (v) => (q.unit === '$M' ? '$' + (v / 1e6).toFixed(2) + 'M' : v + q.unit);
+      q.fmt = f; q.score = sliderScore(q.ans, q.tol); q.say = (v) => 'You said ' + f(v); q.answerText = q.why;
+    }
+    if (q.type === 'calls') {
+      q.score = (v) => Math.round(1000 * clamp((CALL_V10(fixPick(v)) - V_EASY) / (V_BEST - V_EASY), 0, 1));
+      q.say = (v) => 'Your year 10: ' + fmt(CALL_V10(fixPick(v)), { k: true }); q.answerText = q.why;
+    }
+    LIVE['q-' + id] = {
+      head: 'On your phones', body: q.type === 'calls' ? 'Make all five calls on your phone, then lock it in.' : 'Answer on your phone. **Faster right answers score more.**',
+      build(el) { return buildQ(el, q); },
+    };
+  });
+
+  function buildQ(el, q) {
+    el.innerHTML = `<div class="abs in" style="left:90px;top:56px;--d:.05"><div class="k">On your phones</div></div>
+      <div class="abs in qprompt" style="left:90px;top:100px;width:1420px;--d:.15">${md(q.prompt)}</div>
+      ${q.info ? `<div class="abs in qinfo" style="left:90px;top:250px;--d:.25">${md(q.info)}</div>` : ''}
+      <div class="abs qbody" style="left:90px;top:330px;width:1420px;height:420px"></div>
+      <div class="abs answered" style="left:90px;top:780px;width:1420px"><span class="cnt"></span><span class="faces"></span></div>`;
+    const body = $('.qbody', el), cnt = $('.answered .cnt', el), faces = $('.answered .faces', el);
+    const paint = () => {
+      if (!el.isConnected) return;
+      const L = ROOM.list(), A = L.filter((p) => p.ans && p.ans[q.qid]), rev = ROOM.phase === 'reveal' && ROOM.q === q;
+      cnt.textContent = rev ? '' : `${A.length} of ${L.length} answered`;
+      faces.innerHTML = rev ? '' : A.map((p) => face(p, 40)).join('');
+      if (q.type === 'choice') {
+        const n = q.opts.map((_, i) => A.filter((p) => p.ans[q.qid].v === i).length), mx = Math.max(1, ...n);
+        body.innerHTML = `<div class="opts${q.opts.length > 2 ? ' four' : ''}">${q.opts.map((o, i) => `<div class="opt${rev ? (i === q.ans ? ' right' : ' wrong') : ''}">
+          <b>${'ABCD'[i]}</b><span>${esc(o)}</span>${rev ? `<em>${n[i]}</em><i style="width:${n[i] / mx * 100}%"></i>` : ''}</div>`).join('')}</div>`;
+      } else if (q.type === 'slider') {
+        const x = (v) => 40 + 1340 * (v - q.min) / (q.max - q.min);
+        const ticks = [0, 0.25, 0.5, 0.75, 1].map((f) => q.min + f * (q.max - q.min));
+        body.innerHTML = `<div class="line"><i></i>${ticks.map((t) => `<span style="left:${x(t)}px">${q.fmt(t)}</span>`).join('')}
+          ${rev ? A.map((p, k) => `<div class="pin" style="left:${x(p.ans[q.qid].v)}px;top:${-60 - (k % 4) * 46}px">${face(p, 40)}</div>`).join('') : ''}
+          ${rev ? `<div class="truth" style="left:${x(q.ans)}px"><b>${q.fmt(q.ans)}</b></div>` : ''}</div>`;
+      } else {
+        const lo = Math.min(V_EASY, ...A.map((p) => CALL_V10(fixPick(p.ans[q.qid].v)))), hi = V_BEST;
+        const x = (v) => 40 + 1340 * (v - lo) / Math.max(1, hi - lo);
+        body.innerHTML = `<div class="line"><i></i><span style="left:${x(V_EASY)}px">Easy calls ${fmt(V_EASY, { k: true })}</span><span style="left:${x(V_BEST)}px">Best calls ${fmt(V_BEST, { k: true })}</span>
+          ${rev ? A.map((p, k) => `<div class="pin" style="left:${x(CALL_V10(fixPick(p.ans[q.qid].v)))}px;top:${-60 - (k % 4) * 46}px">${face(p, 40)}</div>`).join('') : ''}</div>`;
+      }
+      if (rev) {
+        const top = A.filter((p) => p.ans[q.qid].pts > 0).sort((a, b) => b.ans[q.qid].pts - a.ans[q.qid].pts).slice(0, 5);
+        body.insertAdjacentHTML('beforeend', `<div class="why">${md(q.answerText)}</div>
+          <div class="tops">${top.map((p) => `<span>${face(p, 44)}<b>+${p.ans[q.qid].pts}</b></span>`).join('')}</div>`);
+      }
+    };
+    ROOM.listeners.push(paint);
+    return {
+      enter() { ROOM.start(); ROOM.open(q); paint(); },
+      leave() { ROOM.close(); },
+      next() { if (ROOM.q === q && ROOM.phase === 'open') { ROOM.reveal(); paint(); return true; } return false; },
+    };
+  }
+
+  // ---- the scoreboard, with promotions
+  const boardLive = (title) => ({
+    head: title, body: 'Everyone starts as a 2d Lt. **Points get you promoted**, all the way to Col.',
+    build(el) {
+      el.innerHTML = `<div class="abs in" style="left:90px;top:56px;--d:.05"><div class="k">Scoreboard</div></div>
+        <div class="abs in" style="left:90px;top:96px;--d:.1"><h1 style="font-size:58px">${esc(title)}</h1></div>
+        <div class="abs ladder in" style="left:1180px;top:200px;width:330px;--d:.3">${FRChars.RANKS.slice().reverse().map((r) => `<div>${insig(r, 30)}<span>${r.rank}</span><em>${r.at.toLocaleString()}</em></div>`).join('')}</div>
+        <div class="abs board" style="left:90px;top:200px;width:1050px"></div>`;
+      const b = $('.board', el);
+      const paint = () => {
+        const L = ROOM.list().sort((x, y) => (y.score || 0) - (x.score || 0)), mx = Math.max(1, ...L.map((p) => p.score || 0));
+        b.innerHTML = L.length ? L.slice(0, 10).map((p, i) => { const r = FRChars.rankOf(p.score || 0);
+          return `<div class="row" style="--i:${i}"><b class="n">${i + 1}</b>${face(p, 44)}<span class="nm">${esc(p.name)}</span>${insig(r, 34)}<span class="bar"><i style="--w:${(p.score || 0) / mx * 100}%"></i></span><span class="pts">${(p.score || 0).toLocaleString()}</span></div>`; }).join('')
+          + (L.length > 10 ? `<div class="more">+ ${L.length - 10} more</div>` : '')
+          : '<div class="lab" style="font-size:26px">Nobody has joined yet. The room code is on the join slide.</div>';
+      };
+      ROOM.listeners.push(() => { if (el.isConnected && el.closest('.layer.on')) paint(); });
+      return { enter: paint };
+    },
+  });
+  LIVE.board1 = boardLive('After Your pay');
+  LIVE.board2 = boardLive('After Your LES');
+  LIVE.board3 = boardLive('After the BRS');
+  LIVE.board4 = boardLive('Final standings');
+
+  // ---- where it started: Oregon State and the student loans (Captain Russell, 24 Nov 2026)
+  LIVE.osu = {
+    head: 'Where it started', body: 'Oregon State University. I commissioned in June 2019 and went on active duty in June 2020 owing **$24,920** in student loans.',
+    build(el) {
+      el.innerHTML = `<div class="abs in osu" style="left:110px;top:120px;--d:.1"><div class="o1">OREGON STATE</div><div class="o2">UNIVERSITY</div><div class="o3">Corvallis, Oregon</div><div class="o4">Commissioned June 2019</div></div>
+        <div class="abs in" style="left:860px;top:160px;width:640px;--d:.35"><div class="k">Student loans on day one</div><div class="big r" id="loan" style="font-size:96px;margin-top:10px;white-space:nowrap">$0</div>
+          <div class="lab" style="font-size:28px;margin-top:20px">Paid off by 2022, about two years after I went on active duty.</div></div>`;
+      const n = $('#loan', el); let raf = 0;
+      return { enter() { cancelAnimationFrame(raf); const t0 = performance.now() + 500; const tick = (t) => { const p = clamp((t - t0) / 1600, 0, 1); n.textContent = '−' + fmt(24920.13 * (1 - Math.pow(1 - p, 3)), { cents: true }); if (p < 1) raf = requestAnimationFrame(tick); }; raf = requestAnimationFrame(tick); }, leave() { cancelAnimationFrame(raf); } };
+    },
+  };
+
+  // ---- keep the big things small: the real house and cars
+  LIVE.big = {
+    head: 'Keep the big things small', body: 'The house, the car and debt decide most of it. **Get those right and the little things don\'t hurt.**',
+    build(el) {
+      const A = FRChars.BASE;
+      el.innerHTML = `<div class="abs in photo" style="left:80px;top:80px;width:760px;--d:.1"><img src="${A}house.jpg" alt="Our 2 bedroom, 1 bath house"><div class="cap"><b>Home</b>2 bed, 1 bath, Nevada, Iowa</div></div>
+        <div class="abs in photo" style="left:880px;top:80px;width:640px;--d:.35"><img src="${A}venue.jpg" alt="2021 Hyundai Venue"><div class="cap"><b>Car</b>2021 Hyundai Venue. Paid off in 6 months, 60,000 miles</div></div>
+        <div class="abs in photo" style="left:880px;top:500px;width:640px;--d:.6"><img src="${A}avalon.jpg" alt="2006 Toyota Avalon"><div class="cap"><b>Car</b>2006 Toyota Avalon from Grandma, 115,000 miles</div></div>`;
+      return {};
+    },
+  };
+
+  // ---- the five books
+  const BOOKS = [
+    ['The Richest Man in Babylon', 'George S. Clason', '#6b3f1d', '#f0d9a6', 'Pay yourself first.'],
+    ['The Millionaire Next Door', 'Thomas J. Stanley · William D. Danko', '#14284b', '#f4efe3', 'Most millionaires don\'t look like it.'],
+    ['Millionaire Mission', 'Brian Preston', '#0f5132', '#e8f5ee', 'Do things in the right order.'],
+    ['Money for Couples', 'Ramit Sethi', '#b8433a', '#fff4ee', 'Actually talk about money together.'],
+    ['The Simple Path to Wealth', 'JL Collins', '#eef2f7', '#1e3a6e', 'Spend less, invest the rest in index funds.'],
+  ];
+  LIVE.books = {
+    head: 'Where these ideas come from', body: 'Five books I\'d hand any new lieutenant. **Each money call is tied to one of them.**',
+    build(el) {
+      el.innerHTML = `<div class="abs in" style="left:90px;top:60px;--d:.05"><div class="k">Recommended reading</div></div>
+        <div class="abs books" style="left:90px;top:130px;width:1420px">${BOOKS.map(([t, a, bg, fg, idea], i) => `<div class="book in" style="--d:${0.15 + i * 0.15}">
+          <div class="cover" style="background:${bg};color:${fg}"><div class="t">${esc(t)}</div><div class="a">${esc(a)}</div></div><p>${esc(idea)}</p></div>`).join('')}</div>`;
+      return {};
+    },
+  };
+
+  // ======================================================================
   // the slide list
   // ======================================================================
   const SL = [];
   const scn = (id, sec, from, to) => { const s = SCENES[id].sc.steps; const a = from == null ? 0 : stepOf(id, from), b = to == null ? s.length - 1 : stepOf(id, to); for (let i = a; i <= b; i++) SL.push({ sec, scene: id, i }); };
   const live = (id, sec) => SL.push({ sec, live: id });
-  live('title', 0); live('obj', 0);
-  scn('fr1', 1, 'What did you find?', 'Avoid lifestyle inflation'); live('life', 1);
-  scn('fr1', 2, 'This was me in 2019.', 'What I got wrong'); live('wait', 2); scn('fr1', 2, 'What I got right', 'What I got right');
-  scn('fr2', 3);
-  scn('fr3', 4, 'Three parts, one system', '1. The pension'); live('tsp', 4); scn('fr3', 4, '3. Continuation pay', 'Roth or Traditional?');
-  live('zoom', 5); scn('fr3', 5, 'Always be buying', 'The one rule');
-  live('calls', 6); scn('fr4', 6, 'My mantra', 'My mantra');
+  live('title', 0); live('obj', 0); live('join', 0);
+  live('q-post', 1); scn('fr1', 1, 'What did you find?', 'What did you find?'); live('q-captain', 1); scn('fr1', 1, 'Now compare it', 'Lead with it');
+  live('q-life', 1); scn('fr1', 1, 'Avoid lifestyle inflation', 'Avoid lifestyle inflation'); live('life', 1); live('board1', 1);
+  scn('fr1', 2, 'This was me in 2019.', 'This was me in 2019.'); live('osu', 2); scn('fr1', 2, 'This is me today.', 'What I got wrong'); live('wait', 2);
+  scn('fr1', 2, 'What I got right', 'What I got right'); live('big', 2);
+  live('q-taxed', 3); scn('fr2', 3, 'My real LES', 'Deductions: what is taken out'); live('q-allot', 3); scn('fr2', 3, 'Allotments: pay yourself first'); live('board2', 3);
+  scn('fr3', 4, 'Three parts, one system', 'Three parts, one system'); live('q-pension', 4); scn('fr3', 4, '1. The pension', '1. The pension');
+  live('q-match', 4); live('tsp', 4); live('q-tsp', 4); scn('fr3', 4, '3. Continuation pay', '3. Continuation pay'); live('q-roth', 4); scn('fr3', 4, 'Roth or Traditional?', 'Roth or Traditional?');
+  live('q-market', 5); live('zoom', 5); scn('fr3', 5, 'Always be buying', 'The one rule'); live('board3', 5);
+  live('books', 6); live('q-calls', 6); live('calls', 6); scn('fr4', 6, 'My mantra', 'My mantra'); live('board4', 6);
   live('close', 6);
   SL.forEach((s) => { if (s.scene) { const m = SCENES[s.scene].sc.steps[s.i].meta; s.head = m.head; s.body = m.body; } else { s.head = LIVE[s.live].head; s.body = LIVE[s.live].body; } });
 
@@ -619,7 +872,7 @@
     else render(k, animate);
   }
   let playingScene = null;
-  const next = () => { if (playingScene) { cancelAnimationFrame(raf); players[playingScene.id].renderEnd(playingScene.i); playingScene = null; return; } go(cur + 1, true); };
+  const next = () => { if (onLive && onLive.next && onLive.next()) return; if (playingScene) { cancelAnimationFrame(raf); players[playingScene.id].renderEnd(playingScene.i); playingScene = null; return; } go(cur + 1, true); };
   const prev = () => { if (playingScene) { cancelAnimationFrame(raf); playingScene = null; } go(cur - 1, false); };
   function replay() {
     const s = SL[cur];
@@ -693,6 +946,7 @@
   addEventListener('resize', fit); fit();
   addEventListener('hashchange', () => { const n = parseInt(location.hash.slice(1), 10); if (n && n - 1 !== cur) go(n - 1, false); });
 
+  ROOM.start();
   const start = parseInt(location.hash.slice(1), 10);
   go(start > 0 ? start - 1 : 0, true);
 })();
