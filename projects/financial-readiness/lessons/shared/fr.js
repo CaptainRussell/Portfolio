@@ -4,7 +4,7 @@
  *   FR.CHAPTERS     the four chapters in order (the chapter picker and each chapter's last button)
  *   FR.next(id)     where a chapter's score screen sends the learner
  *   Anim.KINDS.money  a dollar figure that counts smoothly between values: props num, fill; cfg size, weight, anchor, pre, post,
- *                     k (show in thousands), les (an LES amount, 7737.00), fit (as for text)
+ *                     k (show in thousands), les (an LES amount, 7737.00), cents ($6,062.68), fit (as for text)
  *   FR.fmt(n)       "$10,732", "−$20,000"
  * Code organized with help from Claude (Anthropic), Nov 2026.
  */
@@ -12,10 +12,10 @@
   'use strict';
   const { el, C, FONT } = root.Anim;
   const CHAPTERS = [
-    { id: 'fr1', href: 'c1-from-minus-20k/', n: 1, name: 'From −$20K', blurb: 'My real net worth, year by year, and my real budget.' },
+    { id: 'fr1', href: 'c1-from-minus-20k/', n: 1, name: 'From −$20K', blurb: 'Your discussion post, then my real net worth, budget and mistakes.' },
     { id: 'fr2', href: 'c2-first-les/', n: 2, name: 'Your first LES', blurb: 'Build a 2d Lt paycheck from the three types of pay.' },
     { id: 'fr3', href: 'c3-brs/', n: 3, name: 'The BRS', blurb: 'Pension, TSP match and continuation pay, and the 5% rule.' },
-    { id: 'fr4', href: 'c4-money-calls/', n: 4, name: 'Money calls', blurb: 'Make five real money decisions and see where your line ends up.' },
+    { id: 'fr4', href: 'c4-money-calls/', n: 4, name: 'Money calls', blurb: 'Five decisions from your first ten years, next to my real line.' },
   ];
   function next(id) {
     const i = CHAPTERS.findIndex((c) => c.id === id);
@@ -25,6 +25,7 @@
   const fmt = (n, o) => {
     o = o || {};
     if (o.les) return (n < 0 ? '-' : '') + Math.abs(n).toFixed(2);   // an LES amount: 7737.00
+    if (o.cents) return (n < 0 ? '−' : '') + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });   // $6,062.68
     let v = Math.round(n);
     const neg = v < 0; v = Math.abs(v);
     const body = o.k ? (v / 1000).toLocaleString('en-US', { maximumFractionDigits: v < 10000 && v % 1000 ? 1 : 0 }) + 'K' : v.toLocaleString('en-US');

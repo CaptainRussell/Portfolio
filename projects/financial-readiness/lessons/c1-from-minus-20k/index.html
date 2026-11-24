@@ -72,6 +72,10 @@ function project(add) {
   }
 }
 const KEEP = project(YEARLY), STOP = project(0);
+// What I put in the TSP (my W-2s; Captain Russell, 24 Nov 2026) and the taxable base pay on the same W-2s.
+// Commissioned 14 June 2020, 1st Lt December 2021, Captain December 2023. Maxed out the TSP from 2023.
+const TSP_IN = [[2020, 0, 21295.29, '2d Lt'], [2021, 6308.33, 41155.49, '1st Lt'], [2022, 16278.46, 59276.08, ''], [2023, 22500, 67622.12, 'Capt'], [2024, 23000, 81673.2, ''], [2025, 23500, 87579.28, '']];
+const LIFETIME = 435971.46;   // all base pay on my W-2s, June 2020 to October 2026
 
 // ---------------------------------------------------------------- chart geometry
 const CX0 = 250, CX1 = 1450, CY0 = 790, CY1 = 170;
@@ -95,6 +99,33 @@ function scene(st) {
   const S = new Scene('fr1');
   const all = [];
   const add = (id, kind, cfg, props) => { all.push(id); return S.add(id, kind, cfg, props); };
+
+  // ---- the opener: the pre-class discussion post (O-1, 0 years, single, off base in San Antonio 78236, 2026 rates)
+  // and lifestyle inflation (Captain Russell, 24 Nov 2026: "put away that excess above your baseline")
+  const HW = [['Base pay (O-1, under 2 years)', 4150.20], ['BAH (single, San Antonio 78236)', 1584], ['BAS (officers)', 328.48]];
+  add('hwHead', 'text', { size: 44, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 130, content: 'Your discussion post: a brand new 2d Lt', fill: C.ink, o: 0 });
+  add('hwSub', 'text', { size: 28, anchor: 'middle', weight: 600, maxw: 1400 }, { x: 800, y: 178, content: 'Single, off base in San Antonio, 2026 rates', fill: C.soft, o: 0 });
+  HW.forEach(([n, v], i) => {
+    add('hwL' + i, 'text', { size: 34, anchor: 'start', weight: 650, maxw: 760 }, { x: 260, y: 290 + i * 80, content: n, fill: C.ink, o: 0 });
+    add('hwV' + i, 'text', { size: 38, anchor: 'end', weight: 800, mono: true }, { x: 1340, y: 290 + i * 80, content: fmt(v, { cents: true }), fill: C.ink, o: 0 });
+  });
+  add('hwRule', 'rect', {}, { x: 260, y: 482, w: 0, h: 4, rx: 2, fill: C.soft, o: 0 });
+  add('hwM', 'money', { size: 96, weight: 850, mono: true, cents: true }, { x: 800, y: 620, num: 0, fill: C.green, o: 0 });
+  add('hwML', 'text', { size: 32, anchor: 'middle', weight: 650 }, { x: 800, y: 680, content: 'a month', fill: C.soft, o: 0 });
+  add('hwY', 'text', { size: 44, anchor: 'middle', weight: 800, mono: true }, { x: 800, y: 790, content: '$72,752.16 a year', fill: C.cyan, o: 0 });
+
+  const LB = 3000, LP = 6062.68, LX = 200, LWD = 1200;
+  add('liHead', 'text', { size: 44, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 130, content: 'The easiest way to win', fill: C.ink, o: 0 });
+  add('liAl', 'text', { size: 28, anchor: 'start', weight: 700 }, { x: LX, y: 236, content: 'What you live on now, as a cadet', fill: C.soft, o: 0 });
+  add('liA', 'rect', {}, { x: LX, y: 256, w: 0, h: 90, rx: 8, fill: C.amber, fo: 0.85, o: 0 });
+  add('liAv', 'text', { size: 34, anchor: 'end', weight: 850, mono: true }, { x: LX + LWD * LB / LP - 20, y: 314, content: 'about $3,000', fill: '#06101c', o: 0 });
+  add('liBl', 'text', { size: 28, anchor: 'start', weight: 700 }, { x: LX, y: 416, content: 'Your first month as a 2d Lt', fill: C.soft, o: 0 });
+  add('liB', 'rect', {}, { x: LX, y: 436, w: 0, h: 90, rx: 8, fill: C.amber, fo: 0.85, o: 0 });
+  add('liX', 'rect', {}, { x: LX + LWD * LB / LP, y: 436, w: 0, h: 90, rx: 8, fill: C.green, fo: 0.9, o: 0 });
+  add('liXv', 'text', { size: 34, anchor: 'middle', weight: 850, mono: true }, { x: LX + LWD * (LB / LP + (1 - LB / LP) / 2), y: 494, content: '+$3,063', fill: '#06101c', o: 0 });
+  add('liBig', 'text', { size: 56, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 650, content: 'Keep living on $3,000. Bank the rest.', fill: C.green, o: 0 });
+  add('liSub', 'text', { size: 30, anchor: 'middle', weight: 600, maxw: 1400 }, { x: 800, y: 720, content: 'Invested for your first 4 years at 7%: about $168,000.', fill: C.ink, o: 0 });
+  add('liSub2', 'text', { size: 30, anchor: 'middle', weight: 600, maxw: 1400 }, { x: 800, y: 770, content: 'Left alone until you are 60: about $1.7 million, in today\'s dollars.', fill: C.amber, o: 0 });
 
   // ---- the opening number
   add('big', 'money', { size: 150, weight: 850 }, { x: 800, y: 430, num: -20000, fill: C.red, o: 0 });
@@ -211,12 +242,76 @@ function scene(st) {
     add('gy' + k, 'text', { size: 28, anchor: 'end', weight: 800, mono: true }, { x: gx(P.hit) - 20, y: gy(1e6) + (k === 'k' ? -30 : 371), content: `$1M in ${Math.floor(P.hit)}, age ${age(P.hit)}`, fill: col, o: 0 });
   });
 
+  // ---- what I put in the TSP each year
+  add('tspHead', 'text', { size: 40, anchor: 'middle', weight: 800 }, { x: 800, y: 120, content: 'What I put in the TSP each year', fill: C.ink, o: 0 });
+  add('tspSub', 'text', { size: 26, anchor: 'middle', weight: 600 }, { x: 800, y: 164, content: 'From my W-2s, and the share of my base pay it was', fill: C.soft, o: 0 });
+  const TB = 700, TH = 400;
+  TSP_IN.forEach(([yr, amt, base, rank], i) => {
+    const x = 800 + (i - 2.5) * 200, h = Math.max(4, amt / 23500 * TH);
+    add('tspB' + i, 'rect', {}, { x: x - 60, y: TB, w: 120, h: 0, rx: 8, fill: amt >= 22500 ? C.green : amt ? C.amber : C.red, o: 0, hTo: h });
+    add('tspV' + i, 'text', { size: 28, anchor: 'middle', weight: 800, mono: true }, { x, y: TB - h - 52, content: amt ? fmt(amt, { k: true }) : '$0', fill: C.ink, o: 0 });
+    add('tspP' + i, 'text', { size: 24, anchor: 'middle', weight: 700 }, { x, y: TB - h - 18, content: `${Math.round(amt / base * 100)}%`, fill: amt >= 22500 ? C.green : C.soft, o: 0 });
+    if (amt >= 22500) add('tspM' + i, 'text', { size: 26, anchor: 'middle', weight: 850, mono: true }, { x, y: TB - h + 42, content: 'MAX', fill: '#06101c', o: 0 });
+    add('tspY' + i, 'text', { size: 26, anchor: 'middle', weight: 700, mono: true }, { x, y: TB + 40, content: String(yr), fill: C.faint, o: 0 });
+    add('tspR' + i, 'text', { size: 24, anchor: 'middle', weight: 800 }, { x, y: TB + 76, content: rank, fill: C.amber, o: 0 });
+  });
+
+  // ---- what I earned vs what I have
+  const KW = 1280, kx = 160;
+  add('kHead', 'text', { size: 40, anchor: 'start', weight: 800 }, { x: kx, y: 140, content: 'What I earned vs what I have', fill: C.ink, o: 0 });
+  add('kEl', 'text', { size: 28, anchor: 'start', weight: 700 }, { x: kx, y: 236, content: 'All my base pay, June 2020 to now (W-2s)', fill: C.soft, o: 0 });
+  add('kE', 'rect', {}, { x: kx, y: 256, w: 0, h: 90, rx: 8, fill: C.cyan, fo: 0.85, o: 0 });
+  add('kEv', 'text', { size: 36, anchor: 'end', weight: 850, mono: true }, { x: kx + KW - 24, y: 314, content: fmt(LIFETIME), fill: '#06101c', o: 0 });
+  add('kHl', 'text', { size: 28, anchor: 'start', weight: 700 }, { x: kx, y: 436, content: 'My net worth today', fill: C.soft, o: 0 });
+  add('kH', 'rect', {}, { x: kx, y: 456, w: 0, h: 90, rx: 8, fill: C.green, fo: 0.85, o: 0 });
+  add('kHv', 'text', { size: 36, anchor: 'end', weight: 850, mono: true }, { x: kx + KW * NOW / LIFETIME - 24, y: 514, content: fmt(NOW), fill: '#06101c', o: 0 });
+  add('kBig', 'text', { size: 60, anchor: 'start', weight: 850, maxw: 1300 }, { x: kx, y: 680, content: `${Math.round(NOW / LIFETIME * 100)} cents of every dollar, still here`, fill: C.green, o: 0 });
+  add('kSub', 'text', { size: 30, anchor: 'start', weight: 600, maxw: 1300 }, { x: kx, y: 740, content: 'After taxes, a house, two cars, pets and a family. Growth did the rest.', fill: C.soft, o: 0 });
+
+  // ---- what I got wrong, what I got right
+  add('mHead', 'text', { size: 44, anchor: 'start', weight: 850 }, { x: 120, y: 120, content: 'What I got wrong', fill: C.ink, o: 0 });
+  [['Trying to impress people with money', 'instead of just being myself.'],
+   ['Not investing on day 1', 'My first six months as a 2d Lt, nothing went in.'],
+   ['Being so frugal it hurt my family', 'Now we spend on our pets and my wife\'s guilt-free money.']].forEach(([a, b], i) => {
+    const y = 170 + i * 210;
+    add('mR' + i, 'rect', {}, { x: 100, y, w: 1400, h: 180, rx: 22, fill: C.panel2, stroke: C.red, sw: 3, o: 0 });
+    add('mN' + i, 'text', { size: 64, anchor: 'middle', weight: 850, mono: true }, { x: 180, y: y + 114, content: String(i + 1), fill: C.red, o: 0 });
+    add('mA' + i, 'text', { size: 40, anchor: 'start', weight: 800, maxw: 1180 }, { x: 260, y: y + 78, content: a, fill: C.ink, o: 0 });
+    add('mB' + i, 'text', { size: 30, anchor: 'start', weight: 600, maxw: 1180 }, { x: 260, y: y + 136, content: b, fill: C.soft, o: 0 });
+  });
+
+  add('wnHead', 'text', { size: 44, anchor: 'start', weight: 850 }, { x: 120, y: 120, content: 'What I got right: keep the big things small', fill: C.ink, o: 0 });
+  [['HOME', '2 bed, 1 bath in Nevada, Iowa'], ['CAR', '2021 Hyundai Venue: paid off in 6 months, 60,000 miles'], ['CAR', '2006 Toyota Avalon from my grandma, 115,000 miles']].forEach(([a, b], i) => {
+    const y = 230 + i * 110;
+    add('wnA' + i, 'text', { size: 28, anchor: 'start', weight: 800, mono: true }, { x: 140, y: y + 40, content: a, fill: C.green, o: 0 });
+    add('wnB' + i, 'text', { size: 36, anchor: 'start', weight: 700, maxw: 1150 }, { x: 300, y: y + 40, content: b, fill: C.ink, o: 0 });
+  });
+  add('wnBig', 'text', { size: 46, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 640, content: 'If the big things are in check,', fill: C.green, o: 0 });
+  add('wnBig2', 'text', { size: 46, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 700, content: 'the little things don\'t hurt.', fill: C.green, o: 0 });
+  add('wnQ', 'text', { size: 30, anchor: 'middle', weight: 650, maxw: 1400 }, { x: 800, y: 820, content: 'Freedom is bought with hard work and discipline over many years.', fill: C.amber, o: 0 });
+
   const hide = (s, ids) => ids.forEach((id) => { s[id].o = 0; });
   const ids = (pre) => all.filter((id) => id.startsWith(pre));
 
   // ================================================================ steps
+  S.step({ head: 'What did you find?', body: 'Before class you added up a new lieutenant\'s pay. **Did you get $6,062.68?**', go: [800, 640, 900, 290, 'What do I do with it?'] })
+    .beat(0.6, (s) => { s.hwHead.o = 1; s.hwSub.o = 1; })
+    .beat(1.4, (s) => { HW.forEach((_, i) => { s['hwL' + i].o = 1; s['hwV' + i].o = 1; }); }, (id) => { const m = /^hw[LV](\d)$/.exec(id); return m ? { w: [+m[1] / 3, (+m[1] + 1) / 3] } : null; })
+    .beat(0.5, (s) => { s.hwRule.o = 1; s.hwRule.w = 1080; })
+    .beat(1.4, (s) => { s.hwM.o = 1; s.hwM.num = 6062.68; s.hwML.o = 1; })
+    .beat(0.6, (s) => { s.hwY.o = 1; });
+
+  S.step({ head: 'Avoid lifestyle inflation', body: 'You already know how to live broke. **That is your superpower.** Every raise, bank what is above your baseline.', go: [800, 480, 1300, 600, 'Here is my story'] })
+    .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); s.liHead.o = 1; s.liAl.o = 1; })
+    .beat(1.0, (s) => { s.liA.o = 1; s.liA.w = LWD * LB / LP; s.liAv.o = 1; })
+    .beat(0.4, (s) => { s.liBl.o = 1; })
+    .beat(1.0, (s) => { s.liB.o = 1; s.liB.w = LWD * LB / LP; })
+    .beat(1.0, (s) => { s.liX.o = 1; s.liX.w = LWD * (1 - LB / LP); s.liXv.o = 1; })
+    .beat(0.8, (s) => { s.liBig.o = 1; })
+    .beat(0.8, (s) => { s.liSub.o = 1; s.liSub2.o = 1; });
+
   S.step({ head: 'This was me in 2019.', body: 'A brand new college grad.', go: [800, 380, 760, 170, 'What happened next?'] })
-    .beat(0.5, (s) => { s.bigYr.o = 1; })
+    .beat(0.5, (s) => { all.forEach((i) => { s[i].o = 0; }); s.bigYr.o = 1; })
     .beat(1.0, (s) => { s.big.o = 1; s.big.s = 1; })
     .beat(0.7, (s) => { s.bigSub.o = 1; });
 
@@ -224,7 +319,7 @@ function scene(st) {
     .beat(0.4, (s) => { s.bigSub.o = 0; s.bigYr.content = 'November 2026'; })
     .beat(2.4, (s) => { s.big.num = NOW; s.big.fill = C.green; s.big.s = 1.08; });
 
-  S.step({ head: 'Years 1 to 3: digging out', body: 'Paying off the loans. The line barely moves.', go: [xOf(2021), yOf(-3500), 120, 120, 'Keep going'] })
+  S.step({ head: 'Years 1 to 3: digging out', body: 'I commissioned in June 2020 owing **$24,920** in student loans. I paid off a car in 6 months and the loans by 2022.', go: [xOf(2021), yOf(-3500), 120, 120, 'Keep going'] })
     .beat(0.8, (s) => { hide(s, ['big', 'bigYr']); ids('g').filter((i) => /^g(l)?(-?\d)/.test(i)).forEach((i) => { s[i].o = 1; }); for (let y = 2019; y <= 2026; y++) s['yr' + y].o = 1; })
     .beat(0.4, (s) => { s.p0.o = 1; s.p0.s = 1; s.pv0.o = 1; })
     .beat(1.6, (s) => { s.l1.draw = 1; [1, 2].forEach((i) => { s['p' + i].o = 1; s['p' + i].s = 1; s['pv' + i].o = 1; }); }, (id) => (id === 'p2' || id === 'pv2' ? { w: [0.6, 1] } : id === 'p1' || id === 'pv1' ? { w: [0.2, 0.6] } : null));
@@ -237,10 +332,22 @@ function scene(st) {
     .beat(2.6, (s) => { s.l3.draw = 1; s.area.o = 1; for (let i = 4; i < PTS.length; i++) { s['p' + i].o = 1; s['p' + i].s = 1; s['pv' + i].o = 1; } },
       (id) => { const m = /^pv?(\d)$/.exec(id); return m && +m[1] >= 4 ? { w: [(+m[1] - 4) / 5, (+m[1] - 3) / 5] } : null; });
 
-  S.step({ head: 'Each year adds more than the last', body: 'Investments earn returns, and then **the returns earn returns**. That is compounding.', go: [800, 520, 1300, 600, 'Now, the budget'] })
+  S.step({ head: 'Each year adds more than the last', body: 'Investments earn returns, and then **the returns earn returns**. That is compounding.', go: [800, 520, 1300, 600, 'What did I put in?'] })
     .beat(0.8, (s) => { all.forEach((i) => { s[i].o = 0; }); s.gainHead.o = 1; })
     .beat(2.4, (s) => { all.filter((i) => /^g[bvy]\d$/.test(i)).forEach((i) => { s[i].o = 1; }); NW.slice(1, -1).forEach((_, i) => { const g = NW[i + 1][1] - NW[i][1]; s['gb' + i].h = g / 70000 * 430; s['gb' + i].y = 760 - g / 70000 * 430; }); },
       (id) => { const m = /^g[bvy](\d)$/.exec(id); return m ? { w: [+m[1] / 8, (+m[1] + 2) / 8] } : null; });
+
+  S.step({ head: 'What I put in', body: '2020: nothing. I waited, and that was a mistake. Then every promotion, more went in. **From 2023, the legal max.**', go: [800, 500, 1300, 580, 'Earned vs kept'] })
+    .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); s.tspHead.o = 1; s.tspSub.o = 1; })
+    .beat(2.2, (s) => { TSP_IN.forEach(([, amt], i) => { const h = Math.max(4, amt / 23500 * 400); s['tspB' + i].o = 1; s['tspB' + i].h = h; s['tspB' + i].y = 700 - h; ['V', 'P', 'Y', 'R', 'M'].forEach((k) => { if (s['tsp' + k + i]) s['tsp' + k + i].o = 1; }); }); },
+      (id) => { const m = /^tsp[BVPYRM](\d)$/.exec(id); return m ? { w: [+m[1] / 8, (+m[1] + 2) / 8] } : null; })
+
+  S.step({ head: 'Earned vs kept', body: 'Every dollar of base pay I have ever been paid, next to what I have today.', go: [800, 470, 1340, 650, 'Now, the budget'] })
+    .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); s.kHead.o = 1; s.kEl.o = 1; })
+    .beat(1.2, (s) => { s.kE.o = 1; s.kE.w = KW; s.kEv.o = 1; })
+    .beat(0.5, (s) => { s.kHl.o = 1; })
+    .beat(1.4, (s) => { s.kH.o = 1; s.kH.w = KW * NOW / LIFETIME; s.kHv.o = 1; })
+    .beat(0.8, (s) => { s.kBig.o = 1; s.kSub.o = 1; });
 
   S.step({ head: 'Your guess', body: 'Tap the share of my paycheck you think goes to saving and investing.',
     act(ctx) {
@@ -276,9 +383,20 @@ function scene(st) {
     .beat(1.6, (s) => { s.gpk.o = 1; s.gpk.draw = 1; })
     .beat(0.6, (s) => { s.gdk.o = 1; s.gdk.s = 1; s.gtk.o = 1; s.gyk.o = 1; });
 
-  S.step({ head: 'I have already won the game', body: 'Even if I never invest another dollar, what is already there **reaches $1 million on its own**. The early years did the work. **Chapter 2: your first paycheck.**' })
+  S.step({ head: 'I have already won the game', body: 'Even if I never invest another dollar, what is already there **reaches $1 million on its own**. The early years did the work.', go: [gx(STOP.hit) - 80, gy(1e6), 300, 150, 'What did I get wrong?'] })
     .beat(2.2, (s) => { s.gpx.o = 1; s.gpx.draw = 1; })
     .beat(0.7, (s) => { s.gdx.o = 1; s.gdx.s = 1; s.gtx.o = 1; s.gyx.o = 1; });
+
+  S.step({ head: 'What I got wrong', body: 'Three mistakes, so you can skip them. **It is not always about the spreadsheet.**', go: [800, 475, 1420, 640, 'What did I get right?'] })
+    .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); s.mHead.o = 1; })
+    .beat(2.0, (s) => { [0, 1, 2].forEach((i) => { ['R', 'N', 'A', 'B'].forEach((k) => { s['m' + k + i].o = 1; }); }); },
+      (id) => { const m = /^m[RNAB](\d)$/.exec(id); return m ? { w: [+m[1] / 3, (+m[1] + 1) / 3] } : null; });
+
+  S.step({ head: 'What I got right', body: 'My savings rate has been about **50%** for years. That is what buys the flexibility. **Chapter 2: your first paycheck.**' })
+    .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); s.wnHead.o = 1; })
+    .beat(1.6, (s) => { [0, 1, 2].forEach((i) => { s['wnA' + i].o = 1; s['wnB' + i].o = 1; }); }, (id) => { const m = /^wn[AB](\d)$/.exec(id); return m ? { w: [+m[1] / 3, (+m[1] + 1) / 3] } : null; })
+    .beat(0.9, (s) => { s.wnBig.o = 1; s.wnBig2.o = 1; })
+    .beat(0.8, (s) => { s.wnQ.o = 1; });
 
   return S;
 }
@@ -289,10 +407,12 @@ Lesson.mount(document.getElementById('lesson'), {
   state: { guess: '' },
   scene,
   intro: [
-    { kicker: 'Financial Readiness · Chapter 1', head: 'From −$20K', body: 'My real numbers, from a broke college grad with student loans to today. Nothing rounded, nothing hidden.', go: ['Tap here to start', 'outline'] },
+    { kicker: 'Financial Readiness · Chapter 1', head: 'From −$20K', body: 'Your discussion post first, then my real numbers, from a broke college grad with student loans to today. Nothing rounded, nothing hidden.', go: ['Tap here to start', 'outline'] },
   ],
-  pass: 2,
+  pass: 3,
   quiz: [
+    { q: 'Your pay doubles the day you commission. The easiest way to win is:', choices: ['Keep living on your cadet budget, invest the rest', 'Upgrade everything, you earned it', 'Save whatever is left at the end of the month', 'Wait until captain to start investing'], answer: 0,
+      why: 'Avoid lifestyle inflation. Bank what is above your old baseline before you get used to spending it.' },
     { q: 'Which two lines on my paycheck are **not taxed**?', choices: ['BAH and BAS', 'Base pay and BAS', 'Base pay and BAH', 'Base pay and TSP'], answer: 0,
       why: 'BAH (housing) and BAS (food) are allowances. Allowances are not taxed; base pay is.' },
     { q: 'Why did my net worth climb faster each year after 2022?', choices: ['Returns earned their own returns', 'One lucky stock pick paid off', 'A large inheritance came in', 'I stopped paying any taxes'], answer: 0,
