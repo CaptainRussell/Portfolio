@@ -49,9 +49,26 @@
     const A = hexRgb(a), B = hexRgb(b);
     return 'rgb(' + A.map((v, i) => Math.round(lerp(v, B[i], t))).join(',') + ')';
   }
+  // Small screens (Captain Russell, 24 Nov 2026: the game on a phone). The stage is drawn 1600 units wide, so on a
+  // phone a 24-unit label is about 6 px. Every Player sets the stage's real width here, and text smaller than
+  // MIN_PX on screen grows (up to MAX_BOOST times) until it reaches MIN_PX. Text inside a fitted box opts out
+  // with 'data-fit': 'no'. On a computer the stage is wide enough that nothing changes.
+  const MIN_PX = 10, MAX_BOOST = 1.6;
+  let unitPx = 1;   // screen pixels per scene unit
+  const boost = (size) => (size ? Math.min(MAX_BOOST, Math.max(1, MIN_PX / (size * unitPx))) : 1);
+  function setStageWidth(px, units) { if (px > 0) unitPx = px / (units || 1600); }
+  // Font size in px for page elements laid over the stage (message chips and the like), with the same floor.
+  function fitPx(units, stagePx, cap) { const k = stagePx / 1600; return Math.max(units * k, Math.min(units * k * (cap || MAX_BOOST), MIN_PX)); }
+  // a scene object made with fit: false keeps its text at the drawn size; fit: 1.2 lets it grow at most 1.2 times
+  // (for labels packed side by side)
+  const NF = (cfg) => (cfg && cfg.fit != null ? { 'data-fit': cfg.fit === false ? 'no' : cfg.fit } : null);
   function el(tag, attrs, parent) {
     const e = document.createElementNS(NS, tag);
-    for (const k in attrs) e.setAttribute(k, attrs[k]);
+    if (tag === 'text' && attrs && attrs['font-size'] && attrs['data-fit'] !== 'no') {
+      const cap = +attrs['data-fit'] || MAX_BOOST, fs = +attrs['font-size'];
+      attrs = Object.assign({}, attrs, { 'font-size': +(fs * Math.min(cap, boost(fs))).toFixed(2) });
+    }
+    for (const k in attrs) if (k !== 'data-fit') e.setAttribute(k, attrs[k]);
     if (parent) parent.appendChild(e);
     return e;
   }
@@ -66,7 +83,7 @@
   function fillText(textNode, str, cfg) {
     while (textNode.firstChild) textNode.removeChild(textNode.firstChild);
     String(str).split('\n').forEach((line, i) => {
-      const ls = el('tspan', { x: 0, dy: i === 0 ? 0 : (cfg.size || 36) * (cfg.lh || 1.25) }, textNode);
+      const ls = el('tspan', { x: 0, dy: i === 0 ? 0 : (cfg.size || 36) * (cfg.fit === false ? 1 : Math.min(+cfg.fit || MAX_BOOST, boost(cfg.size || 36))) * (cfg.lh || 1.25) }, textNode);
       line.split(/(\*\*[^*]+\*\*)/).forEach((part) => {
         if (!part) return;
         const bold = part.startsWith('**');
@@ -106,7 +123,7 @@
     defaults: { content: '', fill: C.ink, num: 0, rot: 0 },
     create(g, cfg) {
       const r = el('g', {}, g);
-      const mk = () => el('text', { 'font-family': cfg.mono ? MONO : FONT, 'font-size': cfg.size || 36,
+      const mk = () => el('text', { ...NF(cfg), 'font-family': cfg.mono ? MONO : FONT, 'font-size': cfg.size || 36,
         'font-weight': cfg.weight || 500, 'text-anchor': cfg.anchor || 'start', 'letter-spacing': cfg.ls || 0 }, r);
       return { root: r, a: mk(), b: mk(), cfg, sa: null, sb: null };
     },
@@ -203,7 +220,7 @@
       ic.innerHTML = ICONS[cfg.icon] || ICONS.server;
       let lab = null;
       if (cfg.label) {
-        lab = el('text', { x: 0, y: W / 2 + 46, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 40, 'font-weight': 650, fill: C.ink }, r);
+        lab = el('text', { ...NF(cfg), x: 0, y: W / 2 + 46, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 40, 'font-weight': 650, fill: C.ink }, r);
         lab.textContent = cfg.label;
       }
       return { root: r, halo, pulse, tile, ic, W };
@@ -254,7 +271,7 @@
       el('ellipse', { cx: 0, cy: top, rx: W / 2 + 3, ry: W * 0.11 + 3, fill: C.panel2, stroke: C.faint, 'stroke-width': 3 }, cover);
       const q = el('text', { x: 0, y: W * 0.2, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': W * 0.5, 'font-weight': 800, fill: C.soft }, cover);
       q.textContent = '?';
-      const lab = el('text', { x: 0, y: H / 2 + 34, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 26, 'font-weight': 650, fill: C.ink }, r);
+      const lab = el('text', { ...NF(cfg), x: 0, y: H / 2 + 34, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 26, 'font-weight': 650, fill: C.ink }, r);
       return { root: r, halo, body, handle, can, shine, rim, cover, lab, W, H, sl: null };
     },
     update(h, p, from, to, e) {
@@ -290,7 +307,7 @@
       const frame = el('rect', { x: -W / 2 - 12, y: -H / 2 - 12, width: W + 24, height: H + 24, rx: 14, fill: C.panel, 'stroke-width': 2 }, r);
       const bw = W / n, bars = [];
       for (let i = 0; i < n; i++) bars.push(el('rect', { x: -W / 2 + i * bw + bw * 0.12, width: bw * 0.76, rx: 3 }, r));
-      const mk = () => el('text', { x: 0, y: H / 2 + 46, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': cfg.size || 24, 'font-weight': 600, fill: C.soft }, r);
+      const mk = () => el('text', { ...NF(cfg), x: 0, y: H / 2 + 46, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': cfg.size || 24, 'font-weight': 600, fill: C.soft }, r);
       return { root: r, frame, bars, W, H, n, a: mk(), b: mk(), cfg, sa: null, sb: null };
     },
     update(h, p, from, to, e) {
@@ -329,7 +346,7 @@
       el('path', { d: AGENT_BODY, fill: long ? '#c8102e' : '#5b6b86', stroke: line, 'stroke-width': 2 }, fig);
       el('circle', { cx: 0, cy: long ? -13 : -15, r: long ? 20 : 23, fill: '#ffffff', stroke: line, 'stroke-width': 3 }, fig);
       if (!long) el('path', { d: AGENT_HAIR.short, fill: '#1b1410', stroke: '#c9b8a8', 'stroke-width': 1.5 }, fig);
-      const lab = el('text', { x: 0, y: 76 + 46, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 40, 'font-weight': 650, fill: C.ink }, r);
+      const lab = el('text', { ...NF(cfg), x: 0, y: 76 + 46, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 40, 'font-weight': 650, fill: C.ink }, r);
       lab.textContent = cfg.label || (long ? 'Alice' : 'Bob');
       return { root: r, halo, pulse };
     },
@@ -354,7 +371,7 @@
       const iris = el('g', {}, r);
       el('circle', { cx: 0, cy: 0, r: 22 * k, fill: '#0a0f1c' }, iris);
       el('circle', { cx: -7 * k, cy: -7 * k, r: 6 * k, fill: '#ffffff' }, iris);
-      const lab = el('text', { x: 0, y: 30 * k + 46, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 40, 'font-weight': 650, fill: C.red }, r);
+      const lab = el('text', { ...NF(cfg), x: 0, y: 30 * k + 46, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 40, 'font-weight': 650, fill: C.red }, r);
       lab.textContent = cfg.label == null ? 'Eve' : cfg.label;
       return { root: r, halo, pulse, iris, k };
     },
@@ -507,7 +524,7 @@
       const R = cfg.r || 120, r = el('g', {}, g);
       const frame = el('rect', { x: -R - 18, y: -R - 18, width: 2 * R + 36, height: 2 * R + 36, rx: 26, fill: C.panel, 'stroke-width': 2 }, r);
       const A = el('g', {}, r), B = el('g', {}, r);
-      const mk = () => el('text', { x: 0, y: R + 58, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': cfg.size || 24, 'font-weight': 600, fill: C.soft }, r);
+      const mk = () => el('text', { ...NF(cfg), x: 0, y: R + 58, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': cfg.size || 24, 'font-weight': 600, fill: C.soft }, r);
       return { root: r, frame, A, B, R, cfg, ta: mk(), tb: mk(), ha: null, hb: null };
     },
     update(h, p, from, to, e) {
@@ -558,10 +575,10 @@
       if (T) {
         el('path', { d: `M ${-W / 2 + 12} ${-H / 2} H ${-W / 2 + T} V ${H / 2} H ${-W / 2 + 12} A 12 12 0 0 1 ${-W / 2} ${H / 2 - 12} V ${-H / 2 + 12} A 12 12 0 0 1 ${-W / 2 + 12} ${-H / 2} Z`, fill: 'rgba(251,191,36,.16)' }, r);
         line = el('path', { d: `M ${-W / 2 + T} ${-H / 2 + 3} V ${H / 2 - 3}`, 'stroke-width': 3 }, r);
-        const t = el('text', { x: -W / 2 + T / 2, y: 0.36 * fs * 0.85, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': fs * 0.85, 'font-weight': 800, fill: C.amber }, r);
+        const t = el('text', { x: -W / 2 + T / 2, y: 0.36 * fs * 0.85, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': fs * 0.85, 'font-weight': 800, fill: C.amber, 'data-fit': 'no' }, r);
         t.textContent = String(cfg.num);
       }
-      const mk = () => el('text', { x: T / 2, y: 12, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': fs, 'font-weight': 700 }, r);
+      const mk = () => el('text', { x: T / 2, y: 12, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': fs, 'font-weight': 700, 'data-fit': 'no' }, r);
       return { root: r, halo, box, line, a: mk(), b: mk(), cfg, sa: null, sb: null };
     },
     update(h, p, from, to, e) {
@@ -621,6 +638,7 @@
   class Player {
     constructor(svg, scene) {
       this.svg = svg; this.scene = scene;
+      setStageWidth(svg.getBoundingClientRect().width, scene.w);
       while (svg.firstChild) svg.removeChild(svg.firstChild);
       svg.setAttribute('viewBox', `0 0 ${scene.w} ${scene.h}`);
       this.layer = el('g', {}, svg);
@@ -677,5 +695,5 @@
     }
   }
 
-  root.Anim = { Scene, Player, KINDS, ICONS, C, el, easeInOut, fmtNum, FONT, MONO, barSpec, printSVG, printPaths };
+  root.Anim = { Scene, Player, fitPx, setStageWidth, KINDS, ICONS, C, el, easeInOut, fmtNum, FONT, MONO, barSpec, printSVG, printPaths };
 })(this);

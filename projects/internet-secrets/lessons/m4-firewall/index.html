@@ -406,7 +406,7 @@ function scene(st) {
       } else Object.assign(o, { x: FRONT + 6, burn: 1 });
     })));
   }
-  S.beat(0.6, (s) => { s.tally.content = `**${r[0] ? 3 : 0}** of 3 emails in  ·  **${r[1] ? 0 : 3}** of 3 attacks burned`; s.tally.o = 1; s.netLbl.o = 0; });
+  S.beat(0.6, (s) => { s.tally.content = `**${r[0] ? 3 : 0}** of 3 emails in\n**${r[1] ? 0 : 3}** of 3 attacks burned`; s.tally.o = 1; s.netLbl.o = 0; });
 
   // 15. Wrap up
   S.step({ head: 'Open only the gates you need.', body: 'The wall burns anything that does not come through an open gate. Gate **25** stays open for email, gate **22** stays shut. Next, check yourself.' })

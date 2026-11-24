@@ -116,14 +116,14 @@ function scene(st) {
   S.add('pingE', 'packet', { text: 'HI', size: 26, w: 70 }, { x: 800, y: ROAD, o: 0, s: 0.8, edge: C.red, ink: C.red });
 
   // ---- paint
-  PUB.forEach((p, i) => S.add('ch' + i, 'can', {}, { x: pickA(i)[0], y: pickA(i)[1], o: 0, s: 0.6, paint: p.c, tag: p.n }));
-  S.add('aPub', 'can', {}, { x: pickA(st.pub)[0], y: pickA(st.pub)[1], o: 0, paint: P, tag: 'Public' });
-  S.add('bPub', 'can', {}, { x: AL[0] + 120, y: ROAD, o: 0, s: 0.6, paint: P, tag: 'Public' });
-  SEC.forEach((p, i) => S.add('sa' + i, 'can', { size: 88, labelSize: 24 }, { x: pickA(i)[0], y: pickA(i)[1], o: 0, s: 0.6, paint: p.c, tag: p.n }));
-  SEC.forEach((p, i) => S.add('sb' + i, 'can', { size: 88, labelSize: 24 }, { x: pickB(i)[0], y: pickB(i)[1], o: 0, s: 0.6, paint: p.c, tag: p.n }));
-  S.add('aSec', 'can', {}, { x: pickA(st.sec)[0], y: pickA(st.sec)[1], o: 0, s: 0.8, paint: a, tag: "Alice's secret", edge: C.cyan, z: 3 });
-  S.add('bSec', 'can', {}, { x: pickB(st.bob)[0], y: pickB(st.bob)[1], o: 0, s: 0.8, paint: b, tag: "Bob's secret", edge: C.green, z: 3 });
-  const eCan = (id, paint, tag) => S.add(id, 'can', { labelSize: 34 }, { x: 800, y: ROAD, o: 0, s: 0.5, paint, tag, edge: C.red, z: 1 });
+  PUB.forEach((p, i) => S.add('ch' + i, 'can', { fit: 1.15 }, { x: pickA(i)[0], y: pickA(i)[1], o: 0, s: 0.6, paint: p.c, tag: p.n }));
+  S.add('aPub', 'can', { fit: 1.15 }, { x: pickA(st.pub)[0], y: pickA(st.pub)[1], o: 0, paint: P, tag: 'Public' });
+  S.add('bPub', 'can', { fit: 1.15 }, { x: AL[0] + 120, y: ROAD, o: 0, s: 0.6, paint: P, tag: 'Public' });
+  SEC.forEach((p, i) => S.add('sa' + i, 'can', { size: 88, labelSize: 24, fit: 1.15 }, { x: pickA(i)[0], y: pickA(i)[1], o: 0, s: 0.6, paint: p.c, tag: p.n }));
+  SEC.forEach((p, i) => S.add('sb' + i, 'can', { size: 88, labelSize: 24, fit: 1.15 }, { x: pickB(i)[0], y: pickB(i)[1], o: 0, s: 0.6, paint: p.c, tag: p.n }));
+  S.add('aSec', 'can', { fit: 1.15 }, { x: pickA(st.sec)[0], y: pickA(st.sec)[1], o: 0, s: 0.8, paint: a, tag: "Alice's secret", edge: C.cyan, z: 3 });
+  S.add('bSec', 'can', { fit: 1.15 }, { x: pickB(st.bob)[0], y: pickB(st.bob)[1], o: 0, s: 0.8, paint: b, tag: "Bob's secret", edge: C.green, z: 3 });
+  const eCan = (id, paint, tag) => S.add(id, 'can', { labelSize: 34, fit: 1.15 }, { x: 800, y: ROAD, o: 0, s: 0.5, paint, tag, edge: C.red, z: 1 });
   eCan('ePub', P, 'Public'); eCan('eA', MA, "Alice's mix"); eCan('eB', MB, "Bob's mix");
   S.add('same', 'text', { size: 34, weight: 800, mono: true, anchor: 'middle' }, { x: 800, y: 296, content: 'SAME COLOR ON BOTH SIDES', fill: C.green, o: 0 });
   S.add('recipe', 'text', { size: 21, weight: 700, mono: true, anchor: 'middle' }, { x: 800, y: 334, content: "PUBLIC + ALICE'S SECRET + BOB'S SECRET", fill: C.soft, o: 0 });
@@ -349,7 +349,7 @@ function actMsg(ctx) {
     b.addEventListener('click', () => ctx.done({ msg: m }));
     ctx.ov.appendChild(b); fit.push(b);
   });
-  const size = () => fit.forEach((b) => { b.style.fontSize = (21 * ctx.ov.clientWidth / 1600) + 'px'; });
+  const size = () => fit.forEach((b) => { b.style.fontSize = Anim.fitPx(21, ctx.ov.clientWidth) + 'px'; });
   size(); window.addEventListener('resize', size);
 }
 // Optional: the same idea with small numbers (not on the quiz).
