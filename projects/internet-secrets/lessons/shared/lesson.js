@@ -19,9 +19,10 @@
  *     next: {href, label},         // where the score screen sends the learner: the next lesson, or the final review
  *   });
  *
- * Controls: the learner moves on by tapping something on the stage (an action, or the step's meta.go cue);
- * tapping the stage while a step plays skips to its end. The right arrow or Space does the same from the
- * keyboard. The bottom-right button shows only on the last step (the big way into the quiz), or on a step
+ * Controls: the learner moves on by tapping something on the stage (an action, or the step's meta.go cue).
+ * A step's animation always plays to the end: taps on the stage, Next, the right arrow and Space wait until it
+ * has (Captain Russell, 24 Nov 2026: fast tapping skipped the animations). The right arrow or Space moves on
+ * from the keyboard. The bottom-right button shows only on the last step (the big way into the quiz), or on a step
  * that has neither an action nor a cue. Back (left arrow) shows the previous step at rest. Replay (R) plays the current step again.
  * The dots jump to any step. After the last step, Next opens the self-check quiz.
  * Reduced motion: steps appear at rest, with no movement.
@@ -218,15 +219,15 @@
     }
     function rest(k) { cancelAnimationFrame(raf); playing = false; clearAct(); step = k; caption(); player.renderEnd(k); paint(1); startAct(); }
     function next() {
-      if (playing) { finish(); return; }
+      if (playing) return;   // let the animation finish; fast taps never skip it
       if (pending()) return;
       if (step < N - 1) play(step + 1); else openQuiz();
     }
     function back() { if (playing) finish(); if (step > 0) rest(step - 1); }
 
     host.addEventListener('click', (e) => {
-      // a tap on the stage while a step plays skips to its end, so its action or cue shows at once
-      if (playing && e.target.closest('.lz-stage')) { finish(); return; }
+      // a tap on the stage while a step plays does nothing: the animation always plays to the end
+      if (playing && e.target.closest('.lz-stage')) return;
       const b = e.target.closest('button'); if (!b || !host.contains(b)) return;
       if (b.dataset.act === 'next') next();
       else if (b.dataset.act === 'back') back();
