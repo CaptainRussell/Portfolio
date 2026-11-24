@@ -28,6 +28,7 @@
 .lz-hit span{position:absolute;left:50%;top:100%;transform:translate(calc(-50% + var(--dx,0px)),6px);white-space:nowrap;padding:3px 8px;border-radius:8px;
   background:rgba(7,11,20,.88);border:1px solid var(--c-line);font:700 12px/1.2 system-ui,sans-serif;color:var(--c-cyan);pointer-events:none}
 .lz-hit.top span{top:auto;bottom:100%;transform:translate(calc(-50% + var(--dx,0px)),-6px)}
+.lz-hit.side span{top:50%;left:auto;right:100%;transform:translate(-6px,-50%)}
 .lz-hit.quiet span{display:none}
 .lz-hit.thin{min-width:0}
 .lz-hit.thin span{display:none}
@@ -172,7 +173,7 @@ a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 @media (max-width:640px){.lz-btn.big{flex:1 1 100%;min-width:0}}
 /* an action button that sits on the stage itself */
 .lz-stagebtn{position:absolute;transform:translate(-50%,-50%);z-index:3;white-space:nowrap;box-shadow:0 6px 20px rgba(0,0,0,.45)}
-@media (max-width:640px){.lz-stagebtn{padding:7px 11px;font-size:13px}}
+@media (max-width:640px){.lz-stagebtn{padding:7px 11px;font-size:13px;white-space:normal;width:max-content;max-width:38%;text-align:center;line-height:1.2}}
 
 /* choice chips placed on the stage (message pickers) */
 .lz-chip{position:absolute;transform:translate(-50%,-50%);padding:.45em .7em;border-radius:.5em;border:2px solid var(--c-cyan);background:var(--c-panel2);color:var(--c-ink);font:700 1em ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;letter-spacing:.05em;white-space:nowrap;cursor:pointer;animation:lz-beckon 1.6s ease-in-out infinite}
@@ -235,6 +236,8 @@ a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 @media (pointer:coarse){
   .lz-hit::before,.lz-chip::before,.lz-stagebtn::before{content:"";position:absolute;inset:-8px}
   .lz-chip::before{inset:-3px -10px}
+  /* the outline follows the picture it covers; the wider touch area above still makes it easy to hit */
+  .lz-hit{min-width:28px;min-height:28px;border-radius:10px}
 }
 @media (orientation:landscape) and (max-height:520px){
   .lz{max-width:none;margin:4px auto;padding:8px}

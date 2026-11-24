@@ -258,10 +258,10 @@ function actPick(ctx) {
   const go = ctx.button(900, 735, 'Send this message', () => { if (pick) ctx.done({ msg: pick }); }); go.dataset.send = ''; go.disabled = true;
 }
 function actCut(ctx) {
-  ctx.hit(STRIP_X, 388, 120, 110, 'Cut', () => ctx.done({}));
+  ctx.hit(STRIP_X, 388, 120, 110, 'Cut', () => ctx.done({}), 'top');
 }
 function actSend(ctx) {
-  ctx.hit(P.wifi[0], P.wifi[1], 130, 130, 'Send', () => ctx.done({}));
+  ctx.hit(P.wifi[0], P.wifi[1] + 16, 130, 164, 'Send', () => ctx.done({}), 'top');
 }
 function actRoad(ctx) {
   const g = mid('D', 'G'), f = mid('D', 'F');
@@ -273,7 +273,7 @@ function actAsk(ctx) {
 }
 // One tap on Bob's phone puts the postcards in number order.
 function actOrder(ctx) {
-  ctx.hit(TRAY.x, TRAY.y + 10, 560, 170, 'Put in order', () => ctx.done({}));
+  ctx.hit(TRAY.x, TRAY.y + 16, 560, 148, 'Put in order', () => ctx.done({}), 'tight');
 }
 function actEve(ctx) {
   ctx.hit(470, 590, 200, 220, 'Read them', () => ctx.done({}));

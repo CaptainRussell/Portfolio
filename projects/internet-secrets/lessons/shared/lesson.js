@@ -82,6 +82,12 @@
     }
     // a tap target on the stage, centered on (x, y), w by h scene units
     function hit(x, y, w, h, label, onTap, cls) {
+      // on a phone the picture's labels grow and sit a little lower, so a tall target (a picture with its label
+      // under it) reaches further down and wider to keep its outline off the label ('tight' opts out, for packed grids)
+      const sw = svg.getBoundingClientRect().width;
+      if (sw && sw < 700 && h >= 120 && !/\btight\b/.test(cls || '')) { const add = Math.round(Math.min(40, (700 - sw) / 10)); h += add; y += add / 2; w += add * 2;
+        // but never past the edge of the stage
+        w = Math.min(w, 2 * Math.min(x, sc.w - x) - 8); const bot = Math.min(y + h / 2, sc.h - 4), top = y - h / 2; y = (top + bot) / 2; h = bot - top; }
       const b = document.createElement('button');
       b.className = 'lz-hit' + (cls ? ' ' + cls : '');
       Object.assign(b.style, { left: (x / sc.w * 100) + '%', top: (y / sc.h * 100) + '%', width: (w / sc.w * 100) + '%', height: (h / sc.h * 100) + '%' });
@@ -183,7 +189,14 @@
           Object.assign(b.style, ctx.pos(x, y));
           b.innerHTML = `<span>${esc(label)}</span>`;
           b.addEventListener('click', () => onTap(b));
-          ov.appendChild(b); return b;
+          ov.appendChild(b); ctx.keepIn(b); return b;
+        },
+        // slide an element laid over the stage sideways until it is fully inside the stage
+        keepIn(e) {
+          const o = ov.getBoundingClientRect(), r = e.getBoundingClientRect();
+          if (!r.width || !o.width || r.width > o.width) return;
+          const dx = r.left < o.left + 2 ? o.left + 2 - r.left : r.right > o.right - 2 ? o.right - 2 - r.right : 0;
+          if (dx) e.style.left = `calc(${e.style.left} + ${dx}px)`;
         },
         hide(ids) { ids.forEach((id) => { const n = player.h[id] && player.h[id]._node; if (n) { n.style.visibility = 'hidden'; hidden.add(id); } }); },
         toast(msg) {

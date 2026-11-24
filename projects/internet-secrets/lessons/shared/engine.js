@@ -82,6 +82,13 @@
   // Rich text: "**bold**" prints bold in the highlight color; "\n" starts a new line.
   function fillText(textNode, str, cfg) {
     while (textNode.firstChild) textNode.removeChild(textNode.firstChild);
+    // cfg.maxw: grown text never gets wider than this many scene units (it stops growing, never shrinks below its drawn size)
+    if (cfg.maxw && cfg.fit !== false) {
+      const size = cfg.size || 36, grown = size * Math.min(+cfg.fit || MAX_BOOST, boost(size));
+      const L = Math.max(1, ...String(str).replace(/\*\*/g, '').split('\n').map((l) => l.length));
+      const perChar = (cfg.mono ? 0.6 : 0.55) + (cfg.ls || 0) / size;
+      textNode.setAttribute('font-size', +Math.max(size, Math.min(grown, cfg.maxw / (L * perChar))).toFixed(2));
+    }
     String(str).split('\n').forEach((line, i) => {
       const ls = el('tspan', { x: 0, dy: i === 0 ? 0 : (cfg.size || 36) * (cfg.fit === false ? 1 : Math.min(+cfg.fit || MAX_BOOST, boost(cfg.size || 36))) * (cfg.lh || 1.25) }, textNode);
       line.split(/(\*\*[^*]+\*\*)/).forEach((part) => {
@@ -271,7 +278,8 @@
       el('ellipse', { cx: 0, cy: top, rx: W / 2 + 3, ry: W * 0.11 + 3, fill: C.panel2, stroke: C.faint, 'stroke-width': 3 }, cover);
       const q = el('text', { x: 0, y: W * 0.2, 'text-anchor': 'middle', 'font-family': MONO, 'font-size': W * 0.5, 'font-weight': 800, fill: C.soft }, cover);
       q.textContent = '?';
-      const lab = el('text', { ...NF(cfg), x: 0, y: H / 2 + 34, 'text-anchor': 'middle', 'font-family': FONT, 'font-size': cfg.labelSize || 26, 'font-weight': 650, fill: C.ink }, r);
+      const lsz = cfg.labelSize || 26, lgrow = cfg.fit === false ? 1 : Math.min(+cfg.fit || MAX_BOOST, boost(lsz));
+      const lab = el('text', { ...NF(cfg), x: 0, y: H / 2 + 34 + (lgrow > 1 ? lsz * (lgrow - 1) + 8 : 0), 'text-anchor': 'middle', 'font-family': FONT, 'font-size': lsz, 'font-weight': 650, fill: C.ink }, r);
       return { root: r, halo, body, handle, can, shine, rim, cover, lab, W, H, sl: null };
     },
     update(h, p, from, to, e) {
