@@ -60,7 +60,7 @@ const CALLS = [
     opts: [[0, '0%', 'I need the money now'], [5, '5%', 'Get the whole match'], [15, '15%', 'Match plus more']],
     book: 'The Richest Man in Babylon', idea: 'A part of all you earn is yours to keep. Pay yourself first.',
     res: { 0: 'Only the automatic 1% goes in. The match is left on the table.', 5: 'You get the full 5% from the Air Force once the match starts.', 15: 'The full match, plus your own money working for 10 years.' },
-    me: 'Nothing for my first 6 months: my biggest mistake. Then 15% in 2021, and the max every year since 2023.' },
+    me: 'I waited at first, one of my biggest mistakes. Then 15% in 2021, and the max every year since 2023.' },
   { key: 'car', yr: 1, title: 'Year 1: the car lot outside the gate', ask: 'Your college car is old. What do you drive?',
     opts: [['new', 'New truck', '$1,100 a month with insurance'], ['used', 'Used sedan', '$350 a month for 4 years'], ['keep', 'Keep my car', 'Drive it until it dies']],
     book: 'The Millionaire Next Door', idea: 'Most millionaires drive cars that are paid off and a few years old.',
@@ -104,7 +104,7 @@ function sim(c) {
   }
   return pts;
 }
-// mine (Chapter 1), from commissioning on 14 June 2020 = year 0; now (November 2026) = year 6.45
+// mine (Chapter 1), from going on active duty on 14 June 2020 = year 0 (commissioned June 2019); now (November 2026) = year 6.45
 const MINE_T = 6.45;
 const MINE = [[0, -8175], [0.55, -3500], [1.55, 24000], [2.55, 58000], [3.55, 110000], [4.55, 170000], [5.55, 240000], [MINE_T, 290039]];
 
@@ -127,7 +127,7 @@ function scene(st) {
   // ---- the intro
   add('iBig', 'text', { size: 80, anchor: 'middle', weight: 850 }, { x: 800, y: 380, content: 'Ten years. Five calls.', fill: C.ink, o: 0 });
   add('iSub', 'text', { size: 36, anchor: 'middle', weight: 600 }, { x: 800, y: 460, content: 'You start at $0: commissioned, no loans.', fill: C.soft, o: 0 });
-  add('iSub2', 'text', { size: 36, anchor: 'middle', weight: 600 }, { x: 800, y: 512, content: 'I commissioned owing $24,920 in student loans.', fill: C.amber, o: 0 });
+  add('iSub2', 'text', { size: 36, anchor: 'middle', weight: 600 }, { x: 800, y: 512, content: 'I went on active duty owing $24,920 in student loans.', fill: C.amber, o: 0 });
 
   // ---- one decision card, reused for every call
   add('dYr', 'text', { size: 30, anchor: 'middle', weight: 800, mono: true }, { x: 800, y: 150, content: '', fill: C.amber, o: 0 });

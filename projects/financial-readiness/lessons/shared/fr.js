@@ -14,7 +14,7 @@
   const CHAPTERS = [
     { id: 'fr1', href: 'c1-from-minus-20k/', n: 1, name: 'From −$20K', blurb: 'Your discussion post, then my real net worth, budget and mistakes.' },
     { id: 'fr2', href: 'c2-first-les/', n: 2, name: 'Your first LES', blurb: 'Build a 2d Lt paycheck from the three types of pay.' },
-    { id: 'fr3', href: 'c3-brs/', n: 3, name: 'The BRS', blurb: 'Pension, TSP match and continuation pay, and the 5% rule.' },
+    { id: 'fr3', href: 'c3-brs/', n: 3, name: 'The BRS', blurb: 'Pension, TSP match, continuation pay, and when in doubt, zoom out.' },
     { id: 'fr4', href: 'c4-money-calls/', n: 4, name: 'Money calls', blurb: 'Five decisions from your first ten years, next to my real line.' },
   ];
   function next(id) {

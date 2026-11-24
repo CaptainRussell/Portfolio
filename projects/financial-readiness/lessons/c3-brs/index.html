@@ -68,6 +68,24 @@ const CHOICES = [0, 1, 3, 5];
 const END = CHOICES.map(at20);
 const YTD = 851.07 + 3404.28;   // my LES: TSP agency automatic + match, 2026 so far
 
+// ---------------------------------------------------------------- when in doubt, zoom out (Captain Russell, 24 Nov 2026)
+// The S&P 500, which the C Fund tracks. One day: 16 Oct 2026 open, high, low, close. One month: daily closes,
+// 28 Sep to 26 Oct 2026 (investing.com). One year, 10 years and 100 years: monthly averages from the Shiller data
+// (github.com/datasets/s-and-p-500, through Sep 2026); 100 years uses each January and is drawn on a log scale.
+const ZM = [7683.69, 7670.84, 7651.54, 7666.45, 7722.72, 7773.95, 7818.93, 7801.77, 7765.36, 7811.54, 7807.24, 7805.45, 7718.94, 7744.06, 7659.44, 7690.73, 7712.57, 7757.17, 7663.43, 7623.68, 7676.77];
+const ZY1 = [6735.69, 6740.89, 6853.03, 6929.12, 6919.47, 6654.42, 6957.01, 7412.55, 7450.03, 7481.34, 7711.32, 7669.41];
+const ZY10 = [2157.7, 2143.0, 2165.0, 2246.6, 2275.1, 2329.9, 2366.8, 2359.3, 2395.3, 2434.0, 2454.1, 2456.2, 2492.8, 2557.0, 2593.6, 2664.3, 2789.8, 2705.2, 2702.8, 2653.6, 2701.5, 2754.3, 2793.6, 2857.8, 2901.5, 2785.5, 2723.2, 2567.3, 2607.4, 2754.9, 2804.0, 2903.8, 2854.7, 2890.2, 2996.1, 2897.5, 2982.2, 2977.7, 3104.9, 3176.7, 3278.2, 3277.3, 2652.4, 2762.0, 2919.6, 3104.7, 3207.6, 3391.7, 3365.5, 3418.7, 3549.0, 3695.3, 3793.7, 3883.4, 3910.5, 4141.2, 4167.8, 4238.5, 4363.7, 4454.2, 4445.5, 4460.7, 4667.4, 4674.8, 4573.8, 4436.0, 4391.3, 4391.3, 4040.4, 3898.9, 3911.7, 4158.6, 3850.5, 3726.1, 3917.5, 3912.4, 3960.7, 4079.7, 3968.6, 4121.5, 4146.2, 4345.4, 4508.1, 4457.4, 4515.8, 4269.4, 4460.1, 4685.1, 4804.5, 5012.0, 5170.6, 5112.5, 5235.2, 5415.1, 5538.0, 5478.2, 5621.3, 5792.3, 5929.9, 6010.9, 5979.5, 6038.7, 5684.0, 5369.5, 5810.9, 6029.9, 6296.5, 6408.9, 6584.0, 6735.7, 6740.9, 6853.0, 6929.1, 6919.5, 6654.4, 6957.0, 7412.6, 7450.0, 7481.3, 7711.3, 7669.4];
+const ZY100 = [12.65, 13.4, 17.53, 24.86, 21.71, 15.98, 8.3, 7.09, 10.54, 9.26, 13.76, 17.59, 11.31, 12.5, 12.3, 10.55, 8.93, 10.09, 11.85, 13.49, 18.02, 15.21, 14.83, 15.36, 16.88, 21.21, 24.19, 26.18, 25.46, 35.6, 44.15, 45.43, 41.12, 55.62, 58.03, 59.72, 69.07, 65.06, 76.45, 86.12, 93.32, 84.45, 95.04, 102.0, 90.31, 93.49, 103.3, 118.4, 96.11, 72.56, 96.86, 103.8, 90.25, 99.71, 110.9, 133.0, 117.3, 144.3, 166.4, 171.6, 208.2, 264.5, 250.5, 285.4, 339.97, 325.49, 416.08, 435.23, 472.99, 465.25, 614.42, 766.22, 963.36, 1248.77, 1425.59, 1335.63, 1140.21, 895.84, 1132.52, 1181.41, 1278.73, 1424.16, 1378.76, 865.58, 1123.58, 1282.62, 1300.58, 1480.4, 1822.36, 2028.18, 1918.6, 2275.12, 2789.8, 2607.39, 3278.2, 3793.75, 4573.82, 3960.66, 4804.49, 5979.52, 6929.12, 7669.41];
+const ZDAY = [7745.32, 7756.84, 7631.77, 7659.44];   // open, high, low, close
+const ZOOMS = [
+  { key: 'd', name: 'One day', when: '16 October 2026', pts: ZDAY.map((v, i) => [[0, 0.25, 0.7, 1][i], v]) },
+  { key: 'm', name: 'One month', when: '28 Sep to 26 Oct 2026', pts: ZM.map((v, i) => [i / (ZM.length - 1), v]) },
+  { key: 'y', name: 'One year', when: 'Oct 2025 to Sep 2026', pts: ZY1.map((v, i) => [i / (ZY1.length - 1), v]) },
+  { key: 't', name: 'Ten years', when: '2016 to 2026', pts: ZY10.map((v, i) => [i / (ZY10.length - 1), v]) },
+  { key: 'c', name: 'One hundred years', when: '1926 to 2026', pts: ZY100.map((v, i) => [i / (ZY100.length - 1), v]), log: true },
+];
+const DCA_IN = 38000, DCA_NOW = 61534;   // $500 every month, June 2020 to Sep 2026, at the monthly average price, price only
+
 function scene(st) {
   const S = new Scene('fr3');
   const all = [];
@@ -166,6 +184,41 @@ function scene(st) {
   add('ruleS', 'text', { size: 44, anchor: 'middle', weight: 800 }, { x: 800, y: 640, content: 'The least you should ever put in the TSP.', fill: C.ink, o: 0 });
   add('ruleS2', 'text', { size: 32, anchor: 'middle', weight: 600 }, { x: 800, y: 700, content: 'Set it on day 1 in myPay, before you get used to the money.', fill: C.soft, o: 0 });
 
+  // ---- zoom out: one chart box, one line per zoom level
+  const ZX0 = 270, ZX1 = 1440, ZY0 = 760, ZY1 = 290;
+  add('zHead', 'text', { size: 46, anchor: 'start', weight: 850 }, { x: 120, y: 110, content: 'When in doubt, zoom out', fill: C.ink, o: 0 });
+  add('zFrame', 'rect', {}, { x: ZX0 - 20, y: ZY1 - 30, w: ZX1 - ZX0 + 40, h: ZY0 - ZY1 + 60, rx: 18, fill: C.panel2, stroke: C.line, sw: 2, o: 0 });
+  ZOOMS.forEach((z, k) => {
+    const vs = z.pts.map((p) => (z.log ? Math.log10(p[1]) : p[1])), lo = Math.min(...vs), hi = Math.max(...vs), pad = (hi - lo) * 0.08;
+    const yv = (v) => ZY0 - (v - lo + pad) / (hi - lo + 2 * pad) * (ZY0 - ZY1);
+    const d = 'M ' + z.pts.map((p, i) => (ZX0 + p[0] * (ZX1 - ZX0)).toFixed(1) + ' ' + yv(vs[i]).toFixed(1)).join(' L ');
+    const a = z.pts[0][1], b = z.pts[z.pts.length - 1][1], ch = (b - a) / a, up = ch >= 0;
+    z.ch = ch;
+    add('zl' + k, 'path', { d }, { stroke: up ? C.green : C.red, sw: k >= 3 ? 5 : 7, draw: 0, o: 0 });
+    add('zn' + k, 'text', { size: 40, anchor: 'start', weight: 850 }, { x: 120, y: 190, content: z.name, fill: C.ink, o: 0 });
+    add('zw' + k, 'text', { size: 26, anchor: 'start', weight: 600 }, { x: 120, y: 232, content: z.when + (z.log ? ' · log scale' : ''), fill: C.soft, o: 0 });
+    const pct = Math.abs(ch) >= 2 ? `×${b / a >= 20 ? Math.round(b / a) : (b / a).toFixed(1)}` : `${up ? '+' : '−'}${Math.abs(ch * 100).toFixed(1)}%`;
+    add('zc' + k, 'text', { size: 64, anchor: 'end', weight: 900, mono: true }, { x: 1480, y: 200, content: pct, fill: up ? C.green : C.red, o: 0 });
+    add('zhi' + k, 'text', { size: 22, anchor: 'end', weight: 600, mono: true }, { x: ZX0 - 64, y: yv(hi) + 8, content: fmt(z.log ? Math.pow(10, hi) : hi), fill: C.faint, o: 0 });
+    add('zlo' + k, 'text', { size: 22, anchor: 'end', weight: 600, mono: true }, { x: ZX0 - 64, y: yv(lo) + 8, content: fmt(z.log ? Math.pow(10, lo) : lo), fill: C.faint, o: 0 });
+  });
+  add('zTag1', 'text', { size: 24, anchor: 'middle', weight: 800 }, { x: ZX0 + 42 / 120 * (ZX1 - ZX0), y: ZY0 + 2, content: 'COVID crash', fill: C.red, o: 0 });
+  add('zTag2', 'text', { size: 24, anchor: 'middle', weight: 800 }, { x: ZX0 + 72 / 120 * (ZX1 - ZX0), y: 470, content: '2022 bear market', fill: C.red, o: 0 });
+  add('zTag3', 'text', { size: 24, anchor: 'start', weight: 800 }, { x: ZX0 + 20, y: ZY1 + 40, content: 'Great Depression, WWII, 1970s, 2008, COVID...', fill: C.soft, o: 0 });
+  add('zLesson', 'text', { size: 32, anchor: 'middle', weight: 800, maxw: 1400 }, { x: 800, y: 862, content: '', fill: C.amber, o: 0 });
+
+  // ---- always be buying
+  add('abHead', 'text', { size: 46, anchor: 'start', weight: 850 }, { x: 120, y: 130, content: 'Always be buying', fill: C.ink, o: 0 });
+  add('abSub', 'text', { size: 28, anchor: 'start', weight: 600, maxw: 1360 }, { x: 120, y: 180, content: '$500 into the S&P 500 every month from June 2020, the month I started. Up or down.', fill: C.soft, o: 0 });
+  add('abIl', 'text', { size: 28, anchor: 'start', weight: 700 }, { x: 160, y: 286, content: 'What went in', fill: C.soft, o: 0 });
+  add('abI', 'rect', {}, { x: 160, y: 306, w: 0, h: 90, rx: 8, fill: C.cyan, fo: 0.85, o: 0 });
+  add('abIv', 'text', { size: 36, anchor: 'end', weight: 850, mono: true }, { x: 160 + 1280 * DCA_IN / DCA_NOW - 20, y: 364, content: fmt(DCA_IN), fill: '#06101c', o: 0 });
+  add('abWl', 'text', { size: 28, anchor: 'start', weight: 700 }, { x: 160, y: 466, content: 'What it is worth (Sep 2026, before dividends)', fill: C.soft, o: 0 });
+  add('abW', 'rect', {}, { x: 160, y: 486, w: 0, h: 90, rx: 8, fill: C.green, fo: 0.85, o: 0 });
+  add('abWv', 'text', { size: 36, anchor: 'end', weight: 850, mono: true }, { x: 160 + 1280 - 20, y: 544, content: fmt(DCA_NOW), fill: '#06101c', o: 0 });
+  add('abBig', 'text', { size: 50, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 690, content: 'Time in the market beats timing the market.', fill: C.green, o: 0 });
+  add('abMe', 'text', { size: 30, anchor: 'middle', weight: 650, maxw: 1400 }, { x: 800, y: 760, content: 'Every $1 I put in the C Fund in June 2020 is worth about $2.47 today, before dividends.', fill: C.amber, o: 0 });
+
   const off = (s) => all.forEach((i) => { s[i].o = 0; });
   const on = (s, list) => list.forEach((i) => { s[i].o = 1; });
   const tabs = ['title', 'since'].concat(all.filter((i) => /^tab/.test(i)));
@@ -204,10 +257,42 @@ function scene(st) {
     .beat(1.0, (s) => { s.cWin.o = 1; s.cWin.w = tx(12) - tx(7); s.cWinL.o = 1; })
     .beat(0.8, (s) => { s.cAmt.o = 1; s.cEx.o = 1; });
 
-  S.step({ head: 'Roth or Traditional?', body: 'Both get the same match. The question is only **when you pay the tax**.', go: [800, 360, 1420, 310, 'The one rule'] })
+  S.step({ head: 'Roth or Traditional?', body: 'Both get the same match. The question is only **when you pay the tax**.', go: [800, 360, 1420, 310, 'Where does it go?'] })
     .beat(0.6, (s) => { off(s); s.rHead.o = 1; })
     .beat(1.0, (s) => { [0, 1].forEach((i) => ['rc', 'rt', 'ra', 'rb'].forEach((k) => { s[k + i].o = 1; })); })
     .beat(0.8, (s) => { s.rWhy.o = 1; s.rWhy2.o = 1; s.rMe.o = 1; });
+
+  S.step({ head: 'When in doubt, zoom out', body: 'The S&P 500 is what your C Fund holds. **This is one day.** The news would call it a sell-off.', go: [855, 520, 1250, 540, 'Zoom out', 'top'] })
+    .beat(0.6, (s) => { off(s); s.zHead.o = 1; s.zFrame.o = 1; ['zn', 'zw', 'zhi', 'zlo'].forEach((p) => { s[p + 0].o = 1; }); })
+    .beat(1.4, (s) => { s.zl0.o = 1; s.zl0.draw = 1; })
+    .beat(0.6, (s) => { s.zc0.o = 1; s.zLesson.o = 1; s.zLesson.content = 'It went down 1.1% in a day. Scary?';  });
+
+  S.step({ head: 'Zoom out: one month', body: 'Short term moves are noise.', go: [855, 520, 1250, 540, 'Zoom out', 'top'] })
+    .beat(0.6, (s) => { off(s); s.zHead.o = 1; s.zFrame.o = 1; ['zn', 'zw', 'zhi', 'zlo'].forEach((p) => { s[p + 1].o = 1; }); })
+    .beat(2.0, (s) => { s.zl1.o = 1; s.zl1.draw = 1; })
+    .beat(0.6, (s) => { s.zc1.o = 1; s.zLesson.o = 1; s.zLesson.content = 'A month of ups and downs, and it ended about flat.';  });
+
+  S.step({ head: 'Zoom out: one year', body: 'Still noise.', go: [855, 520, 1250, 540, 'Zoom out', 'top'] })
+    .beat(0.6, (s) => { off(s); s.zHead.o = 1; s.zFrame.o = 1; ['zn', 'zw', 'zhi', 'zlo'].forEach((p) => { s[p + 2].o = 1; }); })
+    .beat(2.0, (s) => { s.zl2.o = 1; s.zl2.draw = 1; })
+    .beat(0.6, (s) => { s.zc2.o = 1; s.zLesson.o = 1; s.zLesson.content = 'A year: dips along the way, still up.';  });
+
+  S.step({ head: 'Zoom out: ten years', body: 'Even ten years has scary drops. **The people who kept buying won.**', go: [855, 520, 1250, 540, 'Zoom out', 'top'] })
+    .beat(0.6, (s) => { off(s); s.zHead.o = 1; s.zFrame.o = 1; ['zn', 'zw', 'zhi', 'zlo'].forEach((p) => { s[p + 3].o = 1; }); })
+    .beat(2.0, (s) => { s.zl3.o = 1; s.zl3.draw = 1; })
+    .beat(0.6, (s) => { s.zc3.o = 1; s.zLesson.o = 1; s.zLesson.content = 'Ten years: a crash and a bear market, and it still more than tripled.'; s.zTag1.o = 1; s.zTag2.o = 1; });
+
+  S.step({ head: 'Zoom out: one hundred years', body: '**Your TSP will be invested for 40 years or more.** This is the only chart that matters.', go: [855, 520, 1250, 540, 'So what do I do?', 'top'] })
+    .beat(0.6, (s) => { off(s); s.zHead.o = 1; s.zFrame.o = 1; ['zn', 'zw', 'zhi', 'zlo'].forEach((p) => { s[p + 4].o = 1; }); })
+    .beat(2.0, (s) => { s.zl4.o = 1; s.zl4.draw = 1; })
+    .beat(0.6, (s) => { s.zc4.o = 1; s.zLesson.o = 1; s.zLesson.content = 'Every crisis in a century is a wiggle. Up more than 600 times.'; s.zTag3.o = 1; });
+
+  S.step({ head: 'Always be buying', body: 'You can\'t time the market. Buy every month, in good months and bad. That is **dollar cost averaging**, and your TSP does it for you every payday.', go: [800, 525, 1340, 560, 'The one rule'] })
+    .beat(0.6, (s) => { off(s); s.abHead.o = 1; s.abSub.o = 1; s.abIl.o = 1; })
+    .beat(1.0, (s) => { s.abI.o = 1; s.abI.w = 1280 * DCA_IN / DCA_NOW; s.abIv.o = 1; })
+    .beat(0.4, (s) => { s.abWl.o = 1; })
+    .beat(1.2, (s) => { s.abW.o = 1; s.abW.w = 1280; s.abWv.o = 1; })
+    .beat(0.8, (s) => { s.abBig.o = 1; s.abMe.o = 1; });
 
   S.step({ head: 'The one rule', body: 'Put in at least 5% from your first paycheck. Less than that is a pay cut you give yourself. **Chapter 4: money calls.**' })
     .beat(0.5, (s) => { off(s); })
@@ -222,8 +307,10 @@ Lesson.mount(document.getElementById('lesson'), {
   title: 'Chapter 3',
   state: { pct: 0 },
   scene,
-  pass: 2,
+  pass: 3,
   quiz: [
+    { q: 'The market drops 10% the month after you start. The best move is:', choices: ['Keep buying every month', 'Sell before it drops more', 'Stop your TSP until it recovers', 'Move it all to cash'], answer: 0,
+      why: 'Short term drops are noise. Buying through them means buying at lower prices. Time in the market beats timing the market.' },
     { q: 'How much must **you** put in the TSP to get the full 5% from the Air Force?', choices: ['5% of base pay', '1% of base pay', '3% of base pay', 'Nothing at all'], answer: 0,
       why: 'The 1% is automatic. The match adds up to 4% more, but only when you put in 5%.' },
     { q: 'You retire after exactly 20 years. Your pension is:', choices: ['40% of your highest 36 months', '20% of your final base pay', '50% of your final base pay', '2% of your highest 36 months'], answer: 0,
