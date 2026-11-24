@@ -48,6 +48,7 @@
   <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government.</p>
 </footer>
 <script src="shared/lessons.js"></script>
+<script src="shared/submit.js"></script>
 <script>
 (function () {
   const sc = Lessons.scores(), list = document.getElementById('list');
@@ -72,8 +73,9 @@
   const reset = document.getElementById('reset');
   reset.hidden = !Object.keys(sc).length;
   reset.addEventListener('click', () => {
-    if (!confirm('Clear all lesson and final review scores on this device?')) return;
+    if (!confirm('Clear all lesson and final review scores on this device? The next learner here starts fresh.')) return;
     try { localStorage.removeItem(Lessons.STORE); } catch (e) {}
+    if (window.Submit) Submit.reset();   // the next learner on this computer gets a new random number
     location.reload();
   });
   document.getElementById('overall').textContent = done ? `${done} of 4 lessons checked on this device.` : 'Your scores are kept on this device only.';

@@ -13,6 +13,7 @@ Four short animated, interactive lessons that teach how the internet moves and p
 | 3. Crack the Password | `lessons/m3-passwords/` | Plain vs hashed storage, real SHA-256 fingerprints, one-letter change, salt, guessing attack, crack time | Application (login and server storage) |
 | 4. The Fire Wall | `lessons/m4-firewall/` | Firewall as a wall, default deny, ports as numbered gates (25 email, 22 remote control) | Transport (port numbers) checked at the network edge |
 | Final review | `lessons/complete/` | 8 big-idea questions, overall score | |
+| Tester results | `lessons/results/` | Percent correct by lesson and by question from anonymous sends, CSV downloads (`?demo=1` shows sample data) | |
 
 ## Run it
 
@@ -23,6 +24,10 @@ No install, build step, server or account is needed.
 
 Progress (best quiz score per lesson) is saved only in the learner's own browser (`localStorage` key `ihks-lessons-v1`). The picker's Reset progress button clears it.
 
+## Anonymous results (tester sessions)
+
+Each lesson check saves its answers on the learner's browser, and its score screen shows a locked **Send after the final review** box. The final review's score screen has the opt-in **Send my answers** button, which sends everything in one tap: each lesson's first try (and latest try, after a retake) plus the review. It sends right or wrong per question, the letter picked, which try on that browser, minutes in the lesson, phone or computer, an optional group tag (`?group=afas3410` on any lesson link) and a random learner number made in the browser (`localStorage` key `ihks-learner-v1`). No name, account or IP address. The rows go to a Google Sheet through a Google Apps Script web app (`tools/results/Code.gs`); setup steps are in `tools/results/SETUP.md`. The box stays hidden until the script's `/exec` address is set as `ENDPOINT` in `lessons/shared/submit.js`. Reset progress on the lesson list also gives the next learner on a shared computer a new number.
+
 ## Files
 
 | Path | What |
@@ -32,13 +37,16 @@ Progress (best quiz score per lesson) is saved only in the learner's own browser
 | `lessons/shared/engine.js` | Keyframe animation engine and SVG renderer (carried over from my CPRE 5990 defense slides), with the networking object kinds: `node`, `packet`, `person`, `eye`, `can`, `keyart`, `blender`, `print`. |
 | `lessons/shared/lesson.js` | Lesson player: caption, Back/Replay/Next, step dots, keyboard, reduced motion, learner actions (`act(ctx)`), and the quiz. |
 | `lessons/shared/lessons.js` | Lesson list, saved scores, next-lesson links. |
+| `lessons/shared/submit.js` | Anonymous Send my answers box and the results script address. |
+| `lessons/results/index.html` | Tester results page. |
+| `tools/results/Code.gs`, `SETUP.md` | Google Apps Script for the results Sheet, and how to deploy it. |
 | `lessons/shared/lesson.css` | Player look (cyber palette, always dark). |
 | `lessons/m*/index.html` | One lesson each: scene, steps, learner actions and quiz. |
 | `lessons/complete/index.html` | Final review. |
 
 ## Dependencies
 
-None. Plain HTML, CSS, JavaScript and SVG, with no frameworks, libraries, server or database. Lesson 3 computes SHA-256 with a small function in the page. The project page uses the portfolio's shared `shared/portfolio.css` and `shared/portfolio.js`.
+None. Plain HTML, CSS, JavaScript and SVG, with no frameworks, libraries, server or database. The optional anonymous results use a Google Apps Script and Google Sheet owned by the instructor. Lesson 3 computes SHA-256 with a small function in the page. The project page uses the portfolio's shared `shared/portfolio.css` and `shared/portfolio.js`.
 
 ## Sources and credits
 
