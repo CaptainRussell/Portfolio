@@ -16,6 +16,8 @@
  *                                  // or end with an action, so the bottom-right Next is only the way into the quiz.
  *     quiz: [{q, choices: [...], answer: 0, why: 'one sentence'}],   // five questions
  *     pass: 4,                     // correct answers needed (default 4 of 5, 80%)
+ *     intro: [{kicker, head, body, art, go: [label, 'button' | 'outline']}],   // optional cards before step 1
+ *                                  // (Lesson 1's "what this is and how to play"); each moves on by a tap in the card
  *     next: {href, label},         // where the score screen sends the learner: the next lesson, or the final review
  *   });
  *
@@ -62,7 +64,8 @@
           <button class="lz-btn go" data-act="next"><span>Next</span>${I.next}</button>
         </div>
       </div>
-      <div class="lz-view lz-quiz" data-view="quiz" hidden></div>`;
+      <div class="lz-view lz-quiz" data-view="quiz" hidden></div>
+      <div class="lz-view lz-intro" data-view="intro" hidden></div>`;
     const $ = (s) => host.querySelector(s);
     const svg = $('.lz-svg'), dots = $('.lz-dots'), quiz = $('.lz-quiz'), ov = $('.lz-ov'), slot = $('.lz-act');
     dots.innerHTML = sc.steps.map((s, i) => `<button class="lz-dot" data-i="${i}" aria-label="Step ${i + 1}: ${esc(s.meta.head || '')}"><i></i></button>`).join('');
@@ -235,7 +238,7 @@
       else if (b.classList.contains('lz-dot')) { const i = +b.dataset.i; if (i > reached) return; if (i === 0) { player.renderBase(); play(0); } else { rest(i - 1); play(i); } }
     });
     document.addEventListener('keydown', (e) => {
-      if (e.altKey || e.ctrlKey || e.metaKey || !quiz.hidden) return;
+      if (e.altKey || e.ctrlKey || e.metaKey || !quiz.hidden || !introV.hidden) return;
       const onCtl = e.target.closest && e.target.closest('button, a, input, textarea');
       const typing = e.target.closest && e.target.closest('input, textarea');
       if (typing) return;
@@ -309,8 +312,29 @@
       quiz.querySelector('[data-q="retake"]').addEventListener('click', openQuiz);
     }
 
+    // ------------------------------------------------------------ intro (Lesson 1: what this is, how to play)
+    // One card at a time in the lesson window; each moves on by a tap inside the card, never on its own.
+    const introV = host.querySelector('.lz-intro');
+    function intro(k) {
+      const C = L.intro[k], last = k === L.intro.length - 1, go = C.go || [last ? 'Start' : 'Next', 'button'];
+      const ctl = go[1] === 'outline'
+        ? `<button class="lz-demo" type="button" data-intro="go"><span>${esc(go[0])}</span></button>`
+        : `<button class="lz-btn go big" type="button" data-intro="go"><span>${esc(go[0])}</span>${I.next}</button>`;
+      introV.innerHTML = `<div class="lz-icard">
+          ${C.art ? `<div class="lz-iart" aria-hidden="true">${C.art}</div>` : ''}
+          <div class="lz-itext"><p class="lz-count">${esc(C.kicker || '')}</p>
+            <h2 class="lz-head" tabindex="-1">${rich(C.head || '')}</h2><p class="lz-body">${rich(C.body || '')}</p></div>
+          <div class="lz-igo">${ctl}</div>
+          <div class="lz-qbar lz-idots" aria-hidden="true">${L.intro.map((_, i) => `<i class="${i < k ? 'done' : i === k ? 'cur' : ''}"></i>`).join('')}</div>
+        </div>`;
+      introV.querySelector('[data-intro="go"]').addEventListener('click', () => {
+        if (last) { swap('watch'); player.renderBase(); play(0); } else { swap('intro'); intro(k + 1); }
+      });
+      introV.querySelector('h2').focus({ preventScroll: true });
+    }
     player.renderBase();
-    play(0);
+    if (L.intro && L.intro.length) { host.querySelectorAll('.lz-view').forEach((v) => { v.hidden = v !== introV; }); intro(0); }
+    else play(0);
   }
   root.Lesson = { mount };
 })(this);
