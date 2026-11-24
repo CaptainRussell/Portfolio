@@ -4,7 +4,8 @@
  * Paste this whole file into the Apps Script editor of a new Google Sheet (Extensions > Apps Script),
  * then Deploy > New deployment > Web app, Execute as: Me, Who has access: Anyone. Steps: SETUP.md.
  *
- * POST {action:'submit', ...}  one finished quiz from shared/submit.js -> one row in the Responses tab
+ * POST {action:'submit', learner, group, device, items:[...]}  sent once from the final review by shared/submit.js:
+ *      each lesson's first try (and latest try after a retake) plus the review -> one row per quiz in the Responses tab
  * GET  ?action=results         every row (anonymous) + the question text, read by lessons/results/
  *
  * Nothing here can identify a learner: Apps Script never passes the sender's IP address, and the page sends
@@ -39,35 +40,39 @@ function doPost(e) {
   try {
     var b = JSON.parse((e && e.postData && e.postData.contents) || '{}');
     if (b.action !== 'submit') return out_({ ok: false, error: 'unknown action' });
-    var n = LESSONS[b.lesson];
-    if (!n) return out_({ ok: false, error: 'unknown lesson' });
     var learner = String(b.learner || '');
     if (!/^[a-f0-9]{6,16}$/.test(learner)) return out_({ ok: false, error: 'bad learner' });
     learner = 'L-' + learner;   // a letter first, so Sheets never turns a number like 12e45 into a number
-    var ans = b.answers, picks = b.picks || [];
-    if (!(ans instanceof Array) || ans.length !== n) return out_({ ok: false, error: 'bad answers' });
-    for (var k = 0; k < n; k++) if (ans[k] !== 0 && ans[k] !== 1) return out_({ ok: false, error: 'bad answers' });
-    var tries = Math.max(1, Math.min(99, parseInt(b.attempt, 10) || 1));
     var group = String(b.group || '').replace(/[^\w-]/g, '').slice(0, 24).toLowerCase();
+    var device = b.device === 'phone' ? 'phone' : 'computer';
+    var items = b.items instanceof Array ? b.items.slice(0, 20) : [];
+    if (!items.length) return out_({ ok: false, error: 'nothing to send' });
 
-    var sh = tab_('Responses', HEAD);
-    // the same learner, lesson and try only counts once (a double tap, or a retry after a slow network)
-    var last = sh.getLastRow();
-    if (last > 1) {
-      var seen = sh.getRange(2, 2, last - 1, 4).getValues();
-      for (var r = seen.length - 1; r >= 0 && r >= seen.length - 2000; r--) {
-        if (seen[r][0] === learner && seen[r][2] === b.lesson && Number(seen[r][3]) === tries) return out_({ ok: true, dup: true });
+    var sh = tab_('Responses', HEAD), last = sh.getLastRow();
+    var seen = last > 1 ? sh.getRange(2, 2, last - 1, 4).getValues() : [];
+    var added = 0, dup = 0, bad = 0;
+    items.forEach(function (it) {
+      var n = LESSONS[it && it.lesson], ans = it && it.answers, picks = (it && it.picks) || [];
+      var ok = !!n && ans instanceof Array && ans.length === n;
+      for (var k = 0; ok && k < n; k++) if (ans[k] !== 0 && ans[k] !== 1) ok = false;
+      if (!ok) { bad++; return; }
+      var tries = Math.max(1, Math.min(99, parseInt(it.attempt, 10) || 1));
+      // the same learner, lesson and try only counts once (a retaken final review sends the lessons again)
+      for (var r = seen.length - 1; r >= 0; r--) {
+        if (seen[r][0] === learner && seen[r][2] === it.lesson && Number(seen[r][3]) === tries) { dup++; return; }
       }
-    }
-    var score = 0;
-    for (k = 0; k < n; k++) score += ans[k];
-    var row = [new Date(), learner, group, b.lesson, tries, score, n, score >= Math.ceil(n * 0.8) ? 'yes' : 'no',
-      Math.round((Number(b.secs) || 0) / 6) / 10, b.device === 'phone' ? 'phone' : 'computer'];
-    for (k = 0; k < MAXQ; k++) row.push(k < n ? ans[k] : '');
-    for (k = 0; k < MAXQ; k++) row.push(k < n && picks[k] >= 0 && picks[k] <= 3 ? 'ABCD'.charAt(picks[k]) : '');
-    sh.appendRow(row);
-    saveQuestions_(b.lesson, n, b.questions, b.key);
-    return out_({ ok: true });
+      var score = 0;
+      for (k = 0; k < n; k++) score += ans[k];
+      var row = [new Date(), learner, group, it.lesson, tries, score, n, score >= Math.ceil(n * 0.8) ? 'yes' : 'no',
+        Math.round((Number(it.secs) || 0) / 6) / 10, device];
+      for (k = 0; k < MAXQ; k++) row.push(k < n ? ans[k] : '');
+      for (k = 0; k < MAXQ; k++) row.push(k < n && picks[k] >= 0 && picks[k] <= 3 ? 'ABCD'.charAt(picks[k]) : '');
+      sh.appendRow(row);
+      seen.push([learner, group, it.lesson, tries]);
+      saveQuestions_(it.lesson, n, it.questions, it.key);
+      added++;
+    });
+    return out_({ ok: added + dup > 0, added: added, dup: dup, bad: bad });
   } catch (err) {
     return out_({ ok: false, error: String(err) });
   } finally {

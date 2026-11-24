@@ -110,8 +110,8 @@
         <tr><td>Final review (this time)</td><td>${right}/${Q.length}</td></tr><tr class="total"><td>Overall</td><td>${got}/${of}</td></tr></table>
       ${missing.length ? `<p class="lz-best">Not taken yet: ${missing.map(([l]) => 'Lesson ' + l.n).join(', ')}. Those count as zero until you take their checks.</p>` : ''}
       <div class="lz-bar end"><a class="lz-btn" href="../">All lessons</a><button class="lz-btn go" data-q="again"><span>Retake the review</span>${I.next}</button></div>`;
-    if (window.Submit) Submit.panel(box.querySelector('.fr-table'), { lesson: 'final', attempt: Submit.count('final'), score: right, of: Q.length,
-      pass: right >= Math.ceil(Q.length * 0.8), answers: Q.map((q, i) => (picks[i] === q.answer ? 1 : 0)), picks: picks.slice(),
+    if (window.Submit) Submit.panel(box.querySelector('.fr-table'), { lesson: 'final', score: right, of: Q.length,
+      answers: Q.map((q, i) => (picks[i] === q.answer ? 1 : 0)), picks: picks.slice(),
       key: Q.map((q) => q.answer), questions: Q.map((q) => q.q), secs: (Date.now() - born) / 1000 });
     box.querySelector('h2').focus({ preventScroll: true });
     box.querySelector('[data-q="again"]').addEventListener('click', () => { qi = 0; right = 0; picks = []; born = Date.now(); box.classList.remove('scored'); ask(); });

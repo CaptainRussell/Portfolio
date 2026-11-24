@@ -66,12 +66,12 @@
 <div class="proj-head"><div class="wrap">
   <p class="kicker">Internet Secrets</p>
   <h1>Tester results</h1>
-  <p class="sub">Anonymous answers learners chose to send from each lesson check and the final review. No names are collected.</p>
+  <p class="sub">Anonymous answers learners chose to send at the end of the final review, covering every lesson check and the review. No names are collected.</p>
   <div class="rs-tools">
     <label>Group <select id="group"><option value="">Everyone</option></select></label>
     <div class="seg" role="group" aria-label="Which tries">
       <button type="button" data-tries="first" aria-pressed="true">First try</button>
-      <button type="button" data-tries="all" aria-pressed="false">Every try</button>
+      <button type="button" data-tries="all" aria-pressed="false">First and latest try</button>
     </div>
     <div class="dls">
       <button class="pf-pill" type="button" id="dl-sum">Summary CSV</button>
@@ -163,10 +163,10 @@
     const avg = pct(lessonRows.reduce((a, r) => a + r.score, 0), lessonRows.reduce((a, r) => a + r.of, 0));
     const met = pct(lessonRows.filter((r) => r.score >= Math.ceil(r.of * 0.8)).length, lessonRows.length);
     const fin = S.find((s) => s.les === 'final');
-    $('#tiles').innerHTML = [[learners, 'Learners'], [all, UI.tries === 'first' ? 'Quizzes (first try)' : 'Quizzes (every try)'],
+    $('#tiles').innerHTML = [[learners, 'Learners'], [all, UI.tries === 'first' ? 'Quizzes (first try)' : 'Quizzes (first and latest try)'],
       [lessonRows.length ? avg + '%' : '-', 'Correct on lesson checks'], [lessonRows.length ? met + '%' : '-', 'Checks that met 80%']]
       .map(([b, s]) => `<div class="tile"><b>${b}</b><span>${s}</span></div>`).join('');
-    $('#cap-l').textContent = `${UI.tries === 'first' ? 'First try only.' : 'Every try, retakes included.'}${fin && fin.count ? ` Final review: ${fin.count} sent, ${fin.avg}% correct.` : ''}`;
+    $('#cap-l').textContent = `${UI.tries === 'first' ? 'First try only.' : 'First and latest tries, retakes included.'}${fin && fin.count ? ` Final review: ${fin.count} sent, ${fin.avg}% correct.` : ''}`;
     $('#by-lesson').innerHTML = all ? S.map((s) => bar(esc(NAMES[s.les]), s.count ? `${s.count} sent · ${pct(s.passed, s.count)}% met 80% · ${s.minutes} min average` : 'None sent yet', s.avg,
       `${NAMES[s.les]}: ${s.avg}% correct across ${s.count} quiz${s.count === 1 ? '' : 'zes'}. ${s.passed} met the 80% goal.`)).join('')
       : '<p class="empty">No results yet for this view.</p>';
@@ -195,7 +195,7 @@
     const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
-  const tag = () => `${UI.group || 'everyone'}-${UI.tries === 'first' ? 'first-try' : 'every-try'}${demo ? '-SAMPLE' : ''}`;
+  const tag = () => `${UI.group || 'everyone'}-${UI.tries === 'first' ? 'first-try' : 'first-and-latest-try'}${demo ? '-SAMPLE' : ''}`;
   $('#dl-sum').addEventListener('click', () => {
     const lines = [];
     stats(rowsNow()).forEach((s) => s.qs.forEach((q) => lines.push([NAMES[s.les], q.n, q.text, q.answer, q.count, q.right, q.pct, q.wrong])));

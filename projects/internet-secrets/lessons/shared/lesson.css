@@ -196,4 +196,8 @@ a.lz-btn{text-decoration:none;display:inline-flex;align-items:center;gap:8px}
 .lz-send.sent .lz-btn.send{opacity:1;border-color:var(--c-green);color:var(--c-green);background:transparent}
 .lz-send.sent .lz-send-msg{color:var(--c-green)}
 .lz-send.err .lz-send-msg{color:var(--c-red)}
+.lz-send-txt .lz-send-miss{margin-top:6px;color:var(--c-amber);font-size:14px}
+.lz-send.locked{border-style:solid;border-color:var(--c-line);background:transparent}
+.lz-send.locked .lz-count{color:var(--c-soft)}
+.lz-send.locked .lz-btn.send:disabled{opacity:.6;border-color:var(--c-line);color:var(--c-soft)}
 @media (max-width:640px){.lz-btn.send{flex:1 1 100%;justify-content:center}}

@@ -24,7 +24,7 @@ Send the `/exec` address to Claude and ask to connect it, or put it in `lessons/
 const ENDPOINT = 'https://script.google.com/macros/s/.../exec';
 ```
 
-After that change is merged, every score screen shows **Send my answers**, and `lessons/results/` shows the live results.
+After that change is merged, the final review's score screen shows **Send my answers** (the lesson checks show it locked until then), and `lessons/results/` shows the live results.
 
 ## Running a tester session
 
@@ -36,7 +36,7 @@ After that change is merged, every score screen shows **Send my answers**, and `
 
 ## What is stored
 
-One row per quiz sent: time, random learner number, group tag, lesson, which try on that browser, score, minutes in the lesson, phone or computer, right (1) or wrong (0) for each question, and the letter picked. No name, email, account or IP address. A second send of the same quiz is ignored.
+Learners send once, from the end of the final review. That send adds one row per quiz: each lesson's first try, its latest try if they retook it, and the final review. Each row has the time, random learner number, group tag, lesson, which try on that browser, score, minutes in the lesson, phone or computer, right (1) or wrong (0) for each question, and the letter picked. No name, email, account or IP address. A quiz that was already sent is ignored, so a retaken final review only adds the new rows.
 
 ## Changing the script later
 

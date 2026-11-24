@@ -300,7 +300,7 @@
           ${L.next ? `<a class="lz-btn go big" href="${esc(L.next.href)}"><span>${esc(L.next.label)}</span>${I.next}</a>` : ''}
         </div>`;
       const S = root.Submit;
-      if (S) S.panel(quiz.querySelector('.lz-score'), { lesson: L.id, attempt: S.count(L.id), score: right, of: L.quiz.length, pass,
+      if (S) S.panel(quiz.querySelector('.lz-score'), { lesson: L.id, score: right, of: L.quiz.length,
         answers: L.quiz.map((q, i) => (picks[i] === q.answer ? 1 : 0)), picks: picks.slice(), key: L.quiz.map((q) => q.answer),
         questions: L.quiz.map((q) => S.plain(q.q)), secs: (Date.now() - born) / 1000 });
       quiz.querySelector('h2').focus({ preventScroll: true });
