@@ -59,7 +59,19 @@ const SAVE = [['Roth TSP (27%)', 2088.99], ['Emergency fund', 1672.33], ['Roth I
 const LIVE = [['Mortgage', 1550], ['Groceries', 900], ['Misc', 450], ['Utilities', 445.46], ['Pets', 200], ['Subscriptions + haircut', 120],
   ['Gasoline', 100], ['Eating out', 100], ['Sydney', 100], ['Car insurance', 25.47]];
 const WORTH = [['Roth TSP (C Fund)', 198148, C.green], ['Roth IRAs', 54091, C.cyan], ['Emergency fund', 16000, C.blue], ['Cars', 15000, C.violet], ['Home equity', 6500, C.amber], ['Brokerage', 300, C.soft]];
-const GOAL = [[2030, 500000], [2033, 750000], [2035, 1000000]];
+// The projection (Captain Russell, 24 Nov 2026: "show that I've already won the game"): what is invested today
+// (TSP + both Roth IRAs + brokerage) grows at 7% a year after inflation, in today's dollars. Keep going adds this
+// year's $44,142 (max TSP, max both IRAs, the match) every year; Stop adds nothing. Cash, cars and home equity stay flat.
+const INVESTED = 198148 + 26386 + 27705 + 300, OTHER = NOW - INVESTED, REAL = 0.07, YEARLY = 44142;
+function project(add) {
+  const pts = [[2026.9, NOW]]; let inv = INVESTED, yr = 2026.9;
+  while (true) {
+    const nxt = inv * (1 + REAL) + add, v0 = inv + OTHER, v1 = nxt + OTHER;
+    if (v1 >= 1e6) { const f = (1e6 - v0) / (v1 - v0); pts.push([yr + f, 1e6]); return { pts, hit: yr + f }; }
+    inv = nxt; yr += 1; pts.push([yr, inv + OTHER]);
+  }
+}
+const KEEP = project(YEARLY), STOP = project(0);
 
 // ---------------------------------------------------------------- chart geometry
 const CX0 = 250, CX1 = 1450, CY0 = 790, CY1 = 170;
@@ -68,11 +80,12 @@ const yOf = (v) => CY0 - (v + 50000) * (CY0 - CY1) / 400000;
 const PTS = NW.map(([yr, v]) => [xOf(yr), yOf(v)]);
 const line = (a, b) => 'M ' + PTS.slice(a, b + 1).map((p) => p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' L ');
 const AREA = line(0, PTS.length - 1) + ` L ${PTS[PTS.length - 1][0].toFixed(1)} ${yOf(0).toFixed(1)} L ${PTS[0][0].toFixed(1)} ${yOf(0).toFixed(1)} Z`;
-// the goal chart (last step): 2019 to 2035, 0 to 1.1M
+// the goal chart (last two steps): 2019 to 2049, 0 to 1.1M
 const GX0 = 250, GX1 = 1450, GY0 = 770, GY1 = 230;
-const gx = (yr) => GX0 + (yr - 2019) * (GX1 - GX0) / 16, gy = (v) => GY0 - (v + 50000) * (GY0 - GY1) / 1150000;
+const gx = (yr) => GX0 + (yr - 2019) * (GX1 - GX0) / 30, gy = (v) => GY0 - (v + 50000) * (GY0 - GY1) / 1150000;
 const GHIST = 'M ' + NW.map(([yr, v]) => gx(yr).toFixed(1) + ' ' + gy(v).toFixed(1)).join(' L ');
-const GPROJ = `M ${gx(2026.9).toFixed(1)} ${gy(NOW).toFixed(1)} ` + GOAL.map(([yr, v]) => `L ${gx(yr).toFixed(1)} ${gy(v).toFixed(1)}`).join(' ');
+const pathOf = (pts) => 'M ' + pts.map(([yr, v]) => gx(yr).toFixed(1) + ' ' + gy(v).toFixed(1)).join(' L ');
+const age = (yr) => Math.floor(yr - 1995.3);   // 31 in Nov 2026, 40 in April 2035
 
 // a horizontal bar made of segments, each in proportion to its amount
 const BX = 160, BW = 1280;
@@ -182,18 +195,21 @@ function scene(st) {
   add('wSub', 'text', { size: 32, anchor: 'start', weight: 600 }, { x: BX, y: 706, content: 'Mortgage left on the house: $144,500 at 6.625%, a 30 year VA loan.', fill: C.soft, o: 0 });
 
   // ---- the goal
-  add('goalHead', 'text', { size: 46, anchor: 'start', weight: 800 }, { x: GX0, y: 140, content: 'My goal: $1,000,000 before age 40', fill: C.ink, o: 0 });
-  add('goalSub', 'text', { size: 28, anchor: 'start', weight: 600 }, { x: GX0, y: 186, content: 'April 2035. Same plan: max the TSP and both IRAs, every year.', fill: C.soft, o: 0 });
+  add('goalHead', 'text', { size: 46, anchor: 'start', weight: 800 }, { x: GX0, y: 120, content: 'Where I am headed', fill: C.ink, o: 0 });
+  add('goalSub', 'text', { size: 28, anchor: 'start', weight: 600 }, { x: GX0, y: 166, content: 'Invested today: ' + fmt(INVESTED) + ', growing 7% a year after inflation.', fill: C.soft, o: 0 });
   add('gz', 'rect', {}, { x: GX0 - 10, y: gy(0) - 2, w: GX1 - GX0 + 20, h: 4, rx: 2, fill: C.soft, o: 0 });
-  [2019, 2023, 2027, 2031, 2035].forEach((yr) => add('gyr' + yr, 'text', { size: 24, anchor: 'middle', weight: 600, mono: true }, { x: gx(yr), y: GY0 + 52, content: String(yr), fill: C.faint, o: 0 }));
+  add('gm', 'rect', {}, { x: GX0 - 10, y: gy(1e6) - 1, w: GX1 - GX0 + 20, h: 2, rx: 1, fill: C.line, o: 0 });
+  add('gml', 'text', { size: 24, anchor: 'end', weight: 600, mono: true }, { x: GX0 - 22, y: gy(1e6) + 8, content: '$1M', fill: C.faint, o: 0 });
   add('zlab', 'text', { size: 24, anchor: 'end', weight: 600, mono: true }, { x: GX0 - 22, y: gy(0) + 8, content: '$0', fill: C.faint, o: 0 });
+  [2019, 2026, 2033, 2040, 2047].forEach((yr) => add('gyr' + yr, 'text', { size: 24, anchor: 'middle', weight: 600, mono: true }, { x: gx(yr), y: GY0 + 52, content: String(yr), fill: C.faint, o: 0 }));
   add('gh', 'path', { d: GHIST }, { stroke: C.green, sw: 7, draw: 0 });
-  add('gp', 'path', { d: GPROJ, dash: '14 14' }, { stroke: C.amber, sw: 6, o: 0 });
-  GOAL.forEach(([yr, v], i) => {
-    add('gd' + i, 'dot', {}, { x: gx(yr), y: gy(v), r: 12, fill: C.amber, stroke: C.panel, sw: 4, o: 0 });
-    add('gt' + i, 'text', { size: 28, anchor: 'end', weight: 800, mono: true }, { x: gx(yr) - 22, y: gy(v) - 18, content: `${fmt(v, { k: true })} · ${yr}`, fill: C.amber, o: 0 });
+  add('gnow', 'text', { size: 26, anchor: 'start', weight: 800, mono: true }, { x: gx(2026.9) + 18, y: gy(NOW) + 46, content: 'Now', fill: C.green, o: 0 });
+  [['k', KEEP, C.amber, 'Keep investing'], ['x', STOP, C.cyan, 'Never invest another dollar']].forEach(([k, P, col, name]) => {
+    add('gp' + k, 'path', { d: pathOf(P.pts) }, { stroke: col, sw: 6, draw: 0 });
+    add('gd' + k, 'dot', {}, { x: gx(P.hit), y: gy(1e6), r: 13, fill: col, stroke: C.panel, sw: 4, o: 0, s: 0.2 });
+    add('gt' + k, 'text', { size: 28, anchor: 'end', weight: 800 }, { x: gx(P.hit) - 20, y: gy(1e6) + (k === 'k' ? -64 : 335), content: name, fill: col, o: 0 });
+    add('gy' + k, 'text', { size: 28, anchor: 'end', weight: 800, mono: true }, { x: gx(P.hit) - 20, y: gy(1e6) + (k === 'k' ? -30 : 371), content: `$1M in ${Math.floor(P.hit)}, age ${age(P.hit)}`, fill: col, o: 0 });
   });
-  add('gnow', 'text', { size: 28, anchor: 'start', weight: 800, mono: true }, { x: gx(2026.9) + 22, y: gy(NOW) + 44, content: 'Now: ' + fmt(NOW, { k: true }), fill: C.green, o: 0 });
 
   const hide = (s, ids) => ids.forEach((id) => { s[id].o = 0; });
   const ids = (pre) => all.filter((id) => id.startsWith(pre));
@@ -254,10 +270,15 @@ function scene(st) {
     .beat(1.6, (s) => { WORTH.forEach((p, i) => { s['w' + i].o = 1; s['w' + i].w = Math.max(2, WO[i].w - 3); s['wL' + i].o = 1; }); }, (id) => { const m = /^wL?(\d)$/.exec(id); return m ? { w: [+m[1] / 7, (+m[1] + 2) / 7] } : null; })
     .beat(0.8, (s) => { s.wBig.o = 1; s.wSub.o = 1; });
 
-  S.step({ head: 'Where I am headed', body: 'You start with more than I did: no loans, if you choose. **Chapter 2: your first paycheck.**' })
-    .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); s.goalHead.o = 1; s.goalSub.o = 1; s.gz.o = 1; s.zlab.o = 1; [2019, 2023, 2027, 2031, 2035].forEach((y) => { s['gyr' + y].o = 1; }); })
-    .beat(1.4, (s) => { s.gh.o = 1; s.gh.draw = 1; s.gnow.o = 1; })
-    .beat(1.6, (s) => { s.gp.o = 1; GOAL.forEach((g, i) => { s['gd' + i].o = 1; s['gt' + i].o = 1; }); }, (id) => { const m = /^g[dt](\d)$/.exec(id); return m ? { w: [+m[1] / 3, (+m[1] + 1) / 3] } : null; });
+  S.step({ head: 'Where I am headed', body: 'Same plan, every year: max the TSP and both Roth IRAs. **A millionaire at ' + age(KEEP.hit) + '**, in today\'s dollars.', go: [gx(KEEP.hit) - 80, gy(1e6) - 10, 300, 150, 'And if I stopped today?'] })
+    .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); ['goalHead', 'goalSub', 'gz', 'gm', 'gml', 'zlab'].forEach((i) => { s[i].o = 1; }); [2019, 2026, 2033, 2040, 2047].forEach((y) => { s['gyr' + y].o = 1; }); })
+    .beat(1.2, (s) => { s.gh.o = 1; s.gh.draw = 1; s.gnow.o = 1; })
+    .beat(1.6, (s) => { s.gpk.o = 1; s.gpk.draw = 1; })
+    .beat(0.6, (s) => { s.gdk.o = 1; s.gdk.s = 1; s.gtk.o = 1; s.gyk.o = 1; });
+
+  S.step({ head: 'I have already won the game', body: 'Even if I never invest another dollar, what is already there **reaches $1 million on its own**. The early years did the work. **Chapter 2: your first paycheck.**' })
+    .beat(2.2, (s) => { s.gpx.o = 1; s.gpx.draw = 1; })
+    .beat(0.7, (s) => { s.gdx.o = 1; s.gdx.s = 1; s.gtx.o = 1; s.gyx.o = 1; });
 
   return S;
 }
