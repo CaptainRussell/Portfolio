@@ -114,6 +114,38 @@ function scene(st) {
   add('hwML', 'text', { size: 32, anchor: 'middle', weight: 650 }, { x: 800, y: 680, content: 'a month', fill: C.soft, o: 0 });
   add('hwY', 'text', { size: 44, anchor: 'middle', weight: 800, mono: true }, { x: 800, y: 790, content: '$72,752.16 a year', fill: C.cyan, o: 0 });
 
+  // officer vs enlisted (Captain Russell, 24 Nov 2026): base pay + BAH + BAS, no dependents, off base in San Antonio
+  // (78252), 2026 rates, from his pay calculator screenshots. An O-3 at 8 years out-earns an E-8 at 20.
+  const OE = [['Day 1', 'O-1', 6062.20, 'E-1', 4242.20], ['2 years', 'O-2', 7601.20, 'E-3', 4850.00], ['4 years', 'O-3', 9717.70, 'E-4', 5493.50], ['8 years', 'O-3', 10460.50, 'E-5', 6275.90]];
+  const E8 = 9391.40, OB = 720, OHmax = 390, oh = (v) => v / 11000 * OHmax, ogx = (i) => 250 + i * 270;
+  add('oeHead', 'text', { size: 44, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 96, content: 'Officer vs enlisted: the same Air Force', fill: C.ink, o: 0 });
+  add('oeSub', 'text', { size: 26, anchor: 'middle', weight: 600, maxw: 1400 }, { x: 800, y: 138, content: 'A month of base pay, BAH and BAS. No dependents, San Antonio, 2026.', fill: C.soft, o: 0 });
+  OE.forEach(([yrs, og, ov, eg, ev], i) => {
+    const x = ogx(i);
+    add('oeO' + i, 'rect', {}, { x: x - 100, y: OB, w: 96, h: 0, rx: 8, fill: C.cyan, o: 0 });
+    add('oeOv' + i, 'text', { size: 26, anchor: 'middle', weight: 800, mono: true }, { x: x - 52, y: OB - oh(ov) - 14, content: ov >= 10000 ? '$' + (ov / 1000).toFixed(1) + 'K' : fmt(ov, { k: true }), fill: C.cyan, o: 0 });
+    add('oeE' + i, 'rect', {}, { x: x + 4, y: OB, w: 96, h: 0, rx: 8, fill: C.amber, o: 0 });
+    add('oeEv' + i, 'text', { size: 26, anchor: 'middle', weight: 800, mono: true }, { x: x + 52, y: OB - oh(ev) - 14, content: fmt(ev, { k: true }), fill: C.amber, o: 0 });
+    add('oeG' + i, 'text', { size: 24, anchor: 'middle', weight: 800, mono: true }, { x, y: OB + 38, content: `${og} · ${eg}`, fill: C.soft, o: 0 });
+    add('oeY' + i, 'text', { size: 24, anchor: 'middle', weight: 600 }, { x, y: OB + 72, content: yrs, fill: C.faint, o: 0 });
+  });
+  const ex8 = 1380;
+  add('oeE8', 'rect', {}, { x: ex8 - 48, y: OB, w: 96, h: 0, rx: 8, fill: C.amber, o: 0 });
+  add('oeE8v', 'text', { size: 26, anchor: 'middle', weight: 800, mono: true }, { x: ex8, y: OB - oh(E8) - 14, content: fmt(E8, { k: true }), fill: C.amber, o: 0 });
+  add('oeE8g', 'text', { size: 24, anchor: 'middle', weight: 800, mono: true }, { x: ex8, y: OB + 38, content: 'E-8 (SMSgt)', fill: C.soft, o: 0 });
+  add('oeE8y', 'text', { size: 24, anchor: 'middle', weight: 600 }, { x: ex8, y: OB + 72, content: '20 years', fill: C.faint, o: 0 });
+  add('oeLine', 'rect', {}, { x: ogx(3) - 100, y: OB - oh(10460.5) - 2, w: 0, h: 4, rx: 2, fill: C.cyan, o: 0 });
+  add('oeBig', 'text', { size: 34, anchor: 'end', weight: 850, maxw: 900 }, { x: 1440, y: 214, content: 'A captain at 8 years out-earns a', fill: C.ink, o: 0 });
+  add('oeBig2', 'text', { size: 34, anchor: 'end', weight: 850, maxw: 900 }, { x: 1440, y: 256, content: 'senior master sergeant at 20.', fill: C.ink, o: 0 });
+  add('oeKey', 'text', { size: 24, anchor: 'start', weight: 800 }, { x: 150, y: 214, content: '■ Officer', fill: C.cyan, o: 0 });
+  add('oeKey2', 'text', { size: 24, anchor: 'start', weight: 800 }, { x: 150, y: 250, content: '■ Enlisted', fill: C.amber, o: 0 });
+
+  add('ldQ1', 'text', { size: 44, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 250, content: 'Your troops will have a harder time with money than you will.', fill: C.ink, o: 0 });
+  add('ldA', 'text', { size: 38, anchor: 'middle', weight: 750, maxw: 1400 }, { x: 800, y: 400, content: 'Never brag about your money in front of them.', fill: C.red, o: 0 });
+  add('ldB', 'text', { size: 38, anchor: 'middle', weight: 750, maxw: 1400 }, { x: 800, y: 470, content: 'Never complain about your pay in front of them.', fill: C.red, o: 0 });
+  add('ldC', 'text', { size: 50, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 640, content: 'You are paid the big money', fill: C.green, o: 0 });
+  add('ldD', 'text', { size: 50, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 710, content: 'to make big decisions.', fill: C.green, o: 0 });
+
   const LB = 3000, LP = 6062.68, LX = 200, LWD = 1200;
   add('liHead', 'text', { size: 44, anchor: 'middle', weight: 850, maxw: 1400 }, { x: 800, y: 130, content: 'The easiest way to win', fill: C.ink, o: 0 });
   add('liAl', 'text', { size: 28, anchor: 'start', weight: 700 }, { x: LX, y: 236, content: 'What you live on now, as a cadet', fill: C.soft, o: 0 });
@@ -294,12 +326,27 @@ function scene(st) {
   const ids = (pre) => all.filter((id) => id.startsWith(pre));
 
   // ================================================================ steps
-  S.step({ head: 'What did you find?', body: 'Before class you added up a new lieutenant\'s pay. **Did you get $6,062.68?**', go: [800, 640, 900, 290, 'What do I do with it?'] })
+  S.step({ head: 'What did you find?', body: 'Before class you added up a new lieutenant\'s pay. **Did you get $6,062.68?**', go: [800, 640, 900, 290, 'How does that compare?'] })
     .beat(0.6, (s) => { s.hwHead.o = 1; s.hwSub.o = 1; })
     .beat(1.4, (s) => { HW.forEach((_, i) => { s['hwL' + i].o = 1; s['hwV' + i].o = 1; }); }, (id) => { const m = /^hw[LV](\d)$/.exec(id); return m ? { w: [+m[1] / 3, (+m[1] + 1) / 3] } : null; })
     .beat(0.5, (s) => { s.hwRule.o = 1; s.hwRule.w = 1080; })
     .beat(1.4, (s) => { s.hwM.o = 1; s.hwM.num = 6062.68; s.hwML.o = 1; })
     .beat(0.6, (s) => { s.hwY.o = 1; });
+
+  S.step({ head: 'Now compare it', body: 'Same base, same rules, same years. **Look at the last two bars.**', go: [800, 485, 1420, 610, 'What that means'] })
+    .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); s.oeHead.o = 1; s.oeSub.o = 1; s.oeKey.o = 1; s.oeKey2.o = 1; })
+    .beat(2.2, (s) => { OE.forEach(([, , ov, , ev], i) => { s['oeO' + i].o = 1; s['oeO' + i].h = oh(ov); s['oeO' + i].y = OB - oh(ov); s['oeE' + i].o = 1; s['oeE' + i].h = oh(ev); s['oeE' + i].y = OB - oh(ev);
+        ['Ov', 'Ev', 'G', 'Y'].forEach((k) => { s['oe' + k + i].o = 1; }); }); },
+      (id) => { const m = /^oe(O|E|Ov|Ev|G|Y)(\d)$/.exec(id); return m ? { w: [+m[2] / 6, (+m[2] + 2) / 6] } : null; })
+    .beat(1.0, (s) => { s.oeE8.o = 1; s.oeE8.h = oh(E8); s.oeE8.y = OB - oh(E8); s.oeE8v.o = 1; s.oeE8g.o = 1; s.oeE8y.o = 1; })
+    .beat(0.9, (s) => { s.oeLine.o = 1; s.oeLine.w = ex8 + 60 - (ogx(3) - 100); })
+    .beat(0.7, (s) => { s.oeBig.o = 1; s.oeBig2.o = 1; });
+
+  S.step({ head: 'Lead with it', body: 'This is about leadership, not just money.', go: [800, 480, 1420, 600, 'So what do I do with mine?'] })
+    .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); })
+    .beat(0.9, (s) => { s.ldQ1.o = 1; })
+    .beat(0.8, (s) => { s.ldA.o = 1; s.ldB.o = 1; }, (id) => (id === 'ldB' ? { w: [0.4, 1] } : null))
+    .beat(0.9, (s) => { s.ldC.o = 1; s.ldD.o = 1; });
 
   S.step({ head: 'Avoid lifestyle inflation', body: 'You already know how to live broke. **That is your superpower.** Every raise, bank what is above your baseline.', go: [800, 480, 1300, 600, 'Here is my story'] })
     .beat(0.7, (s) => { all.forEach((i) => { s[i].o = 0; }); s.liHead.o = 1; s.liAl.o = 1; })
