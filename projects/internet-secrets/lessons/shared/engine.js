@@ -536,22 +536,6 @@
       setA(h.ta, 'opacity', ca !== cb ? (1 - e).toFixed(3) : '0'); setA(h.tb, 'opacity', ca !== cb ? e.toFixed(3) : '1');
     },
   };
-  // A section card: a full-stage title that sweeps in between parts of a lesson (shared by all four lessons).
-  // Call Anim.addSection(S) before the first step, then Anim.section(S, 'Part 2', 'Title') at the start of a step.
-  function addSection(S) {
-    S.add('secBg', 'rect', {}, { x: 0, y: 0, w: S.w, h: S.h, rx: 0, fill: C.bg, fo: 0.92, sw: 0, o: 0, z: 50 });
-    S.add('secLine', 'rect', {}, { x: S.w / 2 - 160, y: S.h / 2 + 4, w: 0, h: 5, rx: 3, fill: C.cyan, sw: 0, o: 0, z: 51 });
-    S.add('secK', 'text', { size: 30, weight: 700, mono: true, anchor: 'middle', ls: 6 }, { x: S.w / 2, y: S.h / 2 - 70, content: '', fill: C.cyan, o: 0, z: 51 });
-    S.add('secT', 'text', { size: 72, weight: 800, anchor: 'middle' }, { x: S.w / 2, y: S.h / 2 - 12, content: '', fill: C.ink, o: 0, z: 51 });
-  }
-  function section(S, kicker, title, hide) {
-    S.beat(0.45, (s) => { Object.assign(s.secBg, { o: 1 }); Object.assign(s.secK, { o: 1, content: kicker }); Object.assign(s.secT, { o: 1, content: title }); Object.assign(s.secLine, { o: 1, w: 320 }); });
-    S.beat(0.9, (s) => { if (hide) hide(s); });
-    S.beat(0.45, (s) => { s.secBg.o = 0; s.secK.o = 0; s.secT.o = 0; Object.assign(s.secLine, { o: 0, w: 0 }); });
-    // Clear the words once hidden so the next card never crossfades from this title.
-    S.beat(0.01, (s) => { s.secK.content = ''; s.secT.content = ''; });
-    return S;
-  }
   // A small inline SVG fingerprint for page controls.
   function printSVG(hex, px) {
     const P = printPaths(hex, 120);
@@ -693,5 +677,5 @@
     }
   }
 
-  root.Anim = { Scene, Player, KINDS, ICONS, C, el, easeInOut, fmtNum, FONT, MONO, barSpec, addSection, section, printSVG, printPaths };
+  root.Anim = { Scene, Player, KINDS, ICONS, C, el, easeInOut, fmtNum, FONT, MONO, barSpec, printSVG, printPaths };
 })(this);

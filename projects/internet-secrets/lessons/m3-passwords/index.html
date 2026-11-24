@@ -298,7 +298,6 @@ function scene(st) {
     S.add('pwE' + k, 'text', { size: 40, anchor: 'middle' }, { x: cx, y: ROWS[2] - 76, content: (ANIMALS.find((a) => a[0] === wd) || ['', ''])[1], fill: C.ink, o: 0 });
     return ['pwE' + k, 'pwW' + k];
   }).flat();
-  Anim.addSection(S);
   S.add('how', 'text', { size: 22, weight: 500 }, { x: X0, y: 860, content: 'How we counted: (possible characters) to the power of (length), spaces not counted, at 10 billion guesses a second.', fill: C.faint, o: 0 });
 
   const stagger = (list, span) => (id) => { const k = list.indexOf(id); return k < 0 ? null : { w: [k * (span || 0.12), Math.min(1, k * (span || 0.12) + 0.6)] }; };
@@ -314,7 +313,6 @@ function scene(st) {
 
   // 1. Sign up
   S.step({ head: 'Make an account.', body: 'Alice is signing up. Tap a **username** and one of three **passwords**, then tap **Sign up**.', act: actSignUp });
-  Anim.section(S, 'PART 1', 'Sign up');
   S.beat(1.0, (s) => {
       ['alice', 'site'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
     }, stagger(['alice', 'site'], 0.12));
@@ -333,7 +331,7 @@ function scene(st) {
     .beat(1.1, (s) => rs.forEach((id, i) => Object.assign(s[id], { x: EVE[0] - 260, y: EVE[1] - 70 + 40 * i, fill: C.red })), stagger(rs, 0.1))
     .hold(0.6)
     .hold(0.2);
-  Anim.section(S, 'PART 2', 'The blender', (s) => fade(s, rs.concat(['cab', 'cabLbl', 'unlock', 'eve', 'site'])));
+  S.beat(0.5, (s) => fade(s, rs.concat(['cab', 'cabLbl', 'unlock', 'eve', 'site'])));
   S.beat(0.8, (s) => { Object.assign(s.blender, { o: 1, s: 0.85 }); s.bLbl.o = 1; Object.assign(s.pwBox, { x: PW_L[0], y: PW_L[1], o: 1, s: 1 }); });
 
   // 4. The fingerprint is filed with her username in a good cabinet; be Eve again
@@ -392,9 +390,8 @@ function scene(st) {
 
   // 8. Salt: two sites, same password, same fingerprint; tap Site A's shaker
   S.step({ head: 'A pinch of salt.', body: "Two sites, same password, same fingerprint. Tap **Site A's salt shaker**.", act: (ctx) => actSalt(ctx, 0) });
-  // fade the login view before the part card, so its words never sit under the card
+  // fade the login view before the next scene comes in
   S.beat(0.5, (s) => fade(s, ['alice', 'site', 'cab', 'cabLbl', 'lock', 'cabP', 'cabPLbl'].concat(rs, fns, fps, fhs)));
-  Anim.section(S, 'PART 3', 'A pinch of salt');
   S.beat(0.9, (s) => {
       ['siteA', 'siteB'].forEach((id) => Object.assign(s[id], { o: 1, s: 1 }));
       ['pwA', 'pwB', 'shA', 'shB', 'blA', 'blB', 'barA', 'barB', 'saltSame'].forEach((id) => { s[id].o = 1; });
@@ -448,7 +445,7 @@ function scene(st) {
 
   // 11. Crack time
   S.step({ head: 'Length beats tricky symbols.', body: 'How long each would take to guess. Now build a **long** one: tap **4 animals**, then tap **Test it**.', act: actPhrase });
-  Anim.section(S, 'PART 4', 'Strong passwords', (s) => fade(s, ['eve'].concat(lst)));
+  S.beat(0.5, (s) => fade(s, ['eve'].concat(lst)));
   S.beat(0.5, (s) => { s.uni.o = 1; s.uniLbl.o = 1; [0, 1].forEach((i) => { s['cl' + i].o = 1; }); })
     .beat(1.6, (s) => { [0, 1].forEach((i) => { Object.assign(s['cb' + i], { o: 1, w: rowsTxt[i].w }); s['ct' + i].o = 1; }); }, stagger(['cb0', 'ct0', 'cb1', 'ct1'], 0.1));
 
