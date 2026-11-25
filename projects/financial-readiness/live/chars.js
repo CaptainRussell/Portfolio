@@ -1,6 +1,6 @@
 /* chars.js: the characters cadets pick on their phones, in the Practicum Adventure 8-bit style.
- * The AS300s and Lt Col Cacic use their Storm HQ org chart photos (assets/people/<key>.jpg, 160 px;
- * Captain Russell, 25 Nov 2026: their normal pictures). Guests get a drawn 12 x 12 8-bit avatar in the
+ * The AFAS 3410 class (the AS300s plus Condon-Matzke, Estes and Martinez) and Lt Col Cacic use their Storm HQ org chart photos (assets/people/<key>.jpg, 160 px;
+ * Captain Russell, 25 Nov 2026: their normal pictures). The six Students (numbered, for anyone not listed) get a drawn 12 x 12 8-bit avatar in the
  * Practicum Adventure style (all men, light skin, per Captain Russell) and type their own name.
  * FRChars.list        [{id, name, img, kind: 'cadet' | 'cadre' | 'guest'}]
  * FRChars.get(id)     one of them
@@ -13,18 +13,18 @@
   'use strict';
   const BASE = (document.currentScript && document.currentScript.src || '').replace(/live\/chars\.js.*$/, 'assets/');
   const CADETS = [['AshbackerMiloK', 'Milo Ashbacker'], ['BarszczCadenN', 'Caden Barszcz'], ['BourekAkrynJ', 'Akryn Bourek'], ['BradleeColinR', 'Colin Bradlee'],
-    ['CollierJonathanG', 'Jonathan Collier'], ['CooperTylerL', 'Tyler Cooper'], ['CoulthardNikalo', 'Nikalo Coulthard'], ['CurtisRobertT', 'Robert Curtis'],
-    ['DavilaJoaquinD', 'Joaquin Davila'], ['DavisMartiG', 'Marti Davis'], ['GaulStephenJ', 'Stephen Gaul'], ['HaderAshtenM', 'Ashten Hader'],
-    ['HelleNicolasD', 'Nicolas Helle'], ['HumistonVictoriaR', 'Victoria Humiston'], ['JalodiaAnika', 'Anika Jalodia'], ['MarschangAllissaA', 'Allissa Marschang'],
+    ['CollierJonathanG', 'Jonathan Collier'], ['CondonMatzkeIsabella', 'Isabella Condon-Matzke'], ['CooperTylerL', 'Tyler Cooper'], ['CoulthardNikalo', 'Nikalo Coulthard'], ['CurtisRobertT', 'Robert Curtis'],
+    ['DavilaJoaquinD', 'Joaquin Davila'], ['DavisMartiG', 'Marti Davis'], ['EstesIsellaM', 'Isella Estes'], ['GaulStephenJ', 'Stephen Gaul'], ['HaderAshtenM', 'Ashten Hader'],
+    ['HelleNicolasD', 'Nicolas Helle'], ['HumistonVictoriaR', 'Victoria Humiston'], ['JalodiaAnika', 'Anika Jalodia'], ['MarschangAllissaA', 'Allissa Marschang'], ['MartinezToddM', 'Todd Martinez'],
     ['TuMicahJ', 'Micah Tu'], ['VanDevanderDonC', 'Don Van Devander']];
   // guests: Practicum Adventure's preset avatars (practicum-adventure/data.js AVATARS)
   const GUESTS = [
-    { id: 'g-pilot', name: 'Guest pilot', skin: '#f2c9a0', hair: '#6b4423', style: 'none', acc: 'pilot', shirt: '#2f4f9f' },
-    { id: 'g-shades', name: 'Guest in shades', skin: '#f5d0b0', hair: '#111', style: 'buzz', acc: 'shades', shirt: '#556b2f' },
-    { id: 'g-cap', name: 'Guest in a ball cap', skin: '#ffdbac', hair: '#d4a017', style: 'short', acc: 'cap', shirt: '#7a2b2b' },
-    { id: 'g-glasses', name: 'Guest', skin: '#f1c27d', hair: '#a0522d', style: 'short', acc: 'glasses', shirt: '#2f4f9f' },
-    { id: 'g-patrol', name: 'Guest in a patrol cap', skin: '#eac39b', hair: '#3b2a1a', style: 'buzz', acc: 'patrol', shirt: '#6b6a4a' },
-    { id: 'g-beard', name: 'Guest with a beard', skin: '#f5d0b0', hair: '#8a3b12', style: 'short', acc: 'beard', shirt: '#3d5a80' },
+    { id: 'g-pilot', name: 'Student 1', skin: '#f2c9a0', hair: '#6b4423', style: 'none', acc: 'pilot', shirt: '#2f4f9f' },
+    { id: 'g-shades', name: 'Student 2', skin: '#f5d0b0', hair: '#111', style: 'buzz', acc: 'shades', shirt: '#556b2f' },
+    { id: 'g-cap', name: 'Student 3', skin: '#ffdbac', hair: '#d4a017', style: 'short', acc: 'cap', shirt: '#7a2b2b' },
+    { id: 'g-glasses', name: 'Student 4', skin: '#f1c27d', hair: '#a0522d', style: 'short', acc: 'glasses', shirt: '#2f4f9f' },
+    { id: 'g-patrol', name: 'Student 5', skin: '#eac39b', hair: '#3b2a1a', style: 'buzz', acc: 'patrol', shirt: '#6b6a4a' },
+    { id: 'g-beard', name: 'Student 6', skin: '#f5d0b0', hair: '#8a3b12', style: 'short', acc: 'beard', shirt: '#3d5a80' },
   ];
   function draw(a, i) {
     const c = document.createElement('canvas'); c.width = c.height = 12;

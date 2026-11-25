@@ -140,13 +140,13 @@ input[type=range] { width: 100%; height: 44px; accent-color: var(--gold); }
   function renderPick(app) {
     const taken = new Set(S.taken || []);
     const grp = (kind) => FRChars.list.filter((c) => c.kind === kind || (kind === 'cadet' && c.kind === 'cadre'));
-    const cell = (c) => `<button class="ch ${pick === c.id ? 'on' : ''}" data-id="${c.id}" ${taken.has(c.id) ? 'disabled' : ''}><img class="px" src="${FRChars.src(c.id)}" alt=""><span>${esc(c.kind === 'guest' ? 'Guest' : c.name)}</span></button>`;
+    const cell = (c) => `<button class="ch ${pick === c.id ? 'on' : ''}" data-id="${c.id}" ${taken.has(c.id) ? 'disabled' : ''}><img class="px" src="${FRChars.src(c.id)}" alt=""><span>${esc(c.name)}</span></button>`;
     const sel = pick && FRChars.get(pick);
-    app.innerHTML = `<h1>Pick your character</h1><p>Find yourself. Not a cadet? Grab a guest and type your name.</p>
-      <div class="lab">AS300 cadets and cadre</div><div class="grid">${grp('cadet').map(cell).join('')}</div>
-      <div class="lab">Guests</div><div class="grid">${grp('guest').map(cell).join('')}</div>
+    app.innerHTML = `<h1>Pick your character</h1><p>Find yourself. Not listed? Pick a student and type your name.</p>
+      <div class="lab">AFAS 3410 Class</div><div class="grid">${grp('cadet').map(cell).join('')}</div>
+      <div class="lab">Students</div><div class="grid">${grp('guest').map(cell).join('')}</div>
       ${sel && sel.kind === 'guest' ? '<input class="name" id="gname" maxlength="24" placeholder="Your name">' : ''}
-      <button class="big-btn" id="pickGo" ${pick ? '' : 'disabled'}>${sel ? 'I\'m ' + esc(sel.kind === 'guest' ? 'a guest' : sel.name) : 'Pick one'}</button>`;
+      <button class="big-btn" id="pickGo" ${pick ? '' : 'disabled'}>${sel ? 'I\'m ' + esc(sel.kind === 'guest' ? 'a student' : sel.name) : 'Pick one'}</button>`;
     app.querySelectorAll('.ch').forEach((b) => { b.onclick = () => { pick = b.dataset.id; renderPick(app); const g = $('#gname'); if (g) g.focus(); }; });
     $('#pickGo').onclick = () => { const g = $('#gname'); const name = g ? g.value.trim() : ''; if (g && !name) { g.focus(); return; } net.send({ t: 'pick', char: pick, name }); };
   }

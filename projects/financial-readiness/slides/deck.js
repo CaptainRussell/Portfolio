@@ -561,7 +561,7 @@
           const p = R.players[cid] || (R.players[cid] = { score: 0, ans: {} });
           if (m.t === 'pick') {
             const c = FRChars.get(m.char);
-            if (c && !taken().includes(m.char)) { p.char = m.char; p.name = c.kind === 'guest' ? String(m.name || 'Guest').slice(0, 24) : c.name; p.joined = Date.now(); save(); R.changed(); }
+            if (c && !taken().includes(m.char)) { p.char = m.char; p.name = c.kind === 'guest' ? String(m.name || c.name).slice(0, 24) : c.name; p.joined = Date.now(); save(); R.changed(); }
           }
           if (m.t === 'ans' && R.q && R.phase === 'open' && m.qid === R.q.qid && p.char && !p.ans[m.qid]) {
             p.ans[m.qid] = { v: m.v, t: (performance.now() - R.opened) / 1000 }; save(); R.changed();
