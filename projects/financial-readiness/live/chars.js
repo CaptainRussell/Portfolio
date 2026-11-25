@@ -1,5 +1,5 @@
 /* chars.js: the characters cadets pick on their phones, in the Practicum Adventure 8-bit style.
- * The AFAS 3410 class (the AS300s plus Condon-Matzke, Estes and Martinez) and Lt Col Cacic use their Storm HQ org chart photos (assets/people/<key>.jpg, 160 px;
+ * The AFAS 3410 class (the AS300s, Condon-Matzke, Estes and Martinez, and civilian students Graybill, Gulino and Nordstrom, whose photos he supplied) and Lt Col Cacic use their Storm HQ org chart photos (assets/people/<key>.jpg, 160 px;
  * Captain Russell, 25 Nov 2026: their normal pictures). The six Students (numbered, for anyone not listed) get a drawn 12 x 12 8-bit avatar in the
  * Practicum Adventure style (all men, light skin, per Captain Russell) and type their own name.
  * FRChars.list        [{id, name, img, kind: 'cadet' | 'cadre' | 'guest'}]
@@ -14,8 +14,8 @@
   const BASE = (document.currentScript && document.currentScript.src || '').replace(/live\/chars\.js.*$/, 'assets/');
   const CADETS = [['AshbackerMiloK', 'Milo Ashbacker'], ['BarszczCadenN', 'Caden Barszcz'], ['BourekAkrynJ', 'Akryn Bourek'], ['BradleeColinR', 'Colin Bradlee'],
     ['CollierJonathanG', 'Jonathan Collier'], ['CondonMatzkeIsabella', 'Isabella Condon-Matzke'], ['CooperTylerL', 'Tyler Cooper'], ['CoulthardNikalo', 'Nikalo Coulthard'], ['CurtisRobertT', 'Robert Curtis'],
-    ['DavilaJoaquinD', 'Joaquin Davila'], ['DavisMartiG', 'Marti Davis'], ['EstesIsellaM', 'Isella Estes'], ['GaulStephenJ', 'Stephen Gaul'], ['HaderAshtenM', 'Ashten Hader'],
-    ['HelleNicolasD', 'Nicolas Helle'], ['HumistonVictoriaR', 'Victoria Humiston'], ['JalodiaAnika', 'Anika Jalodia'], ['MarschangAllissaA', 'Allissa Marschang'], ['MartinezToddM', 'Todd Martinez'],
+    ['DavilaJoaquinD', 'Joaquin Davila'], ['DavisMartiG', 'Marti Davis'], ['EstesIsellaM', 'Isella Estes'], ['GaulStephenJ', 'Stephen Gaul'], ['GraybillTyler', 'Tyler Graybill'], ['GulinoAnthony', 'Anthony Gulino'], ['HaderAshtenM', 'Ashten Hader'],
+    ['HelleNicolasD', 'Nicolas Helle'], ['HumistonVictoriaR', 'Victoria Humiston'], ['JalodiaAnika', 'Anika Jalodia'], ['MarschangAllissaA', 'Allissa Marschang'], ['MartinezToddM', 'Todd Martinez'], ['NordstromCaleb', 'Caleb Nordstrom'],
     ['TuMicahJ', 'Micah Tu'], ['VanDevanderDonC', 'Don Van Devander']];
   // guests: Practicum Adventure's preset avatars (practicum-adventure/data.js AVATARS)
   const GUESTS = [
