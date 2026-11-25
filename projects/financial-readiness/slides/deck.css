@@ -182,7 +182,8 @@ input.big-range:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 12px rgb
 #roomBadge i { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); }
 #roomBadge i.live { background: var(--green); box-shadow: 0 0 0 3px rgba(63,214,154,.25); } #roomBadge i.error { background: var(--red); }
 @media (max-width: 900px) { #roomBadge { display: none; } }
-.pxf { image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 8px; display: block; }
+.pxf { border-radius: 8px; display: block; object-fit: cover; }
+.pxf[src^="data:"] { image-rendering: pixelated; image-rendering: crisp-edges; }
 .ins { display: inline-block; background: center / contain no-repeat; flex: 0 0 auto; }
 .qrbox { width: 440px; height: 440px; background: #f4efe3; border-radius: 22px; padding: 14px; box-shadow: 0 0 0 4px var(--gold); }
 .qrbox svg { width: 100%; height: 100%; }

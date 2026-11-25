@@ -597,7 +597,7 @@
 
   // ---- join: QR code, room code and everyone who has joined
   LIVE.join = {
-    head: 'Get your phones out', body: 'Scan the code or go to the link, then **pick your 8-bit self**. Faster right answers score more, and you get promoted as you go.',
+    head: 'Get your phones out', body: 'Scan the code or go to the link, then **pick yourself**. Faster right answers score more, and you get promoted as you go.',
     build(el) {
       ROOM.start();
       let qr = '';

@@ -1,7 +1,7 @@
 /* chars.js: the characters cadets pick on their phones, in the Practicum Adventure 8-bit style.
- * The AS300s and Lt Col Cacic are 24 x 24 pixel portraits made from their Storm HQ org chart photos
- * (assets/chars/<key>.png). Guests get a drawn 12 x 12 avatar from Practicum Adventure's preset list
- * and type their own name.
+ * The AS300s and Lt Col Cacic use their Storm HQ org chart photos (assets/people/<key>.jpg, 160 px;
+ * Captain Russell, 25 Nov 2026: their normal pictures). Guests get a drawn 12 x 12 8-bit avatar in the
+ * Practicum Adventure style (all men, light skin, per Captain Russell) and type their own name.
  * FRChars.list        [{id, name, img, kind: 'cadet' | 'cadre' | 'guest'}]
  * FRChars.get(id)     one of them
  * FRChars.src(id)     the picture's URL (a data: URL for guests)
@@ -19,12 +19,12 @@
     ['TuMicahJ', 'Micah Tu'], ['VanDevanderDonC', 'Don Van Devander']];
   // guests: Practicum Adventure's preset avatars (practicum-adventure/data.js AVATARS)
   const GUESTS = [
-    { id: 'g-pilot', name: 'Guest pilot', skin: '#c68642', hair: '#111', style: 'none', acc: 'pilot', shirt: '#2f4f9f' },
-    { id: 'g-shades', name: 'Guest in shades', skin: '#e0ac69', hair: '#111', style: 'buzz', acc: 'shades', shirt: '#556b2f' },
-    { id: 'g-bun', name: 'Guest', skin: '#ffdbac', hair: '#d4a017', style: 'bun', acc: 'none', shirt: '#7a2b2b' },
+    { id: 'g-pilot', name: 'Guest pilot', skin: '#f2c9a0', hair: '#6b4423', style: 'none', acc: 'pilot', shirt: '#2f4f9f' },
+    { id: 'g-shades', name: 'Guest in shades', skin: '#f5d0b0', hair: '#111', style: 'buzz', acc: 'shades', shirt: '#556b2f' },
+    { id: 'g-cap', name: 'Guest in a ball cap', skin: '#ffdbac', hair: '#d4a017', style: 'short', acc: 'cap', shirt: '#7a2b2b' },
     { id: 'g-glasses', name: 'Guest', skin: '#f1c27d', hair: '#a0522d', style: 'short', acc: 'glasses', shirt: '#2f4f9f' },
-    { id: 'g-beret', name: 'Guest', skin: '#8d5524', hair: '#111', style: 'puff', acc: 'beret', shirt: '#3d5a80' },
-    { id: 'g-robot', name: 'Guest robot', skin: '#8d5524', hair: '#2b1d0e', style: 'short', acc: 'robot', shirt: '#5b5b5b' },
+    { id: 'g-patrol', name: 'Guest in a patrol cap', skin: '#eac39b', hair: '#3b2a1a', style: 'buzz', acc: 'patrol', shirt: '#6b6a4a' },
+    { id: 'g-beard', name: 'Guest with a beard', skin: '#f5d0b0', hair: '#8a3b12', style: 'short', acc: 'beard', shirt: '#3d5a80' },
   ];
   function draw(a, i) {
     const c = document.createElement('canvas'); c.width = c.height = 12;
@@ -42,12 +42,14 @@
       case 'glasses': R('#ddd', 3, 5, 2, 2); R('#ddd', 7, 5, 2, 2); R('#000', 4, 6, 1, 1); R('#000', 7, 6, 1, 1); break;
       case 'beret': R('#2b6cb0', 2, 1, 8, 2); R('#2b6cb0', 8, 3, 2, 1); R('#ffd23f', 3, 2, 1, 1); break;
       case 'pilot': R('#6b4423', 2, 1, 8, 3); R('#9ad', 3, 4, 2, 1); R('#9ad', 7, 4, 2, 1); break;
-      case 'robot': R('#9aa4b1', 3, 3, 6, 7); R('#ff2e63', 4, 6, 1, 1); R('#ff2e63', 7, 6, 1, 1); R('#9aa4b1', 5, 0, 2, 3); R('#555', 4, 8, 4, 1); break;
+      case 'cap': R('#1f3a6b', 3, 1, 6, 2); R('#1f3a6b', 2, 3, 9, 1); R('#fff', 5, 1, 2, 1); break;
+      case 'patrol': R('#6b6a4a', 3, 1, 6, 2); R('#8a8761', 4, 1, 1, 1); R('#8a8761', 7, 2, 1, 1); R('#4f4e36', 2, 3, 8, 1); break;
+      case 'beard': R(a.hair, 3, 7, 6, 3); R(a.hair, 2, 6, 1, 2); R(a.hair, 9, 6, 1, 2); R('#7a2b2b', 5, 8, 2, 1); R(a.skin, 4, 7, 4, 1); break;
     }
     return c.toDataURL();
   }
-  const list = CADETS.map(([id, name]) => ({ id, name, kind: 'cadet', img: BASE + 'chars/' + id + '.png' }));
-  list.push({ id: 'CacicJohn', name: 'Lt Col Cacic', kind: 'cadre', img: BASE + 'chars/CacicJohn.png' });
+  const list = CADETS.map(([id, name]) => ({ id, name, kind: 'cadet', img: BASE + 'people/' + id + '.jpg' }));
+  list.push({ id: 'CacicJohn', name: 'Lt Col Cacic', kind: 'cadre', img: BASE + 'people/CacicJohn.jpg' });
   let guestImgs = null;
   GUESTS.forEach((g) => list.push({ id: g.id, name: g.name, kind: 'guest', spec: g }));
   const byId = {}; list.forEach((c) => { byId[c.id] = c; });

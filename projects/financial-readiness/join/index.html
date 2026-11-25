@@ -23,7 +23,8 @@ header .room { font: 700 13px ui-monospace, Menlo, monospace; color: var(--soft)
 .dot.live { background: var(--green); box-shadow: 0 0 0 4px rgba(63,214,154,.2); } .dot.error { background: var(--red); }
 h1 { font: 700 26px/1.15 var(--serif); margin: 4px 0 8px; }
 p { color: var(--soft); line-height: 1.45; margin: 0 0 14px; }
-.px { image-rendering: pixelated; image-rendering: crisp-edges; border-radius: 6px; }
+.px { border-radius: 6px; object-fit: cover; }
+.px[src^="data:"] { image-rendering: pixelated; image-rendering: crisp-edges; }
 .big-btn { width: 100%; border: 2px solid #8a7232; background: #2a2310; color: #f3dfa6; border-radius: 14px; padding: 15px; font-weight: 850; font-size: 18px; }
 .big-btn:disabled { opacity: .4; }
 input.code { width: 100%; text-align: center; font: 800 38px ui-monospace, Menlo, monospace; letter-spacing: .3em; text-transform: uppercase; background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 12px; }
