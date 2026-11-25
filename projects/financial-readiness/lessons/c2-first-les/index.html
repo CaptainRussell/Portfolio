@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 2: Your First LES · Financial Readiness · Scott D. Russell</title>
+<meta name="description" content="Chapter 2 of Financial Readiness: read a real officer's Leave and Earnings Statement line by line, then build a new 2d Lt's first one from the three types of pay.">
+<link rel="icon" href="../../../../shared/favicon.png" type="image/png">
+<link rel="stylesheet" href="../../../../shared/portfolio.css">
+<link rel="stylesheet" href="../../../internet-secrets/lessons/shared/lesson.css">
+<script src="../../../../shared/portfolio.js"></script>
+</head>
+<body style="--tone:#16a34a">
+<header class="pf-bar">
+  <a class="pf-up" href="../../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Financial Readiness</span><span class="pf-brand"><img class="pf-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="26" height="26"><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<h1 class="vh">Your First LES</h1>
+<main class="wrap">
+  <div id="lesson"></div>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">Tap the glowing outline on the screen to keep going. Keys: right arrow or Space to go on, left arrow for Back, R to replay a step.</p>
+</main>
+
+<footer class="pf-foot">
+  <img class="foot-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="52" height="52">
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">Operations Flight Commander · AFROTC Detachment 250, Iowa State University</p>
+  <p class="source-line">Financial Readiness · AFAS 3410, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government. This is my own LES as an example, not financial advice.</p>
+</footer>
+
+<script src="../../../internet-secrets/lessons/shared/engine.js"></script>
+<script src="../../../internet-secrets/lessons/shared/lesson.js"></script>
+<script src="../shared/fr.js"></script>
+<script src="scene.js"></script>
+<script>
+const scene = FR.SCENES.fr2;
+const fmt = FR.fmt;
+Lesson.mount(document.getElementById('lesson'), {
+  id: 'fr2',
+  title: 'Chapter 2',
+  state: { married: 'no' },
+  scene,
+  pass: 2,
+  quiz: [
+    { q: 'What are the **three types of pay**?', choices: ['Base pay, allowances, special and incentive pay', 'Base pay, taxes, allotments', 'BAH, BAS, the TSP match', 'Salary, bonus, retirement pay'], answer: 0,
+      why: 'Base pay by rank and years, allowances such as BAH and BAS, and special and incentive pay for certain jobs or places.' },
+    { q: 'Why is a pay raise in BAH worth more than the same raise in base pay?', choices: ['BAH is not taxed', 'BAH counts toward the pension', 'BAH grows the TSP match', 'BAH is paid every week'], answer: 0,
+      why: 'Allowances are not taxed. Federal tax and FICA come from base pay only.' },
+    { q: 'What is an **allotment**?', choices: ['Money sent out before pay hits your bank', 'A bonus for a hard assignment', 'The tax taken from base pay', 'A loan from the finance office'], answer: 0,
+      why: 'An allotment sends part of your pay to an account automatically. It is the easiest way to pay yourself first.' },
+  ],
+  next: FR.next('fr2'),
+});
+</script>
+</body>
+</html>

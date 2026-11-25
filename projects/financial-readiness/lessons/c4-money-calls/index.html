@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 4: Money Calls · Financial Readiness · Scott D. Russell</title>
+<meta name="description" content="Chapter 4 of Financial Readiness: make five money decisions from a new lieutenant's first ten years and see where your net worth ends up next to mine.">
+<link rel="icon" href="../../../../shared/favicon.png" type="image/png">
+<link rel="stylesheet" href="../../../../shared/portfolio.css">
+<link rel="stylesheet" href="../../../internet-secrets/lessons/shared/lesson.css">
+<script src="../../../../shared/portfolio.js"></script>
+</head>
+<body style="--tone:#16a34a">
+<header class="pf-bar">
+  <a class="pf-up" href="../../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Financial Readiness</span><span class="pf-brand"><img class="pf-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="26" height="26"><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<h1 class="vh">Money Calls</h1>
+<main class="wrap">
+  <div id="lesson"></div>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">Tap the glowing outline on the screen to keep going. Keys: right arrow or Space to go on, left arrow for Back, R to replay a step.</p>
+</main>
+
+<footer class="pf-foot">
+  <img class="foot-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="52" height="52">
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">Operations Flight Commander · AFROTC Detachment 250, Iowa State University</p>
+  <p class="source-line">Financial Readiness · AFAS 3410, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government. The scenarios are illustrations, not financial advice.</p>
+</footer>
+
+<script src="../../../internet-secrets/lessons/shared/engine.js"></script>
+<script src="../../../internet-secrets/lessons/shared/lesson.js"></script>
+<script src="../shared/fr.js"></script>
+<script src="scene.js"></script>
+<script>
+const scene = FR.SCENES.fr4;
+const fmt = FR.fmt;
+Lesson.mount(document.getElementById('lesson'), {
+  id: 'fr4',
+  title: 'Chapter 4',
+  state: { c: {} },
+  scene,
+  pass: 2,
+  quiz: [
+    { q: 'A $4,000 surprise bill hits. What should pay for it?', choices: ['Your emergency fund', 'A credit card, minimums only', 'A loan from the car dealer', 'Stop your TSP for a year'], answer: 0,
+      why: 'An emergency fund is cash set aside for exactly this. Minimums at 24% turn $4,000 into about $5,650.' },
+    { q: 'You get promoted and base pay goes up. The habit that builds wealth is:', choices: ['Invest most of the raise', 'Upgrade the car right away', 'Spend it all, you earned it', 'Wait a year, then decide'], answer: 0,
+      why: 'Living like a lieutenant while you are paid like a captain is how the gap grows.' },
+    { q: 'Which idea comes from **The Richest Man in Babylon**?', choices: ['Pay yourself first', 'Buy the newest car you can', 'Only invest after age 30', 'Keep money talks private'], answer: 0,
+      why: 'A part of all you earn is yours to keep: save first, then spend what is left.' },
+  ],
+  next: FR.next('fr4'),
+});
+</script>
+</body>
+</html>

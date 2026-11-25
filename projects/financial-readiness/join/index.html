@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Join · Financial Readiness · Scott D. Russell</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="../../../shared/favicon.png" type="image/png">
+<style>
+:root { --bg: #0a1428; --panel: #0f1e3a; --panel2: #152a4d; --line: #2b4370; --ink: #f4efe3; --soft: #b3bfd4; --faint: #7083a6;
+  --green: #3fd69a; --red: #ff6f7d; --gold: #c9a24a; --amber: #e8b54a; --cyan: #4ea8ff;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  color-scheme: dark; }
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: radial-gradient(120% 70% at 50% 0%, #10224a, var(--bg) 60%) fixed, var(--bg); color: var(--ink); font-family: var(--font); min-height: 100%; }
+body { padding: max(14px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); }
+button, input { font: inherit; color: inherit; }
+header { display: flex; align-items: center; gap: 10px; padding-bottom: 12px; border-bottom: 1px solid #3a3220; margin-bottom: 16px; }
+header .t { font: 700 18px var(--serif); flex: 1; }
+header .room { font: 700 13px ui-monospace, Menlo, monospace; color: var(--soft); }
+.dot { width: 9px; height: 9px; border-radius: 50%; background: var(--faint); display: inline-block; margin-right: 6px; }
+.dot.live { background: var(--green); box-shadow: 0 0 0 4px rgba(63,214,154,.2); } .dot.error { background: var(--red); }
+h1 { font: 700 26px/1.15 var(--serif); margin: 4px 0 8px; }
+p { color: var(--soft); line-height: 1.45; margin: 0 0 14px; }
+.px { border-radius: 6px; object-fit: cover; }
+.px[src^="data:"] { image-rendering: pixelated; image-rendering: crisp-edges; }
+.big-btn { width: 100%; border: 2px solid #8a7232; background: #2a2310; color: #f3dfa6; border-radius: 14px; padding: 15px; font-weight: 850; font-size: 18px; }
+.big-btn:disabled { opacity: .4; }
+input.code { width: 100%; text-align: center; font: 800 38px ui-monospace, Menlo, monospace; letter-spacing: .3em; text-transform: uppercase; background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 12px; margin-bottom: 12px; }
+input.name { width: 100%; background: var(--panel); border: 2px solid var(--line); border-radius: 12px; padding: 12px; font-size: 17px; margin: 10px 0; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 10px; margin-bottom: 14px; }
+.ch { border: 2px solid var(--line); background: var(--panel); border-radius: 14px; padding: 8px 6px; text-align: center; }
+.ch img { width: 64px; height: 64px; display: block; margin: 0 auto 6px; }
+.ch span { font-size: 12.5px; font-weight: 700; line-height: 1.2; display: block; }
+.ch.on { border-color: var(--gold); background: #2a2310; }
+.ch:disabled { opacity: .3; }
+.lab { font-size: 12px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; color: var(--gold); margin: 14px 0 8px; }
+.me { display: flex; align-items: center; gap: 14px; background: var(--panel); border: 2px solid var(--line); border-radius: 18px; padding: 14px; }
+.me img.px { width: 72px; height: 72px; }
+.me .n { font-weight: 850; font-size: 19px; }
+.me .r { display: flex; align-items: center; gap: 8px; color: var(--soft); font-weight: 700; margin-top: 4px; }
+.me .r i { display: inline-block; height: 22px; background: center/contain no-repeat; }
+.me .s { margin-left: auto; text-align: right; font: 850 26px var(--font); color: var(--green); }
+.me .s small { display: block; font-size: 11px; color: var(--faint); letter-spacing: .1em; }
+.q { margin-top: 16px; }
+.q .info { background: var(--panel); border-left: 3px solid var(--gold); border-radius: 8px; padding: 10px 12px; color: var(--soft); margin-bottom: 14px; font-size: 15px; }
+.opts { display: grid; gap: 10px; }
+.opts button { text-align: left; border: 2px solid var(--line); background: var(--panel); border-radius: 14px; padding: 15px 16px; font-weight: 750; font-size: 17px; }
+.opts button.on { border-color: var(--gold); background: #2a2310; }
+.slider { background: var(--panel); border: 2px solid var(--line); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+.slider .v { font: 850 40px var(--font); text-align: center; color: var(--amber); margin-bottom: 6px; }
+input[type=range] { width: 100%; height: 44px; accent-color: var(--gold); }
+.calls { display: grid; gap: 12px; margin-bottom: 14px; }
+.call { background: var(--panel); border: 2px solid var(--line); border-radius: 14px; padding: 12px; }
+.call .t { font-weight: 800; margin-bottom: 8px; font-size: 15px; }
+.call .t small { color: var(--faint); margin-right: 6px; }
+.seg { display: flex; gap: 6px; }
+.seg button { flex: 1; border: 2px solid var(--line); background: var(--panel2); border-radius: 10px; padding: 10px 4px; font-weight: 800; font-size: 14px; color: var(--soft); }
+.seg button.on { background: var(--gold); border-color: var(--gold); color: #1a1203; }
+.wait { text-align: center; padding: 26px 8px; }
+.wait .big { font: 700 22px var(--serif); color: var(--ink); margin-bottom: 6px; }
+.res { border-radius: 16px; padding: 16px; margin-top: 16px; text-align: center; border: 2px solid var(--line); background: var(--panel); }
+.res.ok { border-color: var(--green); } .res.no { border-color: var(--red); }
+.res .p { font: 850 40px var(--font); }
+.res.ok .p { color: var(--green); } .res.no .p { color: var(--red); }
+.res .a { color: var(--soft); margin-top: 6px; }
+.promo { animation: pop .8s cubic-bezier(.2,1.6,.4,1); }
+@keyframes pop { from { transform: scale(.6); opacity: 0; } to { transform: none; opacity: 1; } }
+.small { font-size: 13px; color: var(--faint); text-align: center; margin-top: 18px; }
+.small button { background: none; border: 0; color: var(--soft); text-decoration: underline; }
+</style>
+</head>
+<body>
+<header><span class="dot" id="dot"></span><span class="t">Financial Readiness</span><span class="room" id="roomLab"></span></header>
+<main id="app"></main>
+
+<script src="../live/vendor/peerjs.min.js"></script>
+<script src="../live/net.js"></script>
+<script src="../live/chars.js"></script>
+<script>
+/* The phone side of the live lesson. The deck sends {t:'state', ...}; this page only shows what it is sent and
+   sends back a character pick and answers. Code organized with help from Claude (Anthropic), Nov 2026. */
+(function () {
+  'use strict';
+  const $ = (s) => document.querySelector(s);
+  const esc = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const md = (s) => esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+  const store = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  const params = new URLSearchParams(location.search);
+  // one id per phone, kept so a reload keeps your character and score (?cid= lets a test run several in one browser)
+  let cid = params.get('cid') || store.get('fr-cid'); if (!cid) { cid = 'c' + Math.random().toString(36).slice(2, 12); store.set('fr-cid', cid); }
+  let code = (params.get('room') || '').toUpperCase().replace(/[^A-Z]/g, '').slice(0, 4);
+  let net = null, S = null, status = 'off', pick = null, draft = {}, lastRes = null, prevRank = null;
+
+  function connect() {
+    $('#roomLab').textContent = 'Room ' + code;
+    net = FRNet.join(code, cid, {
+      onStatus(s) { status = s; $('#dot').className = 'dot ' + s; if (s === 'live') net.send({ t: 'hi' }); render(); },
+      onOpen() { net.send({ t: 'hi' }); },
+      onMsg(m) { if (m.t === 'state') { const q0 = S && S.q && S.q.qid; S = m; if (!S.q || S.q.qid !== q0) draft = {}; render(); } },
+    });
+    // the deck may have restarted: say hello again now and then until it answers
+    setInterval(() => { if (!S && net) net.send({ t: 'hi' }); }, 2500);
+  }
+
+  const insig = (r, h) => `<i style="height:${h}px;width:${h * r.ar}px;background-image:url('${r.file}')"></i>`;
+  function meCard() {
+    const me = S.me, c = FRChars.get(me.char), r = FRChars.rankOf(me.score);
+    const promo = prevRank && prevRank !== r.rank ? ' promo' : ''; prevRank = r.rank;
+    return `<div class="me${promo}"><img class="px" src="${FRChars.src(me.char)}" alt=""><div><div class="n">${esc(me.name || c.name)}</div>
+      <div class="r">${insig(r, 22)}${esc(r.rank)}</div></div><div class="s">${me.score.toLocaleString()}<small>POINTS</small></div></div>`;
+  }
+
+  function render() {
+    const app = $('#app');
+    if (!code || code.length < 4) {
+      app.innerHTML = `<h1>Join the lesson</h1><p>Type the 4-letter room code on the screen.</p>
+        <input class="code" id="code" maxlength="4" autocomplete="off" autocapitalize="characters" spellcheck="false"><button class="big-btn" id="go">Join</button>`;
+      const inp = $('#code'); inp.focus();
+      const go = () => { const v = inp.value.toUpperCase().replace(/[^A-Z]/g, ''); if (v.length === 4) { code = v; history.replaceState(null, '', '?room=' + v + (FRNet.local() && /local=1/.test(location.search) ? '&local=1' : '')); connect(); render(); } };
+      $('#go').onclick = go; inp.onkeydown = (e) => { if (e.key === 'Enter') go(); };
+      return;
+    }
+    if (!S) { app.innerHTML = `<div class="wait"><div class="big">${status === 'error' ? 'Can\'t reach the room' : 'Connecting…'}</div><p>${status === 'error' ? 'Check the code and your Wi-Fi. It keeps trying.' : 'Room ' + esc(code)}</p></div>
+      <p class="small"><button id="other">Use a different code</button></p>`; $('#other').onclick = () => { location.search = ''; }; return; }
+    if (!S.me || !S.me.char) return renderPick(app);
+    let h = meCard();
+    const q = S.q;
+    if (q && S.phase === 'open' && S.mine == null) h += renderQ(q);
+    else if (q && S.phase === 'open') h += `<div class="wait"><div class="big">Locked in</div><p>${esc(S.mineText || '')}</p><p>Eyes up front for the answer.</p></div>`;
+    else if (q && S.phase === 'reveal' && S.res) {
+      const r = S.res;
+      h += `<div class="res ${r.pts > 0 && r.ok !== false ? 'ok' : 'no'}"><div class="p">+${r.pts.toLocaleString()}</div><div class="a">${md(r.text || '')}</div></div>`;
+    } else h += `<div class="wait"><div class="big">Watch the screen</div><p>Questions show up here as we go. Faster right answers score more.</p></div>`;
+    app.innerHTML = h;
+    wireQ(q);
+  }
+
+  function renderPick(app) {
+    const taken = new Set(S.taken || []);
+    const grp = (kind) => FRChars.list.filter((c) => c.kind === kind || (kind === 'cadet' && c.kind === 'cadre'));
+    const cell = (c) => `<button class="ch ${pick === c.id ? 'on' : ''}" data-id="${c.id}" ${taken.has(c.id) ? 'disabled' : ''}><img class="px" src="${FRChars.src(c.id)}" alt=""><span>${esc(c.kind === 'guest' ? 'Guest' : c.name)}</span></button>`;
+    const sel = pick && FRChars.get(pick);
+    app.innerHTML = `<h1>Pick your character</h1><p>Find yourself. Not a cadet? Grab a guest and type your name.</p>
+      <div class="lab">AS300 cadets and cadre</div><div class="grid">${grp('cadet').map(cell).join('')}</div>
+      <div class="lab">Guests</div><div class="grid">${grp('guest').map(cell).join('')}</div>
+      ${sel && sel.kind === 'guest' ? '<input class="name" id="gname" maxlength="24" placeholder="Your name">' : ''}
+      <button class="big-btn" id="pickGo" ${pick ? '' : 'disabled'}>${sel ? 'I\'m ' + esc(sel.kind === 'guest' ? 'a guest' : sel.name) : 'Pick one'}</button>`;
+    app.querySelectorAll('.ch').forEach((b) => { b.onclick = () => { pick = b.dataset.id; renderPick(app); const g = $('#gname'); if (g) g.focus(); }; });
+    $('#pickGo').onclick = () => { const g = $('#gname'); const name = g ? g.value.trim() : ''; if (g && !name) { g.focus(); return; } net.send({ t: 'pick', char: pick, name }); };
+  }
+
+  function renderQ(q) {
+    let h = `<div class="q"><h1>${md(q.prompt)}</h1>${q.info ? `<div class="info">${md(q.info)}</div>` : ''}`;
+    if (q.type === 'choice') h += `<div class="opts">${q.opts.map((o, i) => `<button data-i="${i}">${esc(o)}</button>`).join('')}</div>`;
+    if (q.type === 'slider') {
+      const v = draft.v != null ? draft.v : q.start != null ? q.start : q.min;
+      h += `<div class="slider"><div class="v" id="sv">${fmtV(q, v)}</div><input type="range" id="sr" min="${q.min}" max="${q.max}" step="${q.step}" value="${v}"></div><button class="big-btn" id="sGo">Lock it in</button>`;
+    }
+    if (q.type === 'calls') {
+      h += `<div class="calls">${q.calls.map((c) => `<div class="call"><div class="t"><small>${esc(c.when)}</small>${esc(c.ask)}</div><div class="seg">${c.opts.map((o) => `<button data-k="${c.key}" data-v="${esc(o[0])}" class="${draft[c.key] === String(o[0]) ? 'on' : ''}">${esc(o[1])}</button>`).join('')}</div></div>`).join('')}</div>
+        <button class="big-btn" id="cGo" ${q.calls.every((c) => draft[c.key] != null) ? '' : 'disabled'}>Lock in my ten years</button>`;
+    }
+    return h + '</div>';
+  }
+  const fmtV = (q, v) => (q.unit === '$' ? '$' + Number(v).toLocaleString() : q.unit === '$M' ? '$' + (v / 1e6).toFixed(2) + 'M' : v + (q.unit || ''));
+  function wireQ(q) {
+    if (!q || S.phase !== 'open' || S.mine != null) return;
+    document.querySelectorAll('.opts button').forEach((b) => { b.onclick = () => net.send({ t: 'ans', qid: q.qid, v: +b.dataset.i }); });
+    const sr = $('#sr');
+    if (sr) { sr.oninput = () => { draft.v = +sr.value; $('#sv').textContent = fmtV(q, +sr.value); }; $('#sGo').onclick = () => net.send({ t: 'ans', qid: q.qid, v: +sr.value }); }
+    document.querySelectorAll('.seg button').forEach((b) => { b.onclick = () => { draft[b.dataset.k] = b.dataset.v; render(); }; });
+    const cg = $('#cGo'); if (cg) cg.onclick = () => net.send({ t: 'ans', qid: q.qid, v: Object.assign({}, draft) });
+  }
+
+  if (code.length === 4) connect();
+  render();
+})();
+</script>
+</body>
+</html>

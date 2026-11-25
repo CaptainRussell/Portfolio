@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chapter 3: The BRS · Financial Readiness · Scott D. Russell</title>
+<meta name="description" content="Chapter 3 of Financial Readiness: the three parts of the Blended Retirement System, and what the 5% rule is worth after 20 years.">
+<link rel="icon" href="../../../../shared/favicon.png" type="image/png">
+<link rel="stylesheet" href="../../../../shared/portfolio.css">
+<link rel="stylesheet" href="../../../internet-secrets/lessons/shared/lesson.css">
+<script src="../../../../shared/portfolio.js"></script>
+</head>
+<body style="--tone:#16a34a">
+<header class="pf-bar">
+  <a class="pf-up" href="../../"><span class="pf-back"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>Financial Readiness</span><span class="pf-brand"><img class="pf-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="26" height="26"><span class="pf-name">Scott D. Russell</span><span class="pf-sub">Cybersecurity Portfolio</span></span></a>
+  <nav><button class="pf-pill pf-theme" type="button">Light</button></nav>
+</header>
+
+<h1 class="vh">The Blended Retirement System</h1>
+<main class="wrap">
+  <div id="lesson"></div>
+  <p class="muted" style="color:var(--soft);font-size:13.5px">Tap the glowing outline on the screen to keep going. Keys: right arrow or Space to go on, left arrow for Back, R to replay a step.</p>
+</main>
+
+<footer class="pf-foot">
+  <img class="foot-mark" src="../../../../shared/img/scott-russell-sm.jpg" alt="" width="52" height="52">
+  <p class="motto">Capt Scott D. Russell, USAF</p>
+  <p class="tagline">Operations Flight Commander · AFROTC Detachment 250, Iowa State University</p>
+  <p class="source-line">Financial Readiness · AFAS 3410, Fall 2026 · <a href="../../">Project page</a></p>
+  <p class="created-by">Views are my own and do not reflect the official position of the U.S. Air Force, the Department of Defense or the U.S. Government. Projections are estimates, not financial advice.</p>
+</footer>
+
+<script src="../../../internet-secrets/lessons/shared/engine.js"></script>
+<script src="../../../internet-secrets/lessons/shared/lesson.js"></script>
+<script src="../shared/fr.js"></script>
+<script src="scene.js"></script>
+<script>
+const scene = FR.SCENES.fr3;
+const fmt = FR.fmt;
+Lesson.mount(document.getElementById('lesson'), {
+  id: 'fr3',
+  title: 'Chapter 3',
+  state: { pct: 0 },
+  scene,
+  pass: 3,
+  quiz: [
+    { q: 'The market drops 10% the month after you start. The best move is:', choices: ['Keep buying every month', 'Sell before it drops more', 'Stop your TSP until it recovers', 'Move it all to cash'], answer: 0,
+      why: 'Short term drops are noise. Buying through them means buying at lower prices. Time in the market beats timing the market.' },
+    { q: 'How much must **you** put in the TSP to get the full 5% from the Air Force?', choices: ['5% of base pay', '1% of base pay', '3% of base pay', 'Nothing at all'], answer: 0,
+      why: 'The 1% is automatic. The match adds up to 4% more, but only when you put in 5%.' },
+    { q: 'You retire after exactly 20 years. Your pension is:', choices: ['40% of your highest 36 months', '20% of your final base pay', '50% of your final base pay', '2% of your highest 36 months'], answer: 0,
+      why: '2% × 20 years = 40% of the average of your highest 36 months of base pay.' },
+    { q: 'When does the TSP **match** start?', choices: ['After 2 years of service', 'On your first day', 'After 60 days', 'At 12 years of service'], answer: 0,
+      why: 'The automatic 1% starts after 60 days. The match starts after 2 full years of service.' },
+  ],
+  next: FR.next('fr3'),
+});
+</script>
+</body>
+</html>
